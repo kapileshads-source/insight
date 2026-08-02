@@ -12,7 +12,7 @@ export default function SignInPage() {
 
       <h1 className="h2 mt-8 text-3xl">Welcome back.</h1>
       <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
-        You&rsquo;ll be asked for your passphrase after this to unlock your
+        You&rsquo;ll be asked for your password after this to unlock your
         data.
       </p>
 

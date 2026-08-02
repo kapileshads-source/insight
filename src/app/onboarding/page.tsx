@@ -5,7 +5,7 @@ import {
   BirthDateStep,
   DevicesStep,
   ParentConsentStep,
-  PassphraseStep,
+  PasswordStep,
   SchoolStep,
 } from "@/components/onboarding/steps";
 
@@ -24,8 +24,8 @@ export default async function OnboardingPage() {
     case "AWAITING_CONSENT":
       return <ParentConsentStep sentTo={user.parentConsent?.parentEmail} />;
 
-    case "PASSPHRASE":
-      return <PassphraseStep />;
+    case "PASSWORD":
+      return <PasswordStep />;
 
     case "SCHOOL": {
       const schools = await db.school.findMany({

@@ -47,7 +47,7 @@ export async function getOrCreateUser() {
 export type OnboardingStep =
   | "BIRTHDATE"
   | "AWAITING_CONSENT"
-  | "PASSPHRASE"
+  | "PASSWORD"
   | "SCHOOL"
   | "DEVICES"
   | "DONE";
@@ -66,7 +66,7 @@ export function nextOnboardingStep(user: UserWithRelations): OnboardingStep {
     return "AWAITING_CONSENT";
   }
 
-  if (!user.encryptionKey) return "PASSPHRASE";
+  if (!user.encryptionKey) return "PASSWORD";
   if (!user.schoolId || user.gradeLevel == null) return "SCHOOL";
   if (!user.laptopOs || !user.phoneOs) return "DEVICES";
 

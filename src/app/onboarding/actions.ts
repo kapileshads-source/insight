@@ -131,7 +131,7 @@ const encryptionSetupSchema = z.object({
 
 /// Stores the wrapped key material produced in the browser.
 ///
-/// Everything arriving here is already encrypted or public. The passphrase is
+/// Everything arriving here is already encrypted or public. The password is
 /// not sent, cannot be sent, and there is no code path on the server that
 /// could recover it.
 export async function saveEncryptionSetup(
@@ -145,7 +145,7 @@ export async function saveEncryptionSetup(
   }
 
   // Re-running this would orphan every existing encrypted row, so it is
-  // create-once. Changing a passphrase goes through a separate path that
+  // create-once. Changing a password goes through a separate path that
   // re-wraps the same data key.
   if (user.encryptionKey) {
     return { ok: false, error: "Encryption is already set up on this account." };

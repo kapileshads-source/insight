@@ -3,7 +3,7 @@
 import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-  checkPassphrase,
+  checkPassword,
   createEncryptionSetup,
 } from "@/lib/crypto";
 import type { ActionResult } from "@/app/onboarding/actions";
@@ -15,7 +15,7 @@ import {
   saveSchool,
 } from "@/app/onboarding/actions";
 
-const STEP_ORDER = ["BIRTHDATE", "PASSPHRASE", "SCHOOL", "DEVICES"] as const;
+const STEP_ORDER = ["BIRTHDATE", "PASSWORD", "SCHOOL", "DEVICES"] as const;
 
 export function OnboardingShell({
   step,
@@ -145,9 +145,9 @@ export function ParentConsentStep({ sentTo }: { sentTo?: string | null }) {
   );
 }
 
-// --- 3. passphrase ----------------------------------------------------------
+// --- 3. password ----------------------------------------------------------
 
-export function PassphraseStep() {
+export function PasswordStep() {
   const router = useRouter();
   const [value, setValue] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -155,7 +155,7 @@ export function PassphraseStep() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const check = value ? checkPassphrase(value) : null;
+  const check = value ? checkPassword(value) : null;
   const matches = value.length > 0 && value === confirm;
   const ready = Boolean(check?.ok) && matches && acknowledged;
 
@@ -165,7 +165,7 @@ export function PassphraseStep() {
 
     startTransition(async () => {
       try {
-        // Key generation happens here, in the browser. The passphrase itself
+        // Key generation happens here, in the browser. The password itself
         // never crosses the network.
         const { setup } = await createEncryptionSetup(value);
         const res = await saveEncryptionSetup(setup);
@@ -182,16 +182,16 @@ export function PassphraseStep() {
 
   return (
     <OnboardingShell
-      step="PASSPHRASE"
-      title="Pick a passphrase."
-      intro="Your sleep, your sessions and your grades get encrypted on this device before they're sent anywhere. This passphrase is the only thing that opens them."
+      step="PASSWORD"
+      title="Pick a password."
+      intro="Your sleep, your sessions and your grades get encrypted on this device before they're sent anywhere. This password is the only thing that opens them."
     >
       <form onSubmit={submit}>
-        <label htmlFor="passphrase" className="label text-text-muted">
-          Passphrase
+        <label htmlFor="password" className="label text-text-muted">
+          Password
         </label>
         <input
-          id="passphrase"
+          id="password"
           type="password"
           autoComplete="new-password"
           value={value}

@@ -1,41 +1,41 @@
 /**
  * Client-side encryption.
  *
- * Everything in this file runs in the browser. The passphrase never leaves the
+ * Everything in this file runs in the browser. The password never leaves the
  * device, which is the entire point — and also why there is no password reset.
  *
  * Two-key design:
  *
- *   passphrase --PBKDF2--> KEK --wraps--> DEK --encrypts--> the student's data
+ *   password --PBKDF2--> KEK --wraps--> DEK --encrypts--> the student's data
  *
  * The data key is random and never derived from anything the student types.
- * Only its wrapped form reaches the server. Changing a passphrase therefore
+ * Only its wrapped form reaches the server. Changing a password therefore
  * re-wraps one 32-byte key instead of re-encrypting a year of study logs.
  *
  * AES-GCM throughout, which authenticates as well as encrypts: a wrong
- * passphrase fails to decrypt rather than silently producing garbage.
+ * password fails to decrypt rather than silently producing garbage.
  */
 
 /// OWASP's floor for PBKDF2-SHA256 as of 2023. Costs roughly half a second on
 /// a mid-range laptop, which is the point — it is what makes a short
-/// passphrase expensive to attack offline.
+/// password expensive to attack offline.
 export const PBKDF2_ITERATIONS = 600_000;
 export const KDF_NAME = "PBKDF2-SHA256";
 
-/// Encrypted under the KEK so a wrong passphrase can be reported as such,
+/// Encrypted under the KEK so a wrong password can be reported as such,
 /// rather than surfacing as "your data is corrupt".
 const VERIFIER_PLAINTEXT = "insight-verifier-v1";
 
-export class WrongPassphraseError extends Error {
+export class WrongPasswordError extends Error {
   constructor() {
-    super("That passphrase doesn't match.");
-    this.name = "WrongPassphraseError";
+    super("That password doesn't match.");
+    this.name = "WrongPasswordError";
   }
 }
 
 /// Everything the server stores about a student's encryption setup. None of it
 /// is secret on its own: a salt is public by design, and the wrapped key is
-/// useless without the passphrase.
+/// useless without the password.
 export type EncryptionSetup = {
   kdf: string;
   iterations: number;
@@ -73,15 +73,15 @@ function randomBytes(n: number): Uint8Array {
 
 // --- key derivation ---------------------------------------------------------
 
-/// Stretch the passphrase into a key-encryption key. Deliberately slow.
+/// Stretch the password into a key-encryption key. Deliberately slow.
 async function deriveKek(
-  passphrase: string,
+  password: string,
   salt: Uint8Array,
   iterations: number,
 ): Promise<CryptoKey> {
   const material = await crypto.subtle.importKey(
     "raw",
-    utf8.encode(passphrase.normalize("NFKC")),
+    utf8.encode(password.normalize("NFKC")),
     "PBKDF2",
     false,
     ["deriveKey"],
@@ -101,15 +101,15 @@ async function deriveKek(
   );
 }
 
-/// Create a fresh setup for a student who has just chosen a passphrase.
+/// Create a fresh setup for a student who has just chosen a password.
 /// Returns both the record to persist and the unlocked data key to use now.
 export async function createEncryptionSetup(
-  passphrase: string,
+  password: string,
 ): Promise<{ setup: EncryptionSetup; dek: CryptoKey }> {
   const salt = randomBytes(16);
-  const kek = await deriveKek(passphrase, salt, PBKDF2_ITERATIONS);
+  const kek = await deriveKek(password, salt, PBKDF2_ITERATIONS);
 
-  // The data key is random, not derived. That is what lets the passphrase
+  // The data key is random, not derived. That is what lets the password
   // change without touching a single encrypted row.
   const dekBytes = randomBytes(32);
 
@@ -153,18 +153,18 @@ async function importDek(raw: Uint8Array): Promise<CryptoKey> {
   );
 }
 
-/// Unlock with a passphrase. Throws WrongPassphraseError if it doesn't match.
+/// Unlock with a password. Throws WrongPasswordError if it doesn't match.
 export async function unlock(
-  passphrase: string,
+  password: string,
   setup: EncryptionSetup,
 ): Promise<CryptoKey> {
   const kek = await deriveKek(
-    passphrase,
+    password,
     fromBase64(setup.salt),
     setup.iterations,
   );
 
-  // Check the verifier first, so a mismatch is reported as a wrong passphrase
+  // Check the verifier first, so a mismatch is reported as a wrong password
   // rather than as unreadable data.
   try {
     const plain = await crypto.subtle.decrypt(
@@ -176,10 +176,10 @@ export async function unlock(
       fromBase64(setup.verifierCipher) as unknown as BufferSource,
     );
     if (fromUtf8.decode(plain) !== VERIFIER_PLAINTEXT) {
-      throw new WrongPassphraseError();
+      throw new WrongPasswordError();
     }
   } catch {
-    throw new WrongPassphraseError();
+    throw new WrongPasswordError();
   }
 
   const dekBytes = await crypto.subtle.decrypt(
@@ -191,15 +191,15 @@ export async function unlock(
   return importDek(new Uint8Array(dekBytes));
 }
 
-/// Re-wrap the existing data key under a new passphrase. Stored rows are
+/// Re-wrap the existing data key under a new password. Stored rows are
 /// untouched, because the key that encrypted them hasn't changed.
-export async function changePassphrase(
-  currentPassphrase: string,
-  newPassphrase: string,
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
   setup: EncryptionSetup,
 ): Promise<EncryptionSetup> {
   const kek = await deriveKek(
-    currentPassphrase,
+    currentPassword,
     fromBase64(setup.salt),
     setup.iterations,
   );
@@ -215,11 +215,11 @@ export async function changePassphrase(
       fromBase64(setup.wrappedDek) as unknown as BufferSource,
     );
   } catch {
-    throw new WrongPassphraseError();
+    throw new WrongPasswordError();
   }
 
   const salt = randomBytes(16);
-  const newKek = await deriveKek(newPassphrase, salt, PBKDF2_ITERATIONS);
+  const newKek = await deriveKek(newPassword, salt, PBKDF2_ITERATIONS);
 
   const wrapIv = randomBytes(12);
   const wrappedDek = await crypto.subtle.encrypt(
@@ -269,18 +269,18 @@ export async function open<T>(dek: CryptoKey, sealed: Sealed): Promise<T> {
   return JSON.parse(fromUtf8.decode(plain)) as T;
 }
 
-// --- passphrase quality -----------------------------------------------------
+// --- password quality -----------------------------------------------------
 
-export type PassphraseCheck = {
+export type PasswordCheck = {
   ok: boolean;
   score: 0 | 1 | 2 | 3;
   message: string;
 };
 
-/// A deliberately plain check. This passphrase cannot be reset, so the failure
+/// A deliberately plain check. This password cannot be reset, so the failure
 /// mode we care about is "too weak to protect a year of data" — and the copy
 /// has to say that to a fifteen-year-old without lecturing.
-export function checkPassphrase(p: string): PassphraseCheck {
+export function checkPassword(p: string): PasswordCheck {
   const trimmed = p.trim();
 
   if (trimmed.length < 10) {

@@ -235,12 +235,12 @@ model User {
 
 /// The student's encryption setup.
 ///
-/// A passphrase derives a key-encryption key, which wraps a randomly generated
+/// A password derives a key-encryption key, which wraps a randomly generated
 /// data-encryption key. Only the wrapped form is stored. This indirection means
-/// changing the passphrase re-wraps one small key rather than re-encrypting a
+/// changing the password re-wraps one small key rather than re-encrypting a
 /// year of study data.
 ///
-/// The passphrase itself never reaches this server, which also means it cannot
+/// The password itself never reaches this server, which also means it cannot
 /// be reset. Losing it loses the data — permanently and by design.
 model EncryptionKey {
   id     String @id @default(cuid())
@@ -252,11 +252,11 @@ model EncryptionKey {
   /// Base64. Public by design — a salt is not a secret.
   salt       String
 
-  /// The data key, encrypted under the key derived from the passphrase.
+  /// The data key, encrypted under the key derived from the password.
   wrappedDek String
   wrapIv     String
 
-  /// Encrypts a known constant, so the client can tell a wrong passphrase from
+  /// Encrypts a known constant, so the client can tell a wrong password from
   /// corrupt data without decrypting anything real.
   verifierCipher String
   verifierIv     String

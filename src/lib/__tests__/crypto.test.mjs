@@ -1,11 +1,11 @@
 import {
   createEncryptionSetup,
   unlock,
-  changePassphrase,
+  changePassword,
   seal,
   open,
-  checkPassphrase,
-  WrongPassphraseError,
+  checkPassword,
+  WrongPasswordError,
 } from "../crypto.ts";
 
 let pass = 0;
@@ -20,7 +20,7 @@ const ok = (name, cond) => {
   }
 };
 
-const PASSPHRASE = "copper lantern drifting harbor";
+const PASSWORD = "copper lantern drifting harbor";
 const SESSION = {
   location: "LIBRARY",
   noise: "QUIET",
@@ -31,14 +31,14 @@ const SESSION = {
 
 console.log("setup + round trip");
 const t0 = Date.now();
-const { setup, dek } = await createEncryptionSetup(PASSPHRASE);
+const { setup, dek } = await createEncryptionSetup(PASSWORD);
 console.log(`  (key derivation took ${Date.now() - t0}ms)`);
 
 ok("salt is stored", typeof setup.salt === "string" && setup.salt.length > 0);
 ok("iterations recorded", setup.iterations === 600000);
 ok(
-  "setup contains no plaintext passphrase",
-  !JSON.stringify(setup).includes(PASSPHRASE),
+  "setup contains no plaintext password",
+  !JSON.stringify(setup).includes(PASSWORD),
 );
 
 const sealed = await seal(dek, SESSION);
@@ -53,7 +53,7 @@ ok("same value seals to different ciphertext", a.cipher !== b.cipher);
 ok("IVs differ", a.iv !== b.iv);
 
 console.log("\nunlocking");
-const dek2 = await unlock(PASSPHRASE, setup);
+const dek2 = await unlock(PASSWORD, setup);
 const viaUnlocked = await open(dek2, sealed);
 ok(
   "data unlocks on a new session",
@@ -66,26 +66,26 @@ try {
 } catch (e) {
   threw = e;
 }
-ok("wrong passphrase throws WrongPassphraseError", threw instanceof WrongPassphraseError);
+ok("wrong password throws WrongPasswordError", threw instanceof WrongPasswordError);
 
-console.log("\nchanging passphrase");
+console.log("\nchanging password");
 const NEW = "seventeen violet kettles arguing";
-const setup2 = await changePassphrase(PASSPHRASE, NEW, setup);
+const setup2 = await changePassword(PASSWORD, NEW, setup);
 const dek3 = await unlock(NEW, setup2);
 const stillReadable = await open(dek3, sealed);
 ok(
-  "data sealed under the old passphrase still opens",
+  "data sealed under the old password still opens",
   JSON.stringify(stillReadable) === JSON.stringify(SESSION),
 );
 ok("salt was rotated", setup2.salt !== setup.salt);
 
 let oldThrew = null;
 try {
-  await unlock(PASSPHRASE, setup2);
+  await unlock(PASSWORD, setup2);
 } catch (e) {
   oldThrew = e;
 }
-ok("old passphrase no longer works", oldThrew instanceof WrongPassphraseError);
+ok("old password no longer works", oldThrew instanceof WrongPasswordError);
 
 console.log("\ntampering");
 const tampered = { ...sealed, cipher: sealed.cipher.slice(0, -6) + "AAAAAA" };
@@ -97,10 +97,10 @@ try {
 }
 ok("modified ciphertext fails to open (AES-GCM auth)", tamperThrew);
 
-console.log("\npassphrase quality");
-ok("rejects short", !checkPassphrase("hunter2").ok);
-ok("accepts four words as strong", checkPassphrase("copper lantern drifting harbor").score === 3);
-ok("accepts long single string", checkPassphrase("Xk9!qzmvb2LPwe4tRn").score >= 2);
+console.log("\npassword quality");
+ok("rejects short", !checkPassword("hunter2").ok);
+ok("accepts four words as strong", checkPassword("copper lantern drifting harbor").score === 3);
+ok("accepts long single string", checkPassword("Xk9!qzmvb2LPwe4tRn").score >= 2);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

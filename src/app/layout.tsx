@@ -26,7 +26,6 @@ export default function RootLayout({
         <ClerkProvider
           appearance={{
             variables: {
-              colorScheme: "dark",
               // Clerk derives borders, hover states and social-button text
               // from this, and it defaults to black. On a Midnight card that
               // renders the Google button's label at 62% black on near-black.

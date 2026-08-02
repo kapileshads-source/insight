@@ -1,7 +1,13 @@
 import "dotenv/config";
+import fs from "node:fs";
+import path from "node:path";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { DayType, SchoolType } from "../src/generated/prisma/enums";
+import {
+  DayType,
+  SchoolType,
+  ScheduleVariant,
+} from "../src/generated/prisma/enums";
 
 const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
@@ -45,104 +51,175 @@ const MIDDLE_SCHOOLS = [
 
 const hm = (h: number, m: number) => h * 60 + m;
 
-// PLACEHOLDER BELL TIMES.
-//
-// These are structurally correct (period count, lunch position, instructional
-// flags) but the actual clock times are not FISD's published times — nobody has
-// entered those yet. They exist so the period-lookup and prompt logic have
-// something real to run against in development. Replace them per campus through
-// the admin schedule editor before any student uses this.
-const HS_PERIODS = [
-  { number: 1, label: null, start: hm(8, 55), end: hm(9, 45), instructional: true },
-  { number: 2, label: null, start: hm(9, 51), end: hm(10, 41), instructional: true },
-  { number: 3, label: null, start: hm(10, 47), end: hm(11, 37), instructional: true },
-  { number: 4, label: "Lunch", start: hm(11, 37), end: hm(12, 17), instructional: false },
-  { number: 5, label: null, start: hm(12, 23), end: hm(13, 13), instructional: true },
-  { number: 6, label: null, start: hm(13, 19), end: hm(14, 9), instructional: true },
-  { number: 7, label: null, start: hm(14, 15), end: hm(15, 5), instructional: true },
-  { number: 8, label: null, start: hm(15, 11), end: hm(16, 5), instructional: true },
+type Slot = {
+  sequence: number;
+  number: number | null;
+  label: string | null;
+  start: number;
+  end: number;
+  instructional: boolean;
+};
+
+// High school: A/B block. Four 90-minute blocks plus Advisory, which sits
+// between the 2nd and 3rd block. Periods 1-4 meet on A days, 5-8 on B days.
+// The district calendar lists high school hours as 9:00-4:30, which these match.
+const HS_A: Slot[] = [
+  { sequence: 1, number: 1, label: null, start: hm(9, 0), end: hm(10, 30), instructional: true },
+  { sequence: 2, number: 2, label: null, start: hm(10, 35), end: hm(12, 5), instructional: true },
+  { sequence: 3, number: null, label: "Advisory", start: hm(12, 10), end: hm(12, 35), instructional: false },
+  // Lunch waves A-D happen inside this block rather than beside it, so the
+  // whole span is one period as far as period lookup is concerned.
+  { sequence: 4, number: 3, label: null, start: hm(12, 40), end: hm(14, 55), instructional: true },
+  { sequence: 5, number: 4, label: null, start: hm(15, 0), end: hm(16, 30), instructional: true },
 ];
 
-const MS_PERIODS = [
-  { number: 1, label: null, start: hm(8, 25), end: hm(9, 12), instructional: true },
-  { number: 2, label: null, start: hm(9, 16), end: hm(10, 3), instructional: true },
-  { number: 3, label: null, start: hm(10, 7), end: hm(10, 54), instructional: true },
-  { number: 4, label: null, start: hm(10, 58), end: hm(11, 45), instructional: true },
-  { number: 5, label: "Lunch", start: hm(11, 45), end: hm(12, 20), instructional: false },
-  { number: 6, label: null, start: hm(12, 24), end: hm(13, 11), instructional: true },
-  { number: 7, label: null, start: hm(13, 15), end: hm(14, 2), instructional: true },
-  { number: 8, label: null, start: hm(14, 6), end: hm(15, 35), instructional: true },
+const HS_B: Slot[] = HS_A.map((s) => ({
+  ...s,
+  number: s.number === null ? null : s.number + 4,
+}));
+
+// Middle school: every class meets every day. District calendar lists middle
+// school hours as 8:25-3:50, which these match. 4th period absorbs the
+// grade-level lunch waves.
+const MS: Slot[] = [
+  { sequence: 1, number: 1, label: null, start: hm(8, 25), end: hm(9, 12), instructional: true },
+  { sequence: 2, number: 2, label: null, start: hm(9, 16), end: hm(10, 3), instructional: true },
+  { sequence: 3, number: 3, label: null, start: hm(10, 7), end: hm(10, 54), instructional: true },
+  { sequence: 4, number: 4, label: "4th period and lunch", start: hm(10, 58), end: hm(12, 58), instructional: true },
+  { sequence: 5, number: 5, label: null, start: hm(13, 2), end: hm(13, 49), instructional: true },
+  { sequence: 6, number: 6, label: null, start: hm(13, 53), end: hm(14, 40), instructional: true },
+  { sequence: 7, number: 7, label: null, start: hm(14, 44), end: hm(15, 31), instructional: true },
+  { sequence: 8, number: null, label: "Advisory", start: hm(15, 35), end: hm(15, 50), instructional: false },
 ];
 
-// PLACEHOLDER TERM DATES — same caveat as bell times. Confirm against the
-// published FISD academic calendar before launch.
+// From the published FISD 2026-2027 student calendar.
 const TERMS = [
-  { name: "2026–27 Fall", start: "2026-08-13", end: "2026-12-18" },
-  { name: "2026–27 Spring", start: "2027-01-06", end: "2027-05-27" },
+  { name: "2026-27 Fall", start: "2026-08-12", end: "2026-12-18" },
+  { name: "2026-27 Spring", start: "2027-01-05", end: "2027-05-14" },
 ];
+
+const date = (iso: string) => new Date(`${iso}T00:00:00Z`);
+
+async function seedPeriods(schoolId: string, dayType: DayType, slots: Slot[]) {
+  for (const s of slots) {
+    await db.period.upsert({
+      where: {
+        schoolId_dayType_variant_sequence: {
+          schoolId,
+          dayType,
+          variant: ScheduleVariant.REGULAR,
+          sequence: s.sequence,
+        },
+      },
+      update: {},
+      create: {
+        schoolId,
+        dayType,
+        variant: ScheduleVariant.REGULAR,
+        sequence: s.sequence,
+        number: s.number,
+        label: s.label,
+        startMinutes: s.start,
+        endMinutes: s.end,
+        isInstructional: s.instructional,
+      },
+    });
+  }
+}
 
 async function seedSchool(name: string, type: SchoolType) {
   const isHigh = type === SchoolType.HIGH;
 
   const school = await db.school.upsert({
     where: { name },
-    update: {},
+    update: { type, promptInterval: isHigh ? 1 : 2 },
     create: {
       name,
       type,
-      // High schools prompt once per period; middle schools every two.
+      // High schools prompt once per block; middle schools every two periods.
+      // The intervals land close together in practice: a 90-minute block
+      // against two 47-minute periods.
       promptInterval: isHigh ? 1 : 2,
-      usesBlockSchedule: false,
     },
   });
 
-  const template = isHigh ? HS_PERIODS : MS_PERIODS;
-  for (const p of template) {
-    await db.period.upsert({
-      where: {
-        schoolId_dayType_number: {
-          schoolId: school.id,
-          dayType: DayType.REGULAR,
-          number: p.number,
-        },
-      },
-      update: {},
-      create: {
-        schoolId: school.id,
-        dayType: DayType.REGULAR,
-        number: p.number,
-        label: p.label,
-        startMinutes: p.start,
-        endMinutes: p.end,
-        isInstructional: p.instructional,
-      },
-    });
+  if (isHigh) {
+    await seedPeriods(school.id, DayType.A, HS_A);
+    await seedPeriods(school.id, DayType.B, HS_B);
+  } else {
+    await seedPeriods(school.id, DayType.ALL, MS);
   }
 
   for (const t of TERMS) {
     await db.term.upsert({
       where: { schoolId_name: { schoolId: school.id, name: t.name } },
-      update: {},
+      update: { startDate: date(t.start), endDate: date(t.end) },
       create: {
         schoolId: school.id,
         name: t.name,
-        startDate: new Date(`${t.start}T00:00:00Z`),
-        endDate: new Date(`${t.end}T00:00:00Z`),
+        startDate: date(t.start),
+        endDate: date(t.end),
       },
     });
   }
+}
 
-  return school;
+/// The district calendar, extracted from FISD's published A/B PDF by sampling
+/// each cell's fill color rather than transcribing it by eye. Gold is an A day,
+/// white a B day, blue no school. See prisma/data for the extracted table.
+async function seedCalendar() {
+  const file = path.join(__dirname, "data", "fisd-2026-27-calendar.json");
+  const rows: { date: string; type: string }[] = JSON.parse(
+    fs.readFileSync(file, "utf8"),
+  );
+
+  const MAP: Record<string, { dayType: DayType | null; variant: ScheduleVariant }> =
+    {
+      A_DAY: { dayType: DayType.A, variant: ScheduleVariant.REGULAR },
+      B_DAY: { dayType: DayType.B, variant: ScheduleVariant.REGULAR },
+      LATE_B: { dayType: DayType.B, variant: ScheduleVariant.LATE_ARRIVAL },
+      NO_SCHOOL: { dayType: null, variant: ScheduleVariant.REGULAR },
+      // Bad-weather make-up days are only school days if they get used, so
+      // they are seeded as non-school and flipped by hand if invoked.
+      MAKEUP: { dayType: null, variant: ScheduleVariant.REGULAR },
+    };
+
+  let n = 0;
+  for (const r of rows) {
+    const m = MAP[r.type];
+    if (!m) continue;
+    await db.districtCalendarDay.upsert({
+      where: { date: date(r.date) },
+      update: { dayType: m.dayType, variant: m.variant },
+      create: {
+        date: date(r.date),
+        dayType: m.dayType,
+        variant: m.variant,
+        note: r.type === "MAKEUP" ? "Bad weather make-up day, unused" : null,
+      },
+    });
+    n++;
+  }
+  return n;
 }
 
 async function main() {
   for (const name of HIGH_SCHOOLS) await seedSchool(name, SchoolType.HIGH);
   for (const name of MIDDLE_SCHOOLS) await seedSchool(name, SchoolType.MIDDLE);
+  const calendarDays = await seedCalendar();
 
-  const schools = await db.school.count();
-  const periods = await db.period.count();
-  const terms = await db.term.count();
-  console.log(`Seeded ${schools} schools, ${periods} periods, ${terms} terms.`);
+  const [schools, periods, terms] = await Promise.all([
+    db.school.count(),
+    db.period.count(),
+    db.term.count(),
+  ]);
+  const aDays = await db.districtCalendarDay.count({ where: { dayType: "A" } });
+  const bDays = await db.districtCalendarDay.count({ where: { dayType: "B" } });
+
+  console.log(
+    `Seeded ${schools} schools, ${periods} periods, ${terms} terms, ` +
+      `${calendarDays} calendar days (${aDays} A / ${bDays} B).`,
+  );
 }
 
 main()

@@ -1,4 +1,6 @@
-import type { InsightDirection } from "@/generated/prisma/enums";
+/// Direction now lives inside the encrypted payload rather than in a database
+/// column, so it's a plain client-side type. The server never sees it.
+export type InsightDirection = "POSITIVE" | "NEGATIVE" | "NEUTRAL";
 
 export type InsightRowProps = {
   /// The stat, stated correlationally. Never phrased as cause.

@@ -1,5 +1,29 @@
 // Insight — data model
-// Docs: https://pris.ly/d/prisma-schema
+//
+// ---------------------------------------------------------------------------
+// A note on encryption, because it shapes nearly every model below.
+//
+// Student data is encrypted in the browser before it is sent here. The server
+// stores ciphertext it cannot read and never possesses the key.
+//
+// The rule applied throughout is: STRUCTURE IS PLAINTEXT, CONTENT IS NOT.
+// Row existence, foreign keys, and the timestamps needed for ordering,
+// pagination and de-duplication stay readable. Everything a student would
+// consider private — how long they slept, what they studied, what they scored,
+// how stressed they were — lives inside `payloadCipher`.
+//
+// Each row carries one encrypted JSON blob rather than a column per encrypted
+// field. That means one decrypt per row instead of many, and adding a new
+// private field later needs no migration.
+//
+// What this deliberately leaks, and what the privacy policy must therefore
+// admit to: that an account exists, its email and campus, how many rows it
+// has, and when they were written.
+//
+// One carve-out: `CanvasConnection.accessToken` is encrypted with a SERVER key,
+// not the student's, because the server has to call Canvas on their behalf.
+// It is the only student secret the server can read, and the policy says so.
+// ---------------------------------------------------------------------------
 
 generator client {
   provider = "prisma-client"
@@ -13,9 +37,8 @@ datasource db {
 // ---------------------------------------------------------------------------
 // Schools, terms, bell schedules
 //
-// Every field here is admin-editable by design. FISD shifts schedules for early
-// release, exam weeks, and semester changes, so nothing about timing is
-// hardcoded in application logic.
+// Admin-editable by design. FISD shifts schedules for early release, exam
+// weeks, and semester changes, so no timing is hardcoded in application logic.
 // ---------------------------------------------------------------------------
 
 enum SchoolType {
@@ -23,24 +46,32 @@ enum SchoolType {
   MIDDLE
 }
 
-/// Day types a campus can run. Campuses without block scheduling only ever use
-/// REGULAR; block campuses use A_DAY/B_DAY and leave REGULAR unused.
+/// Which set of classes meets on a given day.
+/// FISD high schools alternate A and B; middle schools meet everything daily.
 enum DayType {
+  ALL
+  A
+  B
+}
+
+/// What times those classes run. Deliberately separate from DayType — a late
+/// arrival A day is both an A day and a modified schedule, and folding the two
+/// into one enum multiplies its cases every time a new variant appears.
+enum ScheduleVariant {
   REGULAR
-  A_DAY
-  B_DAY
+  LATE_ARRIVAL
+  EARLY_RELEASE
 }
 
 model School {
-  id                String     @id @default(cuid())
-  name              String     @unique
-  type              SchoolType
+  id   String     @id @default(cuid())
+  name String     @unique
+  type SchoolType
+
   /// How many periods must elapse between gap-filling prompts.
   /// 1 for high schools, 2 for middle schools.
-  promptInterval    Int        @default(1)
-  /// True if this campus runs A/B block days.
-  usesBlockSchedule Boolean    @default(false)
-  timezone          String     @default("America/Chicago")
+  promptInterval Int @default(1)
+  timezone       String @default("America/Chicago")
 
   periods   Period[]
   terms     Term[]
@@ -51,27 +82,40 @@ model School {
   updatedAt DateTime @updatedAt
 }
 
-/// One row per period per day-type. Times are stored as minutes-from-midnight
-/// in the school's local timezone, which keeps period lookup a pure integer
-/// comparison and sidesteps DST edge cases around date arithmetic.
+/// One row per period, per day-type, per schedule variant. Times are stored as
+/// minutes-from-midnight in the school's local timezone, which keeps period
+/// lookup a pure integer comparison and sidesteps DST entirely.
 model Period {
   id       String @id @default(cuid())
   schoolId String
   school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
-  dayType      DayType @default(REGULAR)
-  /// Period number as students refer to it (1st period, 2nd period, ...).
-  number       Int
-  /// Optional display label for non-numeric blocks ("Advisory", "Lunch B").
-  label        String?
+  dayType DayType         @default(ALL)
+  variant ScheduleVariant @default(REGULAR)
+
+  /// Chronological position within the day, starting at 1.
+  ///
+  /// This exists separately from `number` because the two diverge. On a B day
+  /// a high schooler's blocks are numbered 5, 6, 7, 8, and Advisory sits
+  /// between the 2nd and 3rd block with no number at all. The prompt interval
+  /// arithmetic needs consecutive ordering; the student needs to be told
+  /// "3rd period". Using one field for both produces nonsense on B days.
+  sequence Int
+
+  /// Period number as students refer to it. Null for Advisory and similar.
+  number Int?
+  /// Display label for blocks without a number, or with a shared one.
+  label  String?
+
   startMinutes Int
   endMinutes   Int
-  /// Lunch and advisory blocks count as time-on-campus but shouldn't advance
-  /// the prompt counter the same way an academic period does.
+
+  /// Advisory and lunch count as time on campus but shouldn't necessarily
+  /// advance the prompt counter the way an academic block does.
   isInstructional Boolean @default(true)
 
-  @@unique([schoolId, dayType, number])
-  @@index([schoolId, dayType])
+  @@unique([schoolId, dayType, variant, sequence])
+  @@index([schoolId, dayType, variant])
 }
 
 /// A semester. FISD runs on semesters; prompt state resets at each boundary.
@@ -90,16 +134,35 @@ model Term {
   @@index([schoolId, startDate])
 }
 
-/// Explicit calendar overrides — early release, exam week, holiday. An override
-/// either cancels the day entirely or swaps in a different day-type.
-model ScheduleOverride {
-  id       String  @id @default(cuid())
-  schoolId String
-  school   School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+/// The district calendar: one row per dated school day.
+///
+/// A/B assignment cannot be computed by alternating from a start date. One
+/// irregular day desynchronizes the rest of the year silently, and a student
+/// being shown the wrong class is the kind of bug nobody reports — they just
+/// stop trusting the app. So every date is stored explicitly, extracted from
+/// the district's published calendar.
+model DistrictCalendarDay {
+  id   String   @id @default(cuid())
+  date DateTime @unique @db.Date
 
-  date    DateTime @db.Date
   /// Null means no school that day.
   dayType DayType?
+  variant ScheduleVariant @default(REGULAR)
+
+  note String?
+
+  @@index([date])
+}
+
+/// Campus-specific deviation from the district calendar.
+model ScheduleOverride {
+  id       String @id @default(cuid())
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  date    DateTime        @db.Date
+  dayType DayType?
+  variant ScheduleVariant @default(REGULAR)
   note    String?
 
   @@unique([schoolId, date])
@@ -108,6 +171,19 @@ model ScheduleOverride {
 // ---------------------------------------------------------------------------
 // Users
 // ---------------------------------------------------------------------------
+
+enum LaptopOs {
+  WINDOWS
+  MACOS
+  CHROMEOS
+  NONE
+}
+
+enum PhoneOs {
+  IOS
+  ANDROID
+  NONE
+}
 
 model User {
   id String @id @default(cuid())
@@ -118,12 +194,24 @@ model User {
   schoolId String?
   school   School? @relation(fields: [schoolId], references: [id])
 
-  /// Grade level, used only for context in the UI. Never used to compare a
-  /// student against anyone but themselves.
+  /// Kept plaintext: needed to pick the right bell schedule and to route
+  /// under-13 signups into the consent flow before anything else is collected.
   gradeLevel Int?
+  birthDate  DateTime? @db.Date
+
+  /// Which builds to offer on the download screen.
+  laptopOs LaptopOs?
+  phoneOs  PhoneOs?
+
+  /// Baselines and preferences that are private to the student.
+  /// Usual sleep and wake times, usual study noise level, usual location.
+  profileCipher String?
+  profileIv     String?
 
   onboardingCompletedAt DateTime?
 
+  encryptionKey     EncryptionKey?
+  parentConsent     ParentConsent?
   canvasConnection  CanvasConnection?
   deviceTokens      DeviceToken[]
   studySessions     StudySession[]
@@ -136,11 +224,63 @@ model User {
   promptStates      PromptState[]
   mutedCategories   MutedInsightCategory[]
   recommendations   Recommendation[]
+  dataGaps          DataGap[]
+  pendingDeviceData PendingDeviceData[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([schoolId])
+}
+
+/// The student's encryption setup.
+///
+/// A passphrase derives a key-encryption key, which wraps a randomly generated
+/// data-encryption key. Only the wrapped form is stored. This indirection means
+/// changing the passphrase re-wraps one small key rather than re-encrypting a
+/// year of study data.
+///
+/// The passphrase itself never reaches this server, which also means it cannot
+/// be reset. Losing it loses the data — permanently and by design.
+model EncryptionKey {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  kdf        String @default("PBKDF2-SHA256")
+  iterations Int    @default(600000)
+  /// Base64. Public by design — a salt is not a secret.
+  salt       String
+
+  /// The data key, encrypted under the key derived from the passphrase.
+  wrappedDek String
+  wrapIv     String
+
+  /// Encrypts a known constant, so the client can tell a wrong passphrase from
+  /// corrupt data without decrypting anything real.
+  verifierCipher String
+  verifierIv     String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// COPPA consent for students under 13. Nothing beyond the parent's email and
+/// the child's account shell is collected until `confirmedAt` is set.
+model ParentConsent {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  parentEmail String
+  /// SHA-256 of the emailed confirmation token.
+  tokenHash   String  @unique
+
+  requestedAt DateTime  @default(now())
+  confirmedAt DateTime?
+  revokedAt   DateTime?
+
+  @@index([userId])
 }
 
 // ---------------------------------------------------------------------------
@@ -152,15 +292,23 @@ model CanvasConnection {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  /// Base URL of the student's Canvas instance (e.g. https://fisd.instructure.com).
   baseUrl String
-  /// Encrypted at rest by the application layer — never written in plaintext.
-  accessToken  String
-  refreshToken String?
-  expiresAt    DateTime?
 
+  /// Encrypted with the SERVER key, not the student's. The server must be able
+  /// to call Canvas on their behalf, so this is the one student secret it can
+  /// read. Called out explicitly in the privacy policy.
+  accessToken String
+  tokenIv     String
+
+  /// FISD forces a 90-day maximum on personal access tokens, so this is a
+  /// recurring event rather than an edge case. A token issued on the first day
+  /// of school expires around five weeks before December finals.
+  expiresAt     DateTime?
   lastSyncedAt  DateTime?
   lastSyncError String?
+  /// Set when Canvas returns 401. Distinguishes "connection dead" from
+  /// "no assignments", which must never be conflated.
+  disconnectedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -171,11 +319,14 @@ model Course {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// Opaque Canvas identifier. Stored as a string because Canvas ids are
+  /// 64-bit and JavaScript loses precision above 2^53.
   canvasId String?
-  name     String
-  /// Short name shown on session-logging chips.
-  shortName String?
-  active    Boolean @default(true)
+  active   Boolean @default(true)
+
+  /// Course name and short name.
+  payloadCipher String
+  payloadIv     String
 
   assignments   Assignment[]
   studySessions StudySession[]
@@ -185,14 +336,6 @@ model Course {
   @@index([userId])
 }
 
-enum SubmissionState {
-  UNSUBMITTED
-  SUBMITTED
-  LATE
-  MISSING
-  GRADED
-}
-
 model Assignment {
   id       String @id @default(cuid())
   userId   String
@@ -200,11 +343,14 @@ model Assignment {
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  canvasId        String?
-  name            String
-  dueAt           DateTime?
-  pointsPossible  Float?
-  submissionState SubmissionState @default(UNSUBMITTED)
+  canvasId String?
+  /// Plaintext so the dashboard can order by what's next without decrypting
+  /// every row first.
+  dueAt    DateTime?
+
+  /// Assignment name, points possible, submission state.
+  payloadCipher String
+  payloadIv     String
 
   outcome Outcome?
 
@@ -220,10 +366,8 @@ enum OutcomeSource {
   MANUAL
 }
 
-/// A graded result. Canvas-sourced and manually-entered outcomes share this
-/// table so reconciliation is a single-table concern: when Canvas later
-/// delivers a grade for an assignment the student already entered by hand, we
-/// keep one row and record that both sources agreed (or flag that they didn't).
+/// A graded result. Canvas-sourced and hand-entered outcomes share this table
+/// so reconciliation is a single-table concern.
 model Outcome {
   id       String @id @default(cuid())
   userId   String
@@ -234,22 +378,17 @@ model Outcome {
   assignmentId String?     @unique
   assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
 
-  /// Free-text label for manual entries with no Canvas assignment ("Unit 4 quiz").
-  label String?
+  source     OutcomeSource
+  occurredOn DateTime      @db.Date
 
-  pointsEarned   Float
-  pointsPossible Float
-  /// Denormalized for the insight engine, which compares percentages across
-  /// assignments with different point totals.
-  percentage     Float
-
-  source OutcomeSource
-  /// Set when a manual entry and a Canvas grade describe the same assessment
-  /// but disagree, so the UI can ask the student which is right instead of
+  /// Set when a hand-entered score and a Canvas grade describe the same
+  /// assessment but disagree, so the UI can ask which is right rather than
   /// silently picking one.
   conflictsWithSource OutcomeSource?
 
-  occurredOn DateTime @db.Date
+  /// Points earned, points possible, percentage, and any free-text label.
+  payloadCipher String
+  payloadIv     String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -261,13 +400,6 @@ model Outcome {
 // Study sessions and the signals attached to them
 // ---------------------------------------------------------------------------
 
-enum StudyLocation {
-  LIBRARY
-  HOME
-  CLASSROOM
-  OTHER
-}
-
 model StudySession {
   id       String  @id @default(cuid())
   userId   String
@@ -275,23 +407,15 @@ model StudySession {
   courseId String?
   course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
+  /// Plaintext: the running timer needs them, and "this week" has to be
+  /// answerable without pulling and decrypting the whole history.
   startedAt DateTime
   endedAt   DateTime?
-  /// Derived on stop. Null while a session is running.
-  durationMinutes Int?
 
-  location     StudyLocation?
-  locationNote String?
-
-  /// Optional context tags, all self-reported.
-  stressLevel         Int?
-  selfRatedDifficulty Int?
-  wasCramSession      Boolean?
-
-  /// Rolled up from extension activity at session end.
-  distractedSeconds Int?
-  focusModeActive   Boolean @default(false)
-  focusModeOverride Boolean @default(false)
+  /// Location, noise level, stress, self-rated difficulty, cram flag,
+  /// distracted seconds, focus mode state.
+  payloadCipher String?
+  payloadIv     String?
 
   activity    ExtensionActivity[]
   blockEvents FocusBlockEvent[]
@@ -308,8 +432,11 @@ model ExtensionActivity {
   sessionId String
   session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
-  domain     String
-  seconds    Int
+  /// Domain and seconds. Which sites a student visits is exactly the kind of
+  /// thing this whole design exists to keep private.
+  payloadCipher String
+  payloadIv     String
+
   recordedAt DateTime @default(now())
 
   @@index([sessionId])
@@ -320,9 +447,10 @@ model FocusBlockEvent {
   sessionId String
   session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
-  siteBlocked  String
-  overrideUsed Boolean  @default(false)
-  occurredAt   DateTime @default(now())
+  payloadCipher String
+  payloadIv     String
+
+  occurredAt DateTime @default(now())
 
   @@index([sessionId])
 }
@@ -333,9 +461,12 @@ model SleepEntry {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  /// The date the student woke up on.
+  /// Plaintext so a second entry for the same night can be caught without
+  /// decrypting. Leaks that they logged sleep, not how much.
   forDate DateTime @db.Date
-  hours   Float
+
+  payloadCipher String
+  payloadIv     String
 
   createdAt DateTime @default(now())
 
@@ -351,21 +482,21 @@ enum ScreenTimeSource {
   MANUAL
 }
 
-/// A daily screen-time total. OCR values are always confirmed by the student
-/// before they land here, so `minutes` is what the student stands behind, and
-/// `ocrRawValue` preserves what the parser originally read for debugging.
+/// A daily screen-time total.
+///
+/// Screenshots are read on the student's own device and never uploaded. Only
+/// the confirmed number is stored, and only in encrypted form.
 model ScreenTimeEntry {
   id     String @id @default(cuid())
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   forDate DateTime         @db.Date
-  minutes Int
   source  ScreenTimeSource
 
-  ocrRawValue  String?
-  ocrConfirmed Boolean @default(false)
-  editedByUser Boolean @default(false)
+  /// Minutes, the raw OCR reading, and whether the student edited it.
+  payloadCipher String
+  payloadIv     String
 
   createdAt DateTime @default(now())
 
@@ -374,7 +505,7 @@ model ScreenTimeEntry {
 }
 
 // ---------------------------------------------------------------------------
-// Device / extension auth
+// Devices
 // ---------------------------------------------------------------------------
 
 enum DeviceKind {
@@ -384,15 +515,15 @@ enum DeviceKind {
   ANDROID_APP
 }
 
-/// Token handshake shared by the extension and all three native apps.
+/// Token handshake shared by the extension and the native apps.
 model DeviceToken {
   id     String @id @default(cuid())
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   kind DeviceKind
-  /// SHA-256 of the token. The plaintext is shown once at pairing time and
-  /// never stored.
+  /// SHA-256 of the token. The plaintext is shown once at pairing and never
+  /// stored.
   tokenHash String  @unique
   label     String?
 
@@ -404,12 +535,34 @@ model DeviceToken {
   @@index([userId, kind])
 }
 
+/// A staging area for data from devices that hold no encryption key.
+///
+/// The extension and native apps can't encrypt on their own, so they post here
+/// and the student's browser picks it up on next load, encrypts it, writes it
+/// to the real tables, and deletes the row. Rows are short-lived by design and
+/// swept after `expiresAt` whether or not they were collected.
+model PendingDeviceData {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  kind    DeviceKind
+  /// Raw JSON, readable by the server. This is the weak point of the whole
+  /// design and the reason these rows live for hours rather than forever.
+  payload Json
+
+  receivedAt DateTime @default(now())
+  expiresAt  DateTime
+
+  @@index([userId, receivedAt])
+}
+
 // ---------------------------------------------------------------------------
 // Gap-filling prompt state
 // ---------------------------------------------------------------------------
 
-/// Tracks how far through the period sequence a student has been prompted, per
-/// term. Reset happens naturally because state is scoped to a term row.
+/// How far through the period sequence a student has been prompted, per term.
+/// Scoping to a term means the reset at each semester boundary is automatic.
 model PromptState {
   id     String @id @default(cuid())
   userId String
@@ -417,15 +570,45 @@ model PromptState {
   termId String
   term   Term   @relation(fields: [termId], references: [id], onDelete: Cascade)
 
-  /// Date the last prompt fired, so the counter resets each school day.
-  lastPromptedOn     DateTime? @db.Date
-  lastPromptedPeriod Int?
-  /// The single post-term prompt described in the plan fires once, then stops.
-  postTermPromptShown Boolean @default(false)
+  /// The date the last prompt fired, so the counter resets each school day.
+  lastPromptedOn       DateTime? @db.Date
+  /// Chronological position, matching Period.sequence rather than the number
+  /// shown to the student.
+  lastPromptedSequence Int?
+  postTermPromptShown  Boolean   @default(false)
 
   updatedAt DateTime @updatedAt
 
   @@unique([userId, termId])
+}
+
+// ---------------------------------------------------------------------------
+// Data gaps
+// ---------------------------------------------------------------------------
+
+enum GapSource {
+  CANVAS
+  EXTENSION
+  SCREEN_TIME
+}
+
+/// A stretch of time where a data source went silent.
+///
+/// Without this, a dead Canvas token reads as "no assignments were due" and
+/// three weeks of missing extension data reads as "they weren't distracted".
+/// Both quietly distort the correlations. The insight engine excludes these
+/// windows rather than treating absence as a zero.
+model DataGap {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  source    GapSource
+  startedAt DateTime
+  endedAt   DateTime?
+  reason    String?
+
+  @@index([userId, source, startedAt])
 }
 
 // ---------------------------------------------------------------------------
@@ -437,44 +620,35 @@ enum InsightCategory {
   STUDY_TIMING
   SESSION_LENGTH
   LOCATION
+  NOISE
   PHONE_USAGE
   DISTRACTION
   WELLBEING
 }
 
-enum InsightDirection {
-  POSITIVE
-  NEGATIVE
-  NEUTRAL
-}
-
-/// A computed, sample-size-gated correlation. Produced entirely by the
-/// statistics engine — no LLM involvement. Smart Recommendations reads these
-/// rows and never sees raw session data.
+/// A computed, sample-size-gated correlation.
+///
+/// Computed in the browser now, since the server can't read the data it would
+/// need. Still produced entirely by statistics — no model is involved in
+/// finding a pattern, only in phrasing one that already passed the gates.
 model Insight {
   id     String @id @default(cuid())
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// Plaintext so the dashboard can count and filter without decrypting, and
+  /// so a student can mute a category. Which factor is being measured is far
+  /// less revealing than the finding itself.
   category InsightCategory
-  /// Machine-readable factor key, e.g. "study_start_time".
-  factor    String
-  direction InsightDirection
-  /// Percentage-point difference vs. the student's own baseline.
-  magnitude Float
-  /// Human-readable threshold this insight splits on ("after 11 PM").
-  thresholdLabel String?
+  factor   String
 
-  sampleSize      Int
-  counterExamples Int @default(0)
-  /// Number of distinct subjects the pattern held across. Used to enforce the
-  /// "must hold across multiple subjects or weeks" rule.
-  subjectsHeld Int @default(0)
-  weeksHeld    Int @default(0)
+  /// Direction, magnitude, threshold, sample size, counter-examples, and how
+  /// many subjects and weeks it held across.
+  payloadCipher String
+  payloadIv     String
 
-  /// False until every gate passes. Ungated rows are kept so the UI can show
-  /// "based on 5 sessions — log more to strengthen this" without inventing a
-  /// separate storage path.
+  /// False until every gate passes. Ungated rows are kept so the UI can say
+  /// "log more to strengthen this" without a separate storage path.
   isSurfaced      Boolean  @default(false)
   firstComputedAt DateTime @default(now())
   lastComputedAt  DateTime @updatedAt
@@ -496,8 +670,11 @@ model MutedInsightCategory {
   @@unique([userId, category])
 }
 
-/// LLM-phrased advice. Always derived from an already-validated Insight — the
-/// model phrases, it never discovers.
+/// Model-phrased advice, always derived from an already-validated Insight.
+///
+/// The browser decrypts the finished insight and sends only that compact
+/// object through the server to the provider. The model phrases; it never
+/// discovers, and it never sees a raw session log.
 model Recommendation {
   id     String @id @default(cuid())
   userId String
@@ -505,8 +682,10 @@ model Recommendation {
 
   insights Insight[]
 
-  text String
-  /// Which provider/model produced it, for auditing wording problems later.
+  payloadCipher String
+  payloadIv     String
+
+  /// Kept plaintext for auditing wording problems later.
   provider String
   model    String
 

@@ -2,16 +2,19 @@
 CREATE TYPE "SchoolType" AS ENUM ('HIGH', 'MIDDLE');
 
 -- CreateEnum
-CREATE TYPE "DayType" AS ENUM ('REGULAR', 'A_DAY', 'B_DAY');
+CREATE TYPE "DayType" AS ENUM ('ALL', 'A', 'B');
 
 -- CreateEnum
-CREATE TYPE "SubmissionState" AS ENUM ('UNSUBMITTED', 'SUBMITTED', 'LATE', 'MISSING', 'GRADED');
+CREATE TYPE "ScheduleVariant" AS ENUM ('REGULAR', 'LATE_ARRIVAL', 'EARLY_RELEASE');
+
+-- CreateEnum
+CREATE TYPE "LaptopOs" AS ENUM ('WINDOWS', 'MACOS', 'CHROMEOS', 'NONE');
+
+-- CreateEnum
+CREATE TYPE "PhoneOs" AS ENUM ('IOS', 'ANDROID', 'NONE');
 
 -- CreateEnum
 CREATE TYPE "OutcomeSource" AS ENUM ('CANVAS', 'MANUAL');
-
--- CreateEnum
-CREATE TYPE "StudyLocation" AS ENUM ('LIBRARY', 'HOME', 'CLASSROOM', 'OTHER');
 
 -- CreateEnum
 CREATE TYPE "ScreenTimeSource" AS ENUM ('OCR_IOS', 'OCR_ANDROID', 'NATIVE_WINDOWS', 'NATIVE_MACOS', 'NATIVE_ANDROID', 'MANUAL');
@@ -20,10 +23,10 @@ CREATE TYPE "ScreenTimeSource" AS ENUM ('OCR_IOS', 'OCR_ANDROID', 'NATIVE_WINDOW
 CREATE TYPE "DeviceKind" AS ENUM ('BROWSER_EXTENSION', 'WINDOWS_APP', 'MACOS_APP', 'ANDROID_APP');
 
 -- CreateEnum
-CREATE TYPE "InsightCategory" AS ENUM ('SLEEP', 'STUDY_TIMING', 'SESSION_LENGTH', 'LOCATION', 'PHONE_USAGE', 'DISTRACTION', 'WELLBEING');
+CREATE TYPE "GapSource" AS ENUM ('CANVAS', 'EXTENSION', 'SCREEN_TIME');
 
 -- CreateEnum
-CREATE TYPE "InsightDirection" AS ENUM ('POSITIVE', 'NEGATIVE', 'NEUTRAL');
+CREATE TYPE "InsightCategory" AS ENUM ('SLEEP', 'STUDY_TIMING', 'SESSION_LENGTH', 'LOCATION', 'NOISE', 'PHONE_USAGE', 'DISTRACTION', 'WELLBEING');
 
 -- CreateTable
 CREATE TABLE "School" (
@@ -31,7 +34,6 @@ CREATE TABLE "School" (
     "name" TEXT NOT NULL,
     "type" "SchoolType" NOT NULL,
     "promptInterval" INTEGER NOT NULL DEFAULT 1,
-    "usesBlockSchedule" BOOLEAN NOT NULL DEFAULT false,
     "timezone" TEXT NOT NULL DEFAULT 'America/Chicago',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -43,8 +45,10 @@ CREATE TABLE "School" (
 CREATE TABLE "Period" (
     "id" TEXT NOT NULL,
     "schoolId" TEXT NOT NULL,
-    "dayType" "DayType" NOT NULL DEFAULT 'REGULAR',
-    "number" INTEGER NOT NULL,
+    "dayType" "DayType" NOT NULL DEFAULT 'ALL',
+    "variant" "ScheduleVariant" NOT NULL DEFAULT 'REGULAR',
+    "sequence" INTEGER NOT NULL,
+    "number" INTEGER,
     "label" TEXT,
     "startMinutes" INTEGER NOT NULL,
     "endMinutes" INTEGER NOT NULL,
@@ -65,11 +69,23 @@ CREATE TABLE "Term" (
 );
 
 -- CreateTable
+CREATE TABLE "DistrictCalendarDay" (
+    "id" TEXT NOT NULL,
+    "date" DATE NOT NULL,
+    "dayType" "DayType",
+    "variant" "ScheduleVariant" NOT NULL DEFAULT 'REGULAR',
+    "note" TEXT,
+
+    CONSTRAINT "DistrictCalendarDay_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "ScheduleOverride" (
     "id" TEXT NOT NULL,
     "schoolId" TEXT NOT NULL,
     "date" DATE NOT NULL,
     "dayType" "DayType",
+    "variant" "ScheduleVariant" NOT NULL DEFAULT 'REGULAR',
     "note" TEXT,
 
     CONSTRAINT "ScheduleOverride_pkey" PRIMARY KEY ("id")
@@ -82,6 +98,11 @@ CREATE TABLE "User" (
     "email" TEXT NOT NULL,
     "schoolId" TEXT,
     "gradeLevel" INTEGER,
+    "birthDate" DATE,
+    "laptopOs" "LaptopOs",
+    "phoneOs" "PhoneOs",
+    "profileCipher" TEXT,
+    "profileIv" TEXT,
     "onboardingCompletedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -90,15 +111,46 @@ CREATE TABLE "User" (
 );
 
 -- CreateTable
+CREATE TABLE "EncryptionKey" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "kdf" TEXT NOT NULL DEFAULT 'PBKDF2-SHA256',
+    "iterations" INTEGER NOT NULL DEFAULT 600000,
+    "salt" TEXT NOT NULL,
+    "wrappedDek" TEXT NOT NULL,
+    "wrapIv" TEXT NOT NULL,
+    "verifierCipher" TEXT NOT NULL,
+    "verifierIv" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "EncryptionKey_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ParentConsent" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "parentEmail" TEXT NOT NULL,
+    "tokenHash" TEXT NOT NULL,
+    "requestedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "confirmedAt" TIMESTAMP(3),
+    "revokedAt" TIMESTAMP(3),
+
+    CONSTRAINT "ParentConsent_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "CanvasConnection" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "baseUrl" TEXT NOT NULL,
     "accessToken" TEXT NOT NULL,
-    "refreshToken" TEXT,
+    "tokenIv" TEXT NOT NULL,
     "expiresAt" TIMESTAMP(3),
     "lastSyncedAt" TIMESTAMP(3),
     "lastSyncError" TEXT,
+    "disconnectedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -110,9 +162,9 @@ CREATE TABLE "Course" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "canvasId" TEXT,
-    "name" TEXT NOT NULL,
-    "shortName" TEXT,
     "active" BOOLEAN NOT NULL DEFAULT true,
+    "payloadCipher" TEXT NOT NULL,
+    "payloadIv" TEXT NOT NULL,
 
     CONSTRAINT "Course_pkey" PRIMARY KEY ("id")
 );
@@ -123,10 +175,9 @@ CREATE TABLE "Assignment" (
     "userId" TEXT NOT NULL,
     "courseId" TEXT NOT NULL,
     "canvasId" TEXT,
-    "name" TEXT NOT NULL,
     "dueAt" TIMESTAMP(3),
-    "pointsPossible" DOUBLE PRECISION,
-    "submissionState" "SubmissionState" NOT NULL DEFAULT 'UNSUBMITTED',
+    "payloadCipher" TEXT NOT NULL,
+    "payloadIv" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -139,13 +190,11 @@ CREATE TABLE "Outcome" (
     "userId" TEXT NOT NULL,
     "courseId" TEXT NOT NULL,
     "assignmentId" TEXT,
-    "label" TEXT,
-    "pointsEarned" DOUBLE PRECISION NOT NULL,
-    "pointsPossible" DOUBLE PRECISION NOT NULL,
-    "percentage" DOUBLE PRECISION NOT NULL,
     "source" "OutcomeSource" NOT NULL,
-    "conflictsWithSource" "OutcomeSource",
     "occurredOn" DATE NOT NULL,
+    "conflictsWithSource" "OutcomeSource",
+    "payloadCipher" TEXT NOT NULL,
+    "payloadIv" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -159,15 +208,8 @@ CREATE TABLE "StudySession" (
     "courseId" TEXT,
     "startedAt" TIMESTAMP(3) NOT NULL,
     "endedAt" TIMESTAMP(3),
-    "durationMinutes" INTEGER,
-    "location" "StudyLocation",
-    "locationNote" TEXT,
-    "stressLevel" INTEGER,
-    "selfRatedDifficulty" INTEGER,
-    "wasCramSession" BOOLEAN,
-    "distractedSeconds" INTEGER,
-    "focusModeActive" BOOLEAN NOT NULL DEFAULT false,
-    "focusModeOverride" BOOLEAN NOT NULL DEFAULT false,
+    "payloadCipher" TEXT,
+    "payloadIv" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -178,8 +220,8 @@ CREATE TABLE "StudySession" (
 CREATE TABLE "ExtensionActivity" (
     "id" TEXT NOT NULL,
     "sessionId" TEXT NOT NULL,
-    "domain" TEXT NOT NULL,
-    "seconds" INTEGER NOT NULL,
+    "payloadCipher" TEXT NOT NULL,
+    "payloadIv" TEXT NOT NULL,
     "recordedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "ExtensionActivity_pkey" PRIMARY KEY ("id")
@@ -189,8 +231,8 @@ CREATE TABLE "ExtensionActivity" (
 CREATE TABLE "FocusBlockEvent" (
     "id" TEXT NOT NULL,
     "sessionId" TEXT NOT NULL,
-    "siteBlocked" TEXT NOT NULL,
-    "overrideUsed" BOOLEAN NOT NULL DEFAULT false,
+    "payloadCipher" TEXT NOT NULL,
+    "payloadIv" TEXT NOT NULL,
     "occurredAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "FocusBlockEvent_pkey" PRIMARY KEY ("id")
@@ -201,7 +243,8 @@ CREATE TABLE "SleepEntry" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "forDate" DATE NOT NULL,
-    "hours" DOUBLE PRECISION NOT NULL,
+    "payloadCipher" TEXT NOT NULL,
+    "payloadIv" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "SleepEntry_pkey" PRIMARY KEY ("id")
@@ -212,11 +255,9 @@ CREATE TABLE "ScreenTimeEntry" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "forDate" DATE NOT NULL,
-    "minutes" INTEGER NOT NULL,
     "source" "ScreenTimeSource" NOT NULL,
-    "ocrRawValue" TEXT,
-    "ocrConfirmed" BOOLEAN NOT NULL DEFAULT false,
-    "editedByUser" BOOLEAN NOT NULL DEFAULT false,
+    "payloadCipher" TEXT NOT NULL,
+    "payloadIv" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "ScreenTimeEntry_pkey" PRIMARY KEY ("id")
@@ -237,16 +278,40 @@ CREATE TABLE "DeviceToken" (
 );
 
 -- CreateTable
+CREATE TABLE "PendingDeviceData" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "kind" "DeviceKind" NOT NULL,
+    "payload" JSONB NOT NULL,
+    "receivedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "PendingDeviceData_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "PromptState" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "termId" TEXT NOT NULL,
     "lastPromptedOn" DATE,
-    "lastPromptedPeriod" INTEGER,
+    "lastPromptedSequence" INTEGER,
     "postTermPromptShown" BOOLEAN NOT NULL DEFAULT false,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "PromptState_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "DataGap" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "source" "GapSource" NOT NULL,
+    "startedAt" TIMESTAMP(3) NOT NULL,
+    "endedAt" TIMESTAMP(3),
+    "reason" TEXT,
+
+    CONSTRAINT "DataGap_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -255,13 +320,8 @@ CREATE TABLE "Insight" (
     "userId" TEXT NOT NULL,
     "category" "InsightCategory" NOT NULL,
     "factor" TEXT NOT NULL,
-    "direction" "InsightDirection" NOT NULL,
-    "magnitude" DOUBLE PRECISION NOT NULL,
-    "thresholdLabel" TEXT,
-    "sampleSize" INTEGER NOT NULL,
-    "counterExamples" INTEGER NOT NULL DEFAULT 0,
-    "subjectsHeld" INTEGER NOT NULL DEFAULT 0,
-    "weeksHeld" INTEGER NOT NULL DEFAULT 0,
+    "payloadCipher" TEXT NOT NULL,
+    "payloadIv" TEXT NOT NULL,
     "isSurfaced" BOOLEAN NOT NULL DEFAULT false,
     "firstComputedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "lastComputedAt" TIMESTAMP(3) NOT NULL,
@@ -283,7 +343,8 @@ CREATE TABLE "MutedInsightCategory" (
 CREATE TABLE "Recommendation" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "text" TEXT NOT NULL,
+    "payloadCipher" TEXT NOT NULL,
+    "payloadIv" TEXT NOT NULL,
     "provider" TEXT NOT NULL,
     "model" TEXT NOT NULL,
     "dismissedAt" TIMESTAMP(3),
@@ -304,16 +365,22 @@ CREATE TABLE "_InsightToRecommendation" (
 CREATE UNIQUE INDEX "School_name_key" ON "School"("name");
 
 -- CreateIndex
-CREATE INDEX "Period_schoolId_dayType_idx" ON "Period"("schoolId", "dayType");
+CREATE INDEX "Period_schoolId_dayType_variant_idx" ON "Period"("schoolId", "dayType", "variant");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Period_schoolId_dayType_number_key" ON "Period"("schoolId", "dayType", "number");
+CREATE UNIQUE INDEX "Period_schoolId_dayType_variant_sequence_key" ON "Period"("schoolId", "dayType", "variant", "sequence");
 
 -- CreateIndex
 CREATE INDEX "Term_schoolId_startDate_idx" ON "Term"("schoolId", "startDate");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Term_schoolId_name_key" ON "Term"("schoolId", "name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "DistrictCalendarDay_date_key" ON "DistrictCalendarDay"("date");
+
+-- CreateIndex
+CREATE INDEX "DistrictCalendarDay_date_idx" ON "DistrictCalendarDay"("date");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ScheduleOverride_schoolId_date_key" ON "ScheduleOverride"("schoolId", "date");
@@ -326,6 +393,18 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE INDEX "User_schoolId_idx" ON "User"("schoolId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "EncryptionKey_userId_key" ON "EncryptionKey"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ParentConsent_userId_key" ON "ParentConsent"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ParentConsent_tokenHash_key" ON "ParentConsent"("tokenHash");
+
+-- CreateIndex
+CREATE INDEX "ParentConsent_userId_idx" ON "ParentConsent"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "CanvasConnection_userId_key" ON "CanvasConnection"("userId");
@@ -373,7 +452,13 @@ CREATE UNIQUE INDEX "DeviceToken_tokenHash_key" ON "DeviceToken"("tokenHash");
 CREATE INDEX "DeviceToken_userId_kind_idx" ON "DeviceToken"("userId", "kind");
 
 -- CreateIndex
+CREATE INDEX "PendingDeviceData_userId_receivedAt_idx" ON "PendingDeviceData"("userId", "receivedAt");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "PromptState_userId_termId_key" ON "PromptState"("userId", "termId");
+
+-- CreateIndex
+CREATE INDEX "DataGap_userId_source_startedAt_idx" ON "DataGap"("userId", "source", "startedAt");
 
 -- CreateIndex
 CREATE INDEX "Insight_userId_isSurfaced_idx" ON "Insight"("userId", "isSurfaced");
@@ -401,6 +486,12 @@ ALTER TABLE "ScheduleOverride" ADD CONSTRAINT "ScheduleOverride_schoolId_fkey" F
 
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_schoolId_fkey" FOREIGN KEY ("schoolId") REFERENCES "School"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "EncryptionKey" ADD CONSTRAINT "EncryptionKey_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ParentConsent" ADD CONSTRAINT "ParentConsent_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "CanvasConnection" ADD CONSTRAINT "CanvasConnection_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -445,10 +536,16 @@ ALTER TABLE "ScreenTimeEntry" ADD CONSTRAINT "ScreenTimeEntry_userId_fkey" FOREI
 ALTER TABLE "DeviceToken" ADD CONSTRAINT "DeviceToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "PendingDeviceData" ADD CONSTRAINT "PendingDeviceData_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "PromptState" ADD CONSTRAINT "PromptState_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "PromptState" ADD CONSTRAINT "PromptState_termId_fkey" FOREIGN KEY ("termId") REFERENCES "Term"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DataGap" ADD CONSTRAINT "DataGap_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Insight" ADD CONSTRAINT "Insight_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

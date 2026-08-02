@@ -1,0 +1,517 @@
+// Insight — data model
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Schools, terms, bell schedules
+//
+// Every field here is admin-editable by design. FISD shifts schedules for early
+// release, exam weeks, and semester changes, so nothing about timing is
+// hardcoded in application logic.
+// ---------------------------------------------------------------------------
+
+enum SchoolType {
+  HIGH
+  MIDDLE
+}
+
+/// Day types a campus can run. Campuses without block scheduling only ever use
+/// REGULAR; block campuses use A_DAY/B_DAY and leave REGULAR unused.
+enum DayType {
+  REGULAR
+  A_DAY
+  B_DAY
+}
+
+model School {
+  id                String     @id @default(cuid())
+  name              String     @unique
+  type              SchoolType
+  /// How many periods must elapse between gap-filling prompts.
+  /// 1 for high schools, 2 for middle schools.
+  promptInterval    Int        @default(1)
+  /// True if this campus runs A/B block days.
+  usesBlockSchedule Boolean    @default(false)
+  timezone          String     @default("America/Chicago")
+
+  periods   Period[]
+  terms     Term[]
+  users     User[]
+  overrides ScheduleOverride[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// One row per period per day-type. Times are stored as minutes-from-midnight
+/// in the school's local timezone, which keeps period lookup a pure integer
+/// comparison and sidesteps DST edge cases around date arithmetic.
+model Period {
+  id       String @id @default(cuid())
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  dayType      DayType @default(REGULAR)
+  /// Period number as students refer to it (1st period, 2nd period, ...).
+  number       Int
+  /// Optional display label for non-numeric blocks ("Advisory", "Lunch B").
+  label        String?
+  startMinutes Int
+  endMinutes   Int
+  /// Lunch and advisory blocks count as time-on-campus but shouldn't advance
+  /// the prompt counter the same way an academic period does.
+  isInstructional Boolean @default(true)
+
+  @@unique([schoolId, dayType, number])
+  @@index([schoolId, dayType])
+}
+
+/// A semester. FISD runs on semesters; prompt state resets at each boundary.
+model Term {
+  id       String @id @default(cuid())
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  name      String
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+
+  promptStates PromptState[]
+
+  @@unique([schoolId, name])
+  @@index([schoolId, startDate])
+}
+
+/// Explicit calendar overrides — early release, exam week, holiday. An override
+/// either cancels the day entirely or swaps in a different day-type.
+model ScheduleOverride {
+  id       String  @id @default(cuid())
+  schoolId String
+  school   School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  date    DateTime @db.Date
+  /// Null means no school that day.
+  dayType DayType?
+  note    String?
+
+  @@unique([schoolId, date])
+}
+
+// ---------------------------------------------------------------------------
+// Users
+// ---------------------------------------------------------------------------
+
+model User {
+  id String @id @default(cuid())
+  /// Clerk user id. Source of truth for identity; we never store credentials.
+  clerkId String @unique
+  email   String @unique
+
+  schoolId String?
+  school   School? @relation(fields: [schoolId], references: [id])
+
+  /// Grade level, used only for context in the UI. Never used to compare a
+  /// student against anyone but themselves.
+  gradeLevel Int?
+
+  onboardingCompletedAt DateTime?
+
+  canvasConnection  CanvasConnection?
+  deviceTokens      DeviceToken[]
+  studySessions     StudySession[]
+  sleepEntries      SleepEntry[]
+  screenTimeEntries ScreenTimeEntry[]
+  courses           Course[]
+  assignments       Assignment[]
+  outcomes          Outcome[]
+  insights          Insight[]
+  promptStates      PromptState[]
+  mutedCategories   MutedInsightCategory[]
+  recommendations   Recommendation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([schoolId])
+}
+
+// ---------------------------------------------------------------------------
+// Canvas
+// ---------------------------------------------------------------------------
+
+model CanvasConnection {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Base URL of the student's Canvas instance (e.g. https://fisd.instructure.com).
+  baseUrl String
+  /// Encrypted at rest by the application layer — never written in plaintext.
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+
+  lastSyncedAt  DateTime?
+  lastSyncError String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Course {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  canvasId String?
+  name     String
+  /// Short name shown on session-logging chips.
+  shortName String?
+  active    Boolean @default(true)
+
+  assignments   Assignment[]
+  studySessions StudySession[]
+  outcomes      Outcome[]
+
+  @@unique([userId, canvasId])
+  @@index([userId])
+}
+
+enum SubmissionState {
+  UNSUBMITTED
+  SUBMITTED
+  LATE
+  MISSING
+  GRADED
+}
+
+model Assignment {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  canvasId        String?
+  name            String
+  dueAt           DateTime?
+  pointsPossible  Float?
+  submissionState SubmissionState @default(UNSUBMITTED)
+
+  outcome Outcome?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, canvasId])
+  @@index([userId, dueAt])
+}
+
+enum OutcomeSource {
+  CANVAS
+  MANUAL
+}
+
+/// A graded result. Canvas-sourced and manually-entered outcomes share this
+/// table so reconciliation is a single-table concern: when Canvas later
+/// delivers a grade for an assignment the student already entered by hand, we
+/// keep one row and record that both sources agreed (or flag that they didn't).
+model Outcome {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  assignmentId String?     @unique
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+
+  /// Free-text label for manual entries with no Canvas assignment ("Unit 4 quiz").
+  label String?
+
+  pointsEarned   Float
+  pointsPossible Float
+  /// Denormalized for the insight engine, which compares percentages across
+  /// assignments with different point totals.
+  percentage     Float
+
+  source OutcomeSource
+  /// Set when a manual entry and a Canvas grade describe the same assessment
+  /// but disagree, so the UI can ask the student which is right instead of
+  /// silently picking one.
+  conflictsWithSource OutcomeSource?
+
+  occurredOn DateTime @db.Date
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, occurredOn])
+}
+
+// ---------------------------------------------------------------------------
+// Study sessions and the signals attached to them
+// ---------------------------------------------------------------------------
+
+enum StudyLocation {
+  LIBRARY
+  HOME
+  CLASSROOM
+  OTHER
+}
+
+model StudySession {
+  id       String  @id @default(cuid())
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  startedAt DateTime
+  endedAt   DateTime?
+  /// Derived on stop. Null while a session is running.
+  durationMinutes Int?
+
+  location     StudyLocation?
+  locationNote String?
+
+  /// Optional context tags, all self-reported.
+  stressLevel         Int?
+  selfRatedDifficulty Int?
+  wasCramSession      Boolean?
+
+  /// Rolled up from extension activity at session end.
+  distractedSeconds Int?
+  focusModeActive   Boolean @default(false)
+  focusModeOverride Boolean @default(false)
+
+  activity    ExtensionActivity[]
+  blockEvents FocusBlockEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, startedAt])
+}
+
+/// Per-domain time within a session, reported by the browser extension.
+model ExtensionActivity {
+  id        String       @id @default(cuid())
+  sessionId String
+  session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  domain     String
+  seconds    Int
+  recordedAt DateTime @default(now())
+
+  @@index([sessionId])
+}
+
+model FocusBlockEvent {
+  id        String       @id @default(cuid())
+  sessionId String
+  session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  siteBlocked  String
+  overrideUsed Boolean  @default(false)
+  occurredAt   DateTime @default(now())
+
+  @@index([sessionId])
+}
+
+/// Prior night's sleep, keyed to the morning it applies to.
+model SleepEntry {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// The date the student woke up on.
+  forDate DateTime @db.Date
+  hours   Float
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, forDate])
+}
+
+enum ScreenTimeSource {
+  OCR_IOS
+  OCR_ANDROID
+  NATIVE_WINDOWS
+  NATIVE_MACOS
+  NATIVE_ANDROID
+  MANUAL
+}
+
+/// A daily screen-time total. OCR values are always confirmed by the student
+/// before they land here, so `minutes` is what the student stands behind, and
+/// `ocrRawValue` preserves what the parser originally read for debugging.
+model ScreenTimeEntry {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  forDate DateTime         @db.Date
+  minutes Int
+  source  ScreenTimeSource
+
+  ocrRawValue  String?
+  ocrConfirmed Boolean @default(false)
+  editedByUser Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, forDate, source])
+  @@index([userId, forDate])
+}
+
+// ---------------------------------------------------------------------------
+// Device / extension auth
+// ---------------------------------------------------------------------------
+
+enum DeviceKind {
+  BROWSER_EXTENSION
+  WINDOWS_APP
+  MACOS_APP
+  ANDROID_APP
+}
+
+/// Token handshake shared by the extension and all three native apps.
+model DeviceToken {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  kind DeviceKind
+  /// SHA-256 of the token. The plaintext is shown once at pairing time and
+  /// never stored.
+  tokenHash String  @unique
+  label     String?
+
+  lastSeenAt DateTime?
+  revokedAt  DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, kind])
+}
+
+// ---------------------------------------------------------------------------
+// Gap-filling prompt state
+// ---------------------------------------------------------------------------
+
+/// Tracks how far through the period sequence a student has been prompted, per
+/// term. Reset happens naturally because state is scoped to a term row.
+model PromptState {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  termId String
+  term   Term   @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  /// Date the last prompt fired, so the counter resets each school day.
+  lastPromptedOn     DateTime? @db.Date
+  lastPromptedPeriod Int?
+  /// The single post-term prompt described in the plan fires once, then stops.
+  postTermPromptShown Boolean @default(false)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, termId])
+}
+
+// ---------------------------------------------------------------------------
+// Insights
+// ---------------------------------------------------------------------------
+
+enum InsightCategory {
+  SLEEP
+  STUDY_TIMING
+  SESSION_LENGTH
+  LOCATION
+  PHONE_USAGE
+  DISTRACTION
+  WELLBEING
+}
+
+enum InsightDirection {
+  POSITIVE
+  NEGATIVE
+  NEUTRAL
+}
+
+/// A computed, sample-size-gated correlation. Produced entirely by the
+/// statistics engine — no LLM involvement. Smart Recommendations reads these
+/// rows and never sees raw session data.
+model Insight {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  category InsightCategory
+  /// Machine-readable factor key, e.g. "study_start_time".
+  factor    String
+  direction InsightDirection
+  /// Percentage-point difference vs. the student's own baseline.
+  magnitude Float
+  /// Human-readable threshold this insight splits on ("after 11 PM").
+  thresholdLabel String?
+
+  sampleSize      Int
+  counterExamples Int @default(0)
+  /// Number of distinct subjects the pattern held across. Used to enforce the
+  /// "must hold across multiple subjects or weeks" rule.
+  subjectsHeld Int @default(0)
+  weeksHeld    Int @default(0)
+
+  /// False until every gate passes. Ungated rows are kept so the UI can show
+  /// "based on 5 sessions — log more to strengthen this" without inventing a
+  /// separate storage path.
+  isSurfaced      Boolean  @default(false)
+  firstComputedAt DateTime @default(now())
+  lastComputedAt  DateTime @updatedAt
+
+  recommendations Recommendation[]
+
+  @@unique([userId, factor])
+  @@index([userId, isSurfaced])
+}
+
+model MutedInsightCategory {
+  id       String          @id @default(cuid())
+  userId   String
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category InsightCategory
+
+  mutedAt DateTime @default(now())
+
+  @@unique([userId, category])
+}
+
+/// LLM-phrased advice. Always derived from an already-validated Insight — the
+/// model phrases, it never discovers.
+model Recommendation {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  insights Insight[]
+
+  text String
+  /// Which provider/model produced it, for auditing wording problems later.
+  provider String
+  model    String
+
+  dismissedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}

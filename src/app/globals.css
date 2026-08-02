@@ -1,0 +1,208 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Insight design tokens
+
+   The palette is drawn entirely from Apple's aluminium and glass finishes.
+   Midnight and Sky Blue anchor it, and every color added alongside them comes
+   from the same source, which is what keeps the set coherent: Starlight,
+   Alpine Green, the warm gold of the older iPhone finishes, and a pale butter
+   yellow. They are all low-chroma and slightly dusty, because they were mixed
+   to look like anodized metal rather than to look bright on a screen. That is
+   precisely why none of them read as generated — the saturated indigo, the
+   neon mint, and the violet-to-pink gradient are the tells, and nothing here
+   is within reach of them.
+
+   Scale and rhythm: apple.com. Large type, short lines, a lot of air, one idea
+   per band, and alternating light and dark sections to carry the eye.
+
+   Tactility: Duolingo. Their good idea is that the single action you should
+   take right now looks physically pressable, and that progress is visible
+   without being a scoreboard. Not taken: their palette, their shapes, their
+   mascot, or anything rewarding a student for reporting "good" data.
+
+   Still no gradients and no glows. Contrast comes from scale and from large
+   flat areas of color, never from ornament.
+--------------------------------------------------------------------------- */
+
+:root {
+  --bg: #171b26; /* Midnight */
+  --surface: #1f2432;
+  --surface-hi: #262c3c;
+  --line: rgba(255, 255, 255, 0.1);
+  --line-hi: rgba(255, 255, 255, 0.2);
+
+  --text: #e9ecf2;
+  --text-muted: #98a1b5;
+  --text-faint: #646d82;
+
+  --sky: #a8c8e0; /* Sky Blue */
+  --sky-deep: #6d92ae; /* the underside of a pressable control */
+  --sky-soft: rgba(168, 200, 224, 0.1);
+
+  --starlight: #efe5d6; /* warm off-white — the inverted sections */
+  --starlight-dim: #ded2c0;
+
+  /* Ink for use on Starlight and Sky panels. */
+  --on-light: #1b1f2a;
+  --on-light-muted: #6b6357;
+
+  /* Direction of a measured change. Alpine Green and the warm gold, both from
+     the same finish family. Deliberately not the default green and red. */
+  --up: #86a98c; /* Alpine Green */
+  --down: #d3a081; /* Gold */
+  --flat: #98a1b5;
+
+  --butter: #e5c77e; /* attention: due soon, needs a look */
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-hi: var(--surface-hi);
+  --color-line: var(--line);
+  --color-line-hi: var(--line-hi);
+
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+
+  --color-sky: var(--sky);
+  --color-sky-deep: var(--sky-deep);
+  --color-sky-soft: var(--sky-soft);
+
+  --color-starlight: var(--starlight);
+  --color-starlight-dim: var(--starlight-dim);
+
+  --color-on-light: var(--on-light);
+  --color-on-light-muted: var(--on-light-muted);
+
+  --color-up: var(--up);
+  --color-down: var(--down);
+  --color-flat: var(--flat);
+  --color-butter: var(--butter);
+
+  /* Familjen Grotesk. Chosen for its digits — the 1 has a real foot, the 2 and
+     4 have drawn joints. A column of figures reads as set rather than as the
+     default grotesque every generated interface arrives in. */
+  --font-sans: var(--font-familjen), system-ui, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Display type. Tracking tightens as size grows, the way it does on a well-set
+   Apple page — a 64px headline needs it, a 20px subhead doesn't. */
+.h1 {
+  font-weight: 600;
+  letter-spacing: -0.033em;
+  line-height: 1.04;
+}
+
+.h2 {
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  line-height: 1.1;
+}
+
+.h3 {
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  line-height: 1.2;
+}
+
+/* Figures that carry meaning. Lighter and looser than the headings, so a
+   number reads as a measurement rather than as a headline. */
+.figure {
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* The one action on a screen that the student should take right now. The solid
+   underside and the press displacement are the Duolingo idea: a control that
+   reads as a physical thing you push. One per screen, never two. */
+.btn-primary {
+  background: var(--sky);
+  color: var(--on-light);
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 0 var(--sky-deep);
+  transition:
+    transform 70ms ease,
+    box-shadow 70ms ease;
+}
+
+/* The same control sitting inside a Sky panel, where Sky-on-Sky would vanish.
+   Inverts to Midnight and keeps the pressable underside. */
+.btn-primary-inverted {
+  background: var(--on-light);
+  color: var(--starlight);
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+  transition:
+    transform 70ms ease,
+    box-shadow 70ms ease;
+}
+
+.btn-primary:active,
+.btn-primary-inverted:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--sky-deep);
+}
+
+.btn-secondary {
+  border: 1px solid var(--line-hi);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: border-color 120ms ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--sky-deep);
+}
+
+/* Secondary action on a Sky or Starlight panel. */
+.btn-secondary-on-light {
+  border: 1px solid rgba(27, 31, 42, 0.28);
+  border-radius: var(--radius-md);
+  color: var(--on-light);
+  font-weight: 500;
+  transition: border-color 120ms ease;
+}
+
+.btn-secondary-on-light:hover {
+  border-color: var(--on-light);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary,
+  .btn-primary-inverted,
+  .btn-secondary,
+  .btn-secondary-on-light {
+    transition: none;
+  }
+}

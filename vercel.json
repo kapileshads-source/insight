@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron?job=canvas-expiry",
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron?job=weekly-recap",
+      "schedule": "0 23 * * 0"
+    }
+  ]
+}

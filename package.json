@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "deploy:migrate": "prisma migrate deploy",
     "start": "next start",
     "lint": "eslint",
     "test": "tsx src/lib/__tests__/crypto.test.mjs && tsx src/lib/__tests__/insights.test.mjs && tsx src/lib/__tests__/ocr.test.mjs",

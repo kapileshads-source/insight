@@ -73,7 +73,7 @@ async function runWeeklyRecaps(): Promise<number> {
   return sent;
 }
 
-export async function POST(request: Request) {
+async function handle(request: Request) {
   if (!authorised(request)) {
     return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
   }
@@ -98,4 +98,14 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+}
+
+// Vercel's scheduler calls with GET and attaches the bearer token itself when
+// the env var is named CRON_SECRET. POST stays for triggering a job by hand.
+export async function GET(request: Request) {
+  return handle(request);
+}
+
+export async function POST(request: Request) {
+  return handle(request);
 }

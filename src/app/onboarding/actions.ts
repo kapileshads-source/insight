@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getOrCreateUser, requiresParentConsent } from "@/lib/user";
+import { sendParentConsent } from "@/lib/email";
 
 // Server Actions are reachable by direct POST, not only through our own UI, so
 // every one of these re-checks the session rather than trusting the caller.
@@ -105,12 +106,19 @@ export async function requestParentConsent(
     },
   });
 
-  // TODO: send the consent email through Resend once the template exists.
-  // Until then the link is logged so the flow can be walked end to end.
-  if (process.env.NODE_ENV !== "production") {
-    console.log(
-      `[consent] ${parsed.data.parentEmail} -> /consent/${token}`,
-    );
+  const sent = await sendParentConsent(
+    parsed.data.parentEmail,
+    user.email,
+    token,
+  );
+  if (!sent.ok) {
+    // The record is already written, so the student isn't stuck — but they
+    // need to know the parent won't see anything until this is retried.
+    return {
+      ok: false,
+      error:
+        "Saved, but the email didn't send. Try again in a moment, or check the address.",
+    };
   }
 
   revalidatePath("/onboarding");

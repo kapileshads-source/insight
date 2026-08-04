@@ -17,6 +17,9 @@ const isPublic = createRouteMatcher([
   "/consent(.*)",
   "/api/consent(.*)",
   "/api/devices(.*)",
+  // Authenticates with a shared secret rather than a session, since the
+  // caller is a scheduler with no user attached.
+  "/api/cron",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

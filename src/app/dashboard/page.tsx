@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getOrCreateUser, nextOnboardingStep } from "@/lib/user";
 import { getSchoolDayState } from "@/lib/current-period";
 import { getRunningSession } from "@/app/actions/sessions";
+import { GapPrompt } from "@/components/gap-prompt";
 import { StudyPanel } from "@/components/study-panel";
 
 export const metadata = { title: "Insight" };
@@ -182,6 +183,8 @@ export default async function Dashboard() {
       </header>
 
       {user.schoolId && <RightNow schoolId={user.schoolId} />}
+
+      <GapPrompt />
 
       <FinishSetup hasCanvas={false} />
 

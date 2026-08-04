@@ -459,3 +459,105 @@ export function weeklyRecap(
     headline: surfaced[0] ?? null,
   };
 }
+
+// --- wellbeing --------------------------------------------------------------
+
+export type WellbeingAlert = {
+  id: string;
+  message: string;
+  /// What to do about it, if anything. Some of these are worth naming without
+  /// prescribing a fix.
+  suggestion?: string;
+};
+
+/// Patterns that suggest a student is running down rather than studying well.
+///
+/// Free to include — every input is already collected for other reasons. The
+/// wording is the hard part: these are noticed, not diagnosed, and none of
+/// them mention grades. Telling a tired fifteen-year-old that their exhaustion
+/// is also costing them marks is the opposite of help.
+export function wellbeingAlerts(
+  inputs: InsightInputs,
+  now: Date = new Date(),
+): WellbeingAlert[] {
+  const alerts: WellbeingAlert[] = [];
+
+  const weekAgo = new Date(now);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+
+  const recentSleep = inputs.sleep
+    .filter((s) => s.forDate >= weekAgo)
+    .sort((a, b) => b.forDate.getTime() - a.forDate.getTime());
+
+  // Compared against their own usual, not a general target.
+  const allSleep = inputs.sleep.map((s) => s.hours);
+  const baseline = allSleep.length >= 5 ? mean(allSleep) : null;
+
+  if (baseline !== null && recentSleep.length >= 4) {
+    const weekMean = mean(recentSleep.map((s) => s.hours));
+    if (weekMean < baseline - 1) {
+      alerts.push({
+        id: "sleep_below_usual",
+        message: `You've been sleeping about ${(baseline - weekMean).toFixed(1)} hours less than your usual this week.`,
+        suggestion:
+          "Worth knowing, not worth worrying about on its own. It tends to catch up over a fortnight.",
+      });
+    }
+  }
+
+  // Three or more consecutive nights under five hours. An absolute floor is
+  // justified here in a way it isn't for grades — this is about a person, not
+  // a comparison.
+  const shortRun = recentSleep.slice(0, 3);
+  if (shortRun.length === 3 && shortRun.every((s) => s.hours < 5)) {
+    alerts.push({
+      id: "short_sleep_streak",
+      message: "That's three nights in a row under five hours.",
+      suggestion:
+        "If something is keeping you up that isn't schoolwork, that's worth telling someone about.",
+    });
+  }
+
+  const recentSessions = inputs.sessions.filter((s) => s.startedAt >= weekAgo);
+
+  const lateNights = recentSessions.filter((s) => {
+    const h = s.startedAt.getHours();
+    return h >= 23 || h < 4;
+  });
+  if (lateNights.length >= 4) {
+    alerts.push({
+      id: "late_night_run",
+      message: `${lateNights.length} of your sessions this week started after 11 PM.`,
+    });
+  }
+
+  const cramming = recentSessions.filter((s) => s.wasCram);
+  if (cramming.length >= 3) {
+    alerts.push({
+      id: "cram_run",
+      message: `You've marked ${cramming.length} sessions as cramming this week.`,
+      suggestion:
+        "Sometimes that's just how a week lands. If it's every week, the timetable may be the problem rather than you.",
+    });
+  }
+
+  const stressed = recentSessions.filter((s) => (s.stress ?? 0) >= 4);
+  if (stressed.length >= 4) {
+    alerts.push({
+      id: "sustained_stress",
+      message: "Most of your sessions this week were logged as high stress.",
+      suggestion:
+        "Insight can't tell you why, and it isn't trying to. But a counsellor or a parent might be worth talking to.",
+    });
+  }
+
+  const marathon = recentSessions.filter((s) => s.durationMinutes >= 240);
+  if (marathon.length >= 2) {
+    alerts.push({
+      id: "very_long_sessions",
+      message: `You had ${marathon.length} sessions over four hours this week.`,
+    });
+  }
+
+  return alerts;
+}

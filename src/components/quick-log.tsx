@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useCrypto } from "@/components/crypto-provider";
+import { ScreenshotReader } from "@/components/screenshot-reader";
 import { saveOutcome, saveScreenTime, saveSleep } from "@/app/actions/logs";
 import type {
   OutcomePayload,
@@ -31,6 +32,8 @@ export function QuickLog({ recentSubjects }: { recentSubjects: string[] }) {
   const [sleepHours, setSleepHours] = useState("");
   const [sleepDate, setSleepDate] = useState(today());
   const [screenMinutes, setScreenMinutes] = useState("");
+  // Kept so a misread can be diagnosed later without keeping the image.
+  const [ocrRaw, setOcrRaw] = useState<string | undefined>(undefined);
   const [screenDate, setScreenDate] = useState(today());
   const [label, setLabel] = useState("");
   const [subject, setSubject] = useState("");
@@ -74,7 +77,11 @@ export function QuickLog({ recentSubjects }: { recentSubjects: string[] }) {
       setError("Minutes should be between 0 and 1440.");
       return;
     }
-    const payload: ScreenTimePayload = { minutes, editedByUser: true };
+    const payload: ScreenTimePayload = {
+      minutes,
+      editedByUser: true,
+      ...(ocrRaw ? { ocrRawValue: ocrRaw } : {}),
+    };
     run(
       async () => saveScreenTime(screenDate, "MANUAL", await conceal(payload)),
       "Screen time saved.",
@@ -183,10 +190,16 @@ export function QuickLog({ recentSubjects }: { recentSubjects: string[] }) {
               />
               <p className="mt-2 text-[14px] leading-relaxed text-text-faint">
                 From Screen Time on iPhone or Digital Wellbeing on Android.
-                Reading it from a screenshot comes later — for now it&rsquo;s
-                typed.
               </p>
             </div>
+            <ScreenshotReader
+              onPick={(minutes, raw) => {
+                setScreenMinutes(String(minutes));
+                setOcrRaw(raw);
+                setError(null);
+              }}
+            />
+
             <div>
               <label htmlFor="screen-date" className="label text-text-muted">
                 For

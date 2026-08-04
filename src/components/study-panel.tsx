@@ -6,13 +6,16 @@ import { InsightRow } from "@/components/insight-row";
 import { QuickLog } from "@/components/quick-log";
 import { SessionTimer } from "@/components/session-timer";
 import { fetchEncryptedRecords } from "@/app/actions/logs";
+import { requestRecommendation } from "@/app/actions/recommendations";
 import {
   basicStats,
   computeInsights,
   weeklyRecap,
+  wellbeingAlerts,
   type ComputedInsight,
   type InsightInputs,
   type WeeklyRecap,
+  type WellbeingAlert,
 } from "@/lib/insights";
 import { formatDuration, type SessionPayload } from "@/lib/records";
 import type {
@@ -37,6 +40,8 @@ export function StudyPanel({
   const [insights, setInsights] = useState<ComputedInsight[] | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [recap, setRecap] = useState<WeeklyRecap | null>(null);
+  const [alerts, setAlerts] = useState<WellbeingAlert[]>([]);
+  const [advice, setAdvice] = useState<string | null>(null);
   const [subjects, setSubjects] = useState<string[]>([]);
   const [failed, setFailed] = useState(false);
 
@@ -109,6 +114,23 @@ export function StudyPanel({
       setInsights(computeInsights(inputs));
       setStats(basicStats(inputs));
       setRecap(weeklyRecap(inputs));
+      setAlerts(wellbeingAlerts(inputs));
+
+      // Only ask for phrasing once something real exists to phrase. The plan's
+      // minimum bar, and the reason this never produces generic filler.
+      const validated = computeInsights(inputs).filter((i) => i.isSurfaced);
+      if (validated.length > 0) {
+        const rec = await requestRecommendation({
+          insights: validated.slice(0, 3).map((i) => ({
+            statement: i.statement,
+            direction: i.direction,
+            magnitude: i.magnitude,
+            sampleSize: i.sampleSize,
+          })),
+          upcoming: [],
+        });
+        setAdvice(rec.ok ? rec.text : null);
+      }
       setSubjects([
         ...new Set(
           [...sessions.map((s) => s.subject), ...outcomes.map((o) => o.subject)]
@@ -185,6 +207,40 @@ export function StudyPanel({
               {recap.headline.statement}
             </p>
           )}
+        </section>
+      )}
+
+      {alerts.length > 0 && (
+        <section className="mt-14 rounded-lg border border-butter/30 bg-butter/8 p-6">
+          <h2 className="h3 text-[17px]">Worth noticing</h2>
+          <div className="mt-4 space-y-4">
+            {alerts.map((a) => (
+              <div key={a.id}>
+                <p className="text-[16px] leading-relaxed">{a.message}</p>
+                {a.suggestion && (
+                  <p className="mt-1 text-[15px] leading-relaxed text-text-muted">
+                    {a.suggestion}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="mt-5 text-[13px] leading-relaxed text-text-faint">
+            These are about you rather than your grades, and nothing here is
+            shared with anyone.
+          </p>
+        </section>
+      )}
+
+      {advice && (
+        <section className="mt-6 rounded-lg border border-sky/30 bg-sky-soft p-6">
+          <h2 className="label text-sky">Suggested this week</h2>
+          <p className="mt-3 text-[17px] leading-relaxed">{advice}</p>
+          <p className="mt-4 text-[13px] leading-relaxed text-text-faint">
+            Written from the patterns above, which were worked out here on your
+            device. Only the finished pattern was sent to phrase it, never your
+            sessions or grades.
+          </p>
         </section>
       )}
 

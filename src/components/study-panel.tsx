@@ -9,8 +9,10 @@ import { fetchEncryptedRecords } from "@/app/actions/logs";
 import {
   basicStats,
   computeInsights,
+  weeklyRecap,
   type ComputedInsight,
   type InsightInputs,
+  type WeeklyRecap,
 } from "@/lib/insights";
 import { formatDuration, type SessionPayload } from "@/lib/records";
 import type {
@@ -34,6 +36,7 @@ export function StudyPanel({
   const { reveal, status } = useCrypto();
   const [insights, setInsights] = useState<ComputedInsight[] | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [recap, setRecap] = useState<WeeklyRecap | null>(null);
   const [subjects, setSubjects] = useState<string[]>([]);
   const [failed, setFailed] = useState(false);
 
@@ -105,6 +108,7 @@ export function StudyPanel({
       const inputs: InsightInputs = { sessions, sleep, screenTime, outcomes };
       setInsights(computeInsights(inputs));
       setStats(basicStats(inputs));
+      setRecap(weeklyRecap(inputs));
       setSubjects([
         ...new Set(
           [...sessions.map((s) => s.subject), ...outcomes.map((o) => o.subject)]
@@ -151,6 +155,36 @@ export function StudyPanel({
             label="Sleep, 7-day"
           />
           <Stat value={String(stats.outcomesLogged)} label="Scores logged" />
+        </section>
+      )}
+
+      {recap && recap.sessions > 0 && (
+        <section className="mt-14 rounded-lg border border-line bg-surface p-6">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="h3 text-[17px]">Your week</h2>
+            <span className="label text-text-faint">Last 7 days</span>
+          </div>
+          <p className="mt-4 text-[17px] leading-relaxed">
+            {recap.sessions} session{recap.sessions === 1 ? "" : "s"},{" "}
+            {formatDuration(recap.minutes)} logged
+            {recap.deltaSessions !== 0 && (
+              <span className={recap.deltaSessions > 0 ? "text-up" : "text-down"}>
+                {" "}
+                ({recap.deltaSessions > 0 ? "+" : "\u2212"}
+                {Math.abs(recap.deltaSessions)} vs. the week before)
+              </span>
+            )}
+            .
+            {recap.meanSleep !== null &&
+              ` Averaging ${recap.meanSleep.toFixed(1)} hours of sleep.`}
+            {recap.scores > 0 &&
+              ` ${recap.scores} score${recap.scores === 1 ? "" : "s"} logged.`}
+          </p>
+          {recap.headline && (
+            <p className="mt-4 border-t border-line pt-4 text-[15px] leading-relaxed text-text-muted">
+              {recap.headline.statement}
+            </p>
+          )}
         </section>
       )}
 

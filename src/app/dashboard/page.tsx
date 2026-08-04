@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getOrCreateUser, nextOnboardingStep } from "@/lib/user";
 import { getSchoolDayState } from "@/lib/current-period";
@@ -84,26 +85,35 @@ async function RightNow({ schoolId }: { schoolId: string }) {
 /// The remaining setup a student can finish whenever they like. Everything
 /// here is optional to reach the dashboard but unlocks something concrete.
 function FinishSetup({ hasCanvas }: { hasCanvas: boolean }) {
-  const items = [
+  const items: {
+    title: string;
+    body: string;
+    done: boolean;
+    href: string | null;
+  }[] = [
     {
       title: "Connect Canvas",
       body: "Brings in your courses, due dates and grades.",
       done: hasCanvas,
+      href: "/canvas",
     },
     {
       title: "Sleep and wake times",
       body: "The baseline every night gets measured against.",
       done: false,
+      href: null,
     },
     {
       title: "Where you usually study",
       body: "Location and noise, so those can be compared later.",
       done: false,
+      href: null,
     },
     {
       title: "Install the extension",
       body: "Tracks laptop time during a session, and powers Focus Mode.",
       done: false,
+      href: null,
     },
   ];
 
@@ -134,8 +144,10 @@ function FinishSetup({ hasCanvas }: { hasCanvas: boolean }) {
                 {item.body}
               </div>
             </div>
-            {!item.done && (
-              <button className="shrink-0 text-[14px] text-sky">Set up</button>
+            {!item.done && item.href && (
+              <Link href={item.href} className="shrink-0 text-[14px] text-sky">
+                Set up
+              </Link>
             )}
           </div>
         ))}
@@ -156,9 +168,17 @@ export default async function Dashboard() {
     <div className="mx-auto w-full max-w-3xl flex-1 px-6 pb-32">
       <header className="flex items-center justify-between border-b border-line py-6">
         <span className="h3 text-[17px]">Insight</span>
-        <span className="text-[14px] text-text-faint">
-          {user.school?.name}
-        </span>
+        <nav className="flex items-center gap-5 text-[14px]">
+          <span className="hidden text-text-faint sm:inline">
+            {user.school?.name}
+          </span>
+          <Link href="/canvas" className="text-text-muted">
+            Canvas
+          </Link>
+          <Link href="/settings" className="text-text-muted">
+            Settings
+          </Link>
+        </nav>
       </header>
 
       {user.schoolId && <RightNow schoolId={user.schoolId} />}

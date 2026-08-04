@@ -403,3 +403,59 @@ export function basicStats(inputs: InsightInputs, now: Date = new Date()) {
     }),
   };
 }
+
+// --- weekly recap -----------------------------------------------------------
+
+export type WeeklyRecap = {
+  weekStart: Date;
+  sessions: number;
+  minutes: number;
+  scores: number;
+  meanScore: number | null;
+  meanSleep: number | null;
+  /// Change against the seven days before, in the same units.
+  deltaSessions: number;
+  deltaMinutes: number;
+  /// Surfaced insights at the time of the recap, so the email and the
+  /// dashboard say the same thing rather than being computed twice.
+  headline: ComputedInsight | null;
+};
+
+/// The same numbers the periodic recap will send by email.
+///
+/// One function feeding both surfaces, per the plan: a recap that disagreed
+/// with the dashboard would be worse than having no recap.
+export function weeklyRecap(
+  inputs: InsightInputs,
+  now: Date = new Date(),
+): WeeklyRecap {
+  const weekStart = new Date(now);
+  weekStart.setDate(weekStart.getDate() - 7);
+  const priorStart = new Date(now);
+  priorStart.setDate(priorStart.getDate() - 14);
+
+  const thisWeek = inputs.sessions.filter((s) => s.startedAt >= weekStart);
+  const priorWeek = inputs.sessions.filter(
+    (s) => s.startedAt >= priorStart && s.startedAt < weekStart,
+  );
+
+  const minutes = thisWeek.reduce((n, s) => n + s.durationMinutes, 0);
+  const priorMinutes = priorWeek.reduce((n, s) => n + s.durationMinutes, 0);
+
+  const scores = inputs.outcomes.filter((o) => o.occurredOn >= weekStart);
+  const nights = inputs.sleep.filter((s) => s.forDate >= weekStart);
+
+  const surfaced = computeInsights(inputs).filter((i) => i.isSurfaced);
+
+  return {
+    weekStart,
+    sessions: thisWeek.length,
+    minutes,
+    scores: scores.length,
+    meanScore: scores.length ? mean(scores.map((s) => s.percentage)) : null,
+    meanSleep: nights.length ? mean(nights.map((s) => s.hours)) : null,
+    deltaSessions: thisWeek.length - priorWeek.length,
+    deltaMinutes: minutes - priorMinutes,
+    headline: surfaced[0] ?? null,
+  };
+}

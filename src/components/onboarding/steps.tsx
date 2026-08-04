@@ -4,6 +4,7 @@ import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   checkPassword,
+  UnsupportedBrowserError,
   createEncryptionSetup,
 } from "@/lib/crypto";
 import type { ActionResult } from "@/app/onboarding/actions";
@@ -66,7 +67,7 @@ function ErrorNote({ result }: { result: ActionResult | null }) {
 }
 
 const FIELD =
-  "w-full rounded-md border border-line-hi bg-surface px-4 py-3 text-[16px] text-text outline-none focus:border-sky";
+  "w-full rounded-md border border-line-hi bg-surface px-4 py-3 text-[16px] text-text focus:border-sky";
 
 // --- 1. birthdate -----------------------------------------------------------
 
@@ -174,8 +175,15 @@ export function PasswordStep() {
           return;
         }
         router.refresh();
-      } catch {
-        setError("Something went wrong setting up encryption. Try again.");
+      } catch (e) {
+        // An unsupported browser is not a retryable error, and telling a
+        // student to "try again" would have them retype a correct password
+        // until they give up.
+        setError(
+          e instanceof UnsupportedBrowserError
+            ? e.message
+            : "Something went wrong setting up encryption. Try again.",
+        );
       }
     });
   }

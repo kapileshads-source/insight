@@ -26,6 +26,28 @@ export const KDF_NAME = "PBKDF2-SHA256";
 /// rather than surfacing as "your data is corrupt".
 const VERIFIER_PLAINTEXT = "insight-verifier-v1";
 
+/// WebCrypto only exists in a secure context. Localhost and HTTPS qualify;
+/// a plain-http LAN address does not, which is exactly how someone testing
+/// from their phone on the school wifi would hit it. Without this check the
+/// failure is `crypto.subtle is undefined` thrown from inside key derivation
+/// and surfaced as a generic "something went wrong" — the student retypes
+/// their password five times and concludes the app is broken.
+export function cryptoAvailable(): boolean {
+  return (
+    typeof globalThis.crypto !== "undefined" &&
+    typeof globalThis.crypto.subtle !== "undefined"
+  );
+}
+
+export class UnsupportedBrowserError extends Error {
+  constructor() {
+    super(
+      "This browser can't encrypt your data. Insight needs a secure connection — open it over https, or use localhost rather than an IP address.",
+    );
+    this.name = "UnsupportedBrowserError";
+  }
+}
+
 export class WrongPasswordError extends Error {
   constructor() {
     super("That password doesn't match.");
@@ -106,6 +128,8 @@ async function deriveKek(
 export async function createEncryptionSetup(
   password: string,
 ): Promise<{ setup: EncryptionSetup; dek: CryptoKey }> {
+  if (!cryptoAvailable()) throw new UnsupportedBrowserError();
+
   const salt = randomBytes(16);
   const kek = await deriveKek(password, salt, PBKDF2_ITERATIONS);
 
@@ -158,6 +182,8 @@ export async function unlock(
   password: string,
   setup: EncryptionSetup,
 ): Promise<CryptoKey> {
+  if (!cryptoAvailable()) throw new UnsupportedBrowserError();
+
   const kek = await deriveKek(
     password,
     fromBase64(setup.salt),

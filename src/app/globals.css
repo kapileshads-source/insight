@@ -34,7 +34,7 @@
 
   --text: #e9ecf2;
   --text-muted: #98a1b5;
-  --text-faint: #646d82;
+  --text-faint: #828ba0;
 
   --sky: #a8c8e0; /* Sky Blue */
   --sky-deep: #6d92ae; /* the underside of a pressable control */
@@ -45,7 +45,7 @@
 
   /* Ink for use on Starlight and Sky panels. */
   --on-light: #1b1f2a;
-  --on-light-muted: #6b6357;
+  --on-light-muted: #585044;
 
   /* Direction of a measured change. Alpine Green and the warm gold, both from
      the same finish family. Deliberately not the default green and red. */
@@ -196,6 +196,17 @@ body {
 
 .btn-secondary-on-light:hover {
   border-color: var(--on-light);
+}
+
+/* One visible focus ring for everything reachable by keyboard.
+   Removing the outline and recolouring a border instead is the usual
+   substitute, and it is not equivalent: a 1px border shift is easy to miss,
+   sits at the element's edge rather than outside it, and disappears entirely
+   against a same-coloured background. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--sky);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 @media (prefers-reduced-motion: reduce) {

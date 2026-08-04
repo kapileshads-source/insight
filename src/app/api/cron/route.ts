@@ -51,7 +51,25 @@ async function runCanvasExpiryWarnings(): Promise<number> {
   return sent;
 }
 
-async function runWeeklyRecaps(): Promise<number> {
+/// Is it Sunday in Frisco right now?
+///
+/// The recap is scheduled daily rather than weekly on purpose. Vercel's Hobby
+/// plan rejects any cron expression firing more than once a day, and while a
+/// weekly one is technically less frequent, relying on that reading is a
+/// deploy-time gamble. Running daily and checking the day here is boring and
+/// certain. It also survives Vercel's "timing guaranteed within the hour"
+/// caveat, which could otherwise slide a 23:00 UTC job into Monday.
+function isRecapDay(now: Date): boolean {
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    weekday: "short",
+  }).format(now);
+  return weekday === "Sun";
+}
+
+async function runWeeklyRecaps(force: boolean): Promise<number> {
+  if (!force && !isRecapDay(new Date())) return 0;
+
   // Only students who have actually logged something in the last week. A
   // recap saying nothing happened is not worth an email.
   const weekAgo = new Date();
@@ -86,7 +104,10 @@ async function handle(request: Request) {
       return NextResponse.json({ sent: await runCanvasExpiryWarnings() });
     }
     if (job === "weekly-recap") {
-      return NextResponse.json({ sent: await runWeeklyRecaps() });
+      // `?force=1` lets you trigger it by hand on a Tuesday to check it works,
+      // without waiting until Sunday to find out it doesn't.
+      const force = searchParams.get("force") === "1";
+      return NextResponse.json({ sent: await runWeeklyRecaps(force) });
     }
     return NextResponse.json(
       { error: "Unknown job. Use ?job=canvas-expiry or ?job=weekly-recap" },

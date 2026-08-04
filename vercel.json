@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron?job=weekly-recap",
-      "schedule": "0 23 * * 0"
+      "schedule": "0 23 * * *"
     }
   ]
 }

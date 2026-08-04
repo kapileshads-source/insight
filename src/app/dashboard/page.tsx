@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { getOrCreateUser, nextOnboardingStep } from "@/lib/user";
 import { getSchoolDayState } from "@/lib/current-period";
-import { InsightRow } from "@/components/insight-row";
+import { getRunningSession } from "@/app/actions/sessions";
+import { StudyPanel } from "@/components/study-panel";
 
 export const metadata = { title: "Insight" };
 
@@ -33,14 +34,6 @@ async function RightNow({ schoolId }: { schoolId: string }) {
             {formatDay(state.nextSchoolDay, state.timezone)}.
           </p>
         )}
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <button className="btn-primary-inverted px-7 py-3.5 text-[16px]">
-            Start studying
-          </button>
-          <button className="btn-secondary-on-light px-5 py-3.5 text-[16px]">
-            Log a score
-          </button>
-        </div>
       </section>
     );
   }
@@ -58,14 +51,6 @@ async function RightNow({ schoolId }: { schoolId: string }) {
           Good time to log a session. Nothing you do now counts against a
           period.
         </p>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <button className="btn-primary-inverted px-7 py-3.5 text-[16px]">
-            Start studying
-          </button>
-          <button className="btn-secondary-on-light px-5 py-3.5 text-[16px]">
-            Log a score
-          </button>
-        </div>
       </section>
     );
   }
@@ -92,14 +77,6 @@ async function RightNow({ schoolId }: { schoolId: string }) {
         you&rsquo;re sitting in.
       </p>
 
-      <div className="mt-8 flex flex-wrap items-center gap-3">
-        <button className="btn-primary-inverted px-7 py-3.5 text-[16px]">
-          Start studying
-        </button>
-        <button className="btn-secondary-on-light px-5 py-3.5 text-[16px]">
-          Log a score
-        </button>
-      </div>
     </section>
   );
 }
@@ -173,6 +150,7 @@ export default async function Dashboard() {
   if (nextOnboardingStep(user) !== "DONE") redirect("/onboarding");
 
   const today = new Date();
+  const running = await getRunningSession();
 
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-6 pb-32">
@@ -187,41 +165,13 @@ export default async function Dashboard() {
 
       <FinishSetup hasCanvas={false} />
 
-      {/* Nothing below this line is real yet. It stays visible so the shape of
-          the product is obvious while the data behind it gets built, and it is
-          labelled rather than passed off as the student's own numbers. */}
-      <section className="mt-16">
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 className="h2 text-[clamp(1.6rem,4vw,2.125rem)]">
-            What we&rsquo;ll show you
-          </h2>
-          <span className="label text-text-faint">Example</span>
-        </div>
-        <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-text-muted">
-          Once you&rsquo;ve logged a couple of weeks, patterns like these
-          appear here — always compared against your own averages, and never
-          shown until there&rsquo;s enough data to mean something.
-        </p>
-
-        <div className="mt-8 opacity-70">
-          <InsightRow
-            direction="NEGATIVE"
-            magnitude={-15}
-            statement="Sessions you started after 11 PM came before lower scores than your own average."
-            sampleSize={12}
-            heldIn={{ held: 9, of: 12 }}
-            isSurfaced
-          />
-          <InsightRow
-            direction="POSITIVE"
-            magnitude={11}
-            statement="Library sessions came before higher scores than sessions at home."
-            sampleSize={14}
-            heldIn={{ held: 11, of: 14 }}
-            isSurfaced
-          />
-        </div>
-      </section>
+      <StudyPanel
+        running={
+          running
+            ? { id: running.id, startedAt: running.startedAt.toISOString() }
+            : null
+        }
+      />
 
       <p className="mt-12 text-[13px] text-text-faint">
         {formatDay(today, user.school?.timezone ?? "America/Chicago")}

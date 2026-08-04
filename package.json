@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx src/lib/__tests__/crypto.test.mjs",
+    "test": "tsx src/lib/__tests__/crypto.test.mjs && tsx src/lib/__tests__/insights.test.mjs",
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {

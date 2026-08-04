@@ -372,8 +372,12 @@ model Outcome {
   id       String @id @default(cuid())
   userId   String
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  /// Optional, because a score can be entered by hand long before Canvas is
+  /// connected — and for a student who never connects it, there is no Course
+  /// row to point at. The subject then lives in the encrypted payload
+  /// alongside the score, which is where it belongs anyway.
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
   assignmentId String?     @unique
   assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)

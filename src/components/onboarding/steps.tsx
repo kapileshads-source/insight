@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useCrypto } from "@/components/crypto-provider";
 import {
   checkPassword,
   UnsupportedBrowserError,
@@ -150,6 +151,7 @@ export function ParentConsentStep({ sentTo }: { sentTo?: string | null }) {
 
 export function PasswordStep() {
   const router = useRouter();
+  const { adopt } = useCrypto();
   const [value, setValue] = useState("");
   const [confirm, setConfirm] = useState("");
   const [acknowledged, setAcknowledged] = useState(false);
@@ -168,12 +170,16 @@ export function PasswordStep() {
       try {
         // Key generation happens here, in the browser. The password itself
         // never crosses the network.
-        const { setup } = await createEncryptionSetup(value);
+        const { setup, dek } = await createEncryptionSetup(value);
         const res = await saveEncryptionSetup(setup);
         if (!res.ok) {
           setError(res.error);
           return;
         }
+        // Hand the key straight to the session. Without this the student
+        // reaches the dashboard and is immediately asked for the password
+        // they set ten seconds ago.
+        await adopt(dek, false);
         router.refresh();
       } catch (e) {
         // An unsupported browser is not a retryable error, and telling a

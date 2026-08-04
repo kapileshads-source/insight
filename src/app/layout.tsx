@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Familjen_Grotesk } from "next/font/google";
+import { CryptoProvider } from "@/components/crypto-provider";
 import "./globals.css";
 
 const familjen = Familjen_Grotesk({
@@ -49,7 +50,10 @@ export default function RootLayout({
             },
           }}
         >
-          {children}
+          {/* Wraps everything so the key survives client-side navigation —
+              notably from the signup password step straight to the dashboard,
+              which would otherwise ask for the password a student just set. */}
+          <CryptoProvider>{children}</CryptoProvider>
         </ClerkProvider>
       </body>
     </html>

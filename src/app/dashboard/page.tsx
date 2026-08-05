@@ -4,6 +4,7 @@ import { getOrCreateUser, nextOnboardingStep } from "@/lib/user";
 import { getSchoolDayState } from "@/lib/current-period";
 import { getRunningSession } from "@/app/actions/sessions";
 import { getCanvasStatus } from "@/app/actions/canvas";
+import { listDevices } from "@/app/actions/devices";
 import { GapPrompt } from "@/components/gap-prompt";
 import { StudyPanel } from "@/components/study-panel";
 
@@ -101,7 +102,13 @@ async function RightNow({ schoolId }: { schoolId: string }) {
 
 /// The remaining setup a student can finish whenever they like. Everything
 /// here is optional to reach the dashboard but unlocks something concrete.
-function FinishSetup({ hasCanvas }: { hasCanvas: boolean }) {
+function FinishSetup({
+  hasCanvas,
+  hasExtension,
+}: {
+  hasCanvas: boolean;
+  hasExtension: boolean;
+}) {
   const items: {
     title: string;
     body: string;
@@ -129,8 +136,8 @@ function FinishSetup({ hasCanvas }: { hasCanvas: boolean }) {
     {
       title: "Install the extension",
       body: "Tracks laptop time during a session, and powers Focus Mode.",
-      done: false,
-      href: null,
+      done: hasExtension,
+      href: "/devices",
     },
   ];
 
@@ -181,6 +188,7 @@ export default async function Dashboard() {
   const today = new Date();
   const running = await getRunningSession();
   const canvas = await getCanvasStatus();
+  const devices = await listDevices();
 
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-6 pb-32">
@@ -193,6 +201,9 @@ export default async function Dashboard() {
           <Link href="/canvas" className="text-text-muted">
             Canvas
           </Link>
+          <Link href="/devices" className="text-text-muted">
+            Devices
+          </Link>
           <Link href="/settings" className="text-text-muted">
             Settings
           </Link>
@@ -203,7 +214,10 @@ export default async function Dashboard() {
 
       <GapPrompt />
 
-      <FinishSetup hasCanvas={canvas.connected} />
+      <FinishSetup
+        hasCanvas={canvas.connected}
+        hasExtension={devices.some((d) => d.kind === "BROWSER_EXTENSION")}
+      />
 
       <StudyPanel
         running={

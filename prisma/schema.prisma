@@ -416,8 +416,21 @@ model StudySession {
   startedAt DateTime
   endedAt   DateTime?
 
+  /// Focus Mode state, deliberately plaintext.
+  ///
+  /// The extension has no key and must never have one, so the server has to be
+  /// able to answer "should I be blocking right now?" without decrypting. This
+  /// sits on the structure side of the line: whether a mode is switched on is
+  /// not the same kind of fact as what a student studied or how they slept.
+  ///
+  /// `focusModeOverride` records that a student turned blocking off early,
+  /// which the insight engine needs in order to know the session's distraction
+  /// figures are incomplete rather than genuinely low.
+  focusModeActive   Boolean @default(false)
+  focusModeOverride Boolean @default(false)
+
   /// Location, noise level, stress, self-rated difficulty, cram flag,
-  /// distracted seconds, focus mode state.
+  /// distracted seconds.
   payloadCipher String?
   payloadIv     String?
 

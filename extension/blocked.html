@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Focus Mode — Insight</title>
+    <style>
+      :root {
+        --bg: #171b26;
+        --surface: #1f2432;
+        --line: rgba(255, 255, 255, 0.1);
+        --line-hi: rgba(255, 255, 255, 0.2);
+        --text: #e9ecf2;
+        --muted: #98a1b5;
+        --faint: #828ba0;
+        --sky: #a8c8e0;
+        --sky-deep: #6d92ae;
+        --on-light: #1b1f2a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, sans-serif;
+        padding: 24px;
+      }
+      main { max-width: 460px; }
+      h1 {
+        font-size: clamp(2rem, 5vw, 2.75rem);
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+        margin: 0;
+      }
+      p { font-size: 17px; line-height: 1.6; color: var(--muted); }
+      .site { color: var(--text); }
+      .actions { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 12px; }
+      button, a.btn {
+        padding: 13px 24px;
+        border-radius: 12px;
+        border: none;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .primary {
+        background: var(--sky);
+        color: var(--on-light);
+        box-shadow: 0 4px 0 var(--sky-deep);
+      }
+      .primary:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--sky-deep); }
+      .secondary {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--line-hi);
+        font-weight: 500;
+      }
+      .note {
+        margin-top: 28px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+        font-size: 14px;
+        color: var(--faint);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .primary:active { transform: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Not right now.</h1>
+      <p id="message" style="margin-top: 20px">
+        Focus Mode is on, so <span class="site" id="site">this site</span> is
+        paused until you stop studying.
+      </p>
+
+      <div class="actions">
+        <button id="back" class="primary">Back to work</button>
+        <button id="override" class="secondary">Let me through anyway</button>
+      </div>
+
+      <p class="note">
+        Choosing to go through is recorded, and only so your own session data
+        stays honest. Nobody else sees it, and it isn't held against you.
+      </p>
+    </main>
+
+    <script src="blocked.js"></script>
+  </body>
+</html>

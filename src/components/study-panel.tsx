@@ -8,6 +8,10 @@ import { SessionTimer } from "@/components/session-timer";
 import { fetchEncryptedRecords } from "@/app/actions/logs";
 import { requestRecommendation } from "@/app/actions/recommendations";
 import {
+  commitPendingDeviceData,
+  fetchPendingDeviceData,
+} from "@/app/actions/devices";
+import {
   basicStats,
   computeInsights,
   weeklyRecap,
@@ -18,6 +22,7 @@ import {
   type WellbeingAlert,
 } from "@/lib/insights";
 import { formatDuration, type SessionPayload } from "@/lib/records";
+import type { Sealed } from "@/lib/crypto";
 import type {
   OutcomePayload,
   ScreenTimePayload,
@@ -36,7 +41,7 @@ export function StudyPanel({
 }: {
   running: { id: string; startedAt: string } | null;
 }) {
-  const { reveal, status } = useCrypto();
+  const { reveal, conceal, status } = useCrypto();
   const [insights, setInsights] = useState<ComputedInsight[] | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [recap, setRecap] = useState<WeeklyRecap | null>(null);
@@ -45,10 +50,50 @@ export function StudyPanel({
   const [subjects, setSubjects] = useState<string[]>([]);
   const [failed, setFailed] = useState(false);
 
+  const collectPendingDeviceData = useCallback(async () => {
+    const pending = await fetchPendingDeviceData();
+    if (pending.length === 0) return;
+
+    // Grouped by session, because each commit is scoped to one and the
+    // extension may have staged across a session boundary.
+    const bySession = new Map<string, { id: string; payload: Sealed }[]>();
+
+    for (const row of pending) {
+      const payload = row.payload as {
+        sessionId?: string;
+        domains?: { domain: string; seconds: number }[];
+        blocked?: { site: string; overrideUsed: boolean }[];
+      };
+      if (!payload?.sessionId) continue;
+
+      const sealed = await conceal({
+        domains: payload.domains ?? [],
+        blocked: payload.blocked ?? [],
+      });
+
+      const list = bySession.get(payload.sessionId) ?? [];
+      list.push({ id: row.id, payload: sealed });
+      bySession.set(payload.sessionId, list);
+    }
+
+    for (const [sessionId, entries] of bySession) {
+      await commitPendingDeviceData({ sessionId, entries });
+    }
+  }, [conceal]);
+
   const load = useCallback(async () => {
     if (status !== "unlocked") return;
 
     try {
+      // Collect anything the extension staged before reading records, so a
+      // session that just ended includes its laptop activity rather than
+      // showing it a page-load late.
+      //
+      // The extension has no key, so its data waits on the server in readable
+      // form until this runs. Encrypting and clearing it here is what keeps
+      // that window measured in minutes.
+      await collectPendingDeviceData();
+
       const raw = await fetchEncryptedRecords();
       setFailed(false);
       if (!raw) return;
@@ -143,7 +188,7 @@ export function StudyPanel({
       // be shown as an empty dashboard — that would read as data loss.
       setFailed(true);
     }
-  }, [reveal, status]);
+  }, [reveal, status, collectPendingDeviceData]);
 
   useEffect(() => {
     // The rule can't see that `load` awaits before it touches state — every

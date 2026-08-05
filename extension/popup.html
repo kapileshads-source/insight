@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      /* Same palette as the website — Midnight and Sky Blue — so the popup
+         reads as part of Insight rather than a stray tool. */
+      :root {
+        --bg: #171b26;
+        --surface: #1f2432;
+        --line: rgba(255, 255, 255, 0.1);
+        --line-hi: rgba(255, 255, 255, 0.2);
+        --text: #e9ecf2;
+        --muted: #98a1b5;
+        --faint: #828ba0;
+        --sky: #a8c8e0;
+        --sky-deep: #6d92ae;
+        --on-light: #1b1f2a;
+        --up: #86a98c;
+        --down: #d3a081;
+      }
+      * { box-sizing: border-box; }
+      body {
+        width: 320px;
+        margin: 0;
+        padding: 18px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      h1 { font-size: 15px; margin: 0 0 14px; letter-spacing: -0.01em; }
+      p { margin: 0 0 10px; color: var(--muted); }
+      .status {
+        border: 1px solid var(--line);
+        background: var(--surface);
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 14px;
+      }
+      .dot {
+        display: inline-block;
+        width: 8px; height: 8px;
+        border-radius: 999px;
+        margin-right: 7px;
+        vertical-align: middle;
+      }
+      .on { background: var(--up); }
+      .off { background: var(--faint); }
+      label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+      input {
+        width: 100%;
+        padding: 9px 11px;
+        border-radius: 8px;
+        border: 1px solid var(--line-hi);
+        background: var(--bg);
+        color: var(--text);
+        font-size: 13px;
+        margin-bottom: 10px;
+      }
+      input:focus { outline: 2px solid var(--sky); outline-offset: 2px; border-color: var(--sky); }
+      button {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        background: var(--sky);
+        color: var(--on-light);
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        box-shadow: 0 3px 0 var(--sky-deep);
+      }
+      button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--sky-deep); }
+      button.secondary {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--line-hi);
+        box-shadow: none;
+        font-weight: 500;
+      }
+      .error { color: var(--down); }
+      .note { font-size: 12px; color: var(--faint); margin-top: 12px; }
+      .hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <h1>Insight</h1>
+
+    <div id="paired" class="hidden">
+      <div class="status">
+        <div><span id="dot" class="dot off"></span><span id="state">Not studying</span></div>
+        <p id="detail" style="margin: 6px 0 0; font-size: 13px;"></p>
+      </div>
+      <p id="error" class="error hidden"></p>
+      <button id="unpair" class="secondary">Unpair this browser</button>
+      <p class="note">
+        Nothing is recorded unless a session is running, and only site names
+        are ever sent — never the pages themselves.
+      </p>
+    </div>
+
+    <div id="unpaired">
+      <p>Paste the pairing code from Insight to connect this browser.</p>
+      <label for="apiBase">Insight address</label>
+      <input id="apiBase" type="url" placeholder="https://insight-study-sleep.vercel.app" />
+      <label for="token">Pairing code</label>
+      <input id="token" type="password" placeholder="Paste it here" />
+      <button id="pair">Connect</button>
+      <p id="pairError" class="error hidden"></p>
+      <p class="note">Find this under Devices on the Insight website.</p>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

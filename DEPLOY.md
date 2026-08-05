@@ -179,3 +179,31 @@ Each of these catches a failure that is invisible when you test as yourself.
 - A lawyer's pass over the consent flow and privacy policy
 - Neon sleeps when idle; the first request each morning is slow. Fine for a
   pilot, worth knowing before someone reports it as a bug.
+
+---
+
+## Gotcha: "Deployment Blocked — commit author did not have contributing access"
+
+Vercel resolves the **email on the git commit** to a GitHub account, then checks
+whether that account can deploy the project. On the Hobby plan only the owner
+can, so a commit authored with a different address is refused — even though it
+was pushed to the right repo by the right person.
+
+This happens when the email in `git config` isn't the one attached to the
+GitHub account that owns the Vercel project.
+
+Fix it by committing as that account's GitHub noreply address:
+
+```bash
+gh api user --jq '"\(.id)+\(.login)@users.noreply.github.com"'
+```
+
+```bash
+git config user.email "<the address that printed>"
+```
+
+The noreply form always resolves to that account. A plain email only resolves
+if GitHub has it verified, which is what fails here in the first place.
+
+Existing commits keep their old author; only new ones are affected, so one new
+commit is enough to unblock the deploy.

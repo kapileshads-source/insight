@@ -79,6 +79,18 @@ automatically when the secret is named `CRON_SECRET`.
 
 ## 3. Clerk production instance
 
+**Blocked until you have a domain — do step 5 first.**
+
+Clerk production instances need DNS records on a domain you own, for session
+management and email. A `*.vercel.app` subdomain cannot work, because you
+can't add DNS records to a domain Vercel owns.
+
+Until then the development instance runs fine on the Vercel URL. You get an
+orange "Development mode" banner, a redirect through `clerk.accounts.dev` on
+first load, and Google's consent screen naming Clerk rather than Insight.
+Usable for testing with people who know what they're looking at; not for
+strangers.
+
 Free, but it changes two things that were quietly handled for you in dev.
 
 1. Clerk dashboard → environment dropdown (says **Development**) → **Create
@@ -111,10 +123,19 @@ Verify under **Project → Settings → Cron Jobs** after the first deploy.
 
 ## 5. Domain and email — free via GitHub Student Pack
 
-Until this step, Resend delivers **only to your own signup address**. That
-means parent consent emails silently reach nobody, and an under-13 student sits
-at "waiting on your parent" forever. So this step isn't optional for a real
-pilot — but it doesn't have to cost anything.
+**Start this first. Two other steps depend on it.**
+
+A domain is needed for:
+
+- **Clerk production** (step 3) — DNS records for session management
+- **Resend** — DNS records proving you may send as that address
+
+Without one, Resend delivers **only to your own signup address**, so parent
+consent emails reach nobody and an under-13 student waits forever. And Clerk
+stays on its development instance.
+
+Approval takes a few days, which is why it goes first even though it's
+numbered fifth.
 
 1. **education.github.com/pack** → **Get student benefits**.
    - High school students qualify. You need to be 13+ and prove enrollment —

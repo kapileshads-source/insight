@@ -38,6 +38,28 @@ export async function getOrCreateUser() {
   const email = clerkUser?.primaryEmailAddress?.emailAddress;
   if (!email) return null;
 
+  // Same person, new Clerk id.
+  //
+  // Clerk cannot move users between instances, so everyone's id changes on the
+  // day this app switches from its development instance to production. Without
+  // this branch that day would be quietly destructive: the insert below would
+  // violate the unique constraint on email, and even if it didn't, the student
+  // would get a fresh empty row while a year of encrypted logs sat orphaned
+  // against their old id.
+  //
+  // Re-pointing on a verified email address is safe, because proving control
+  // of the address is exactly what Clerk's magic link establishes — the same
+  // guarantee any email-based account recovery rests on. Their data key is
+  // untouched, so their existing password still opens everything.
+  const byEmail = await db.user.findUnique({ where: { email } });
+  if (byEmail) {
+    return db.user.update({
+      where: { id: byEmail.id },
+      data: { clerkId: userId },
+      include: { encryptionKey: true, parentConsent: true, school: true },
+    });
+  }
+
   return db.user.create({
     data: { clerkId: userId, email },
     include: { encryptionKey: true, parentConsent: true, school: true },

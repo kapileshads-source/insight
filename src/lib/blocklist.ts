@@ -199,3 +199,37 @@ export function normalizeSite(input: string): string {
   // that silently never matches anything.
   return /^[a-z0-9.-]+\.[a-z]{2,}$/.test(value) ? value : "";
 }
+
+/// Does a hostname fall under a blocklist entry?
+///
+/// Shared with the extension's matcher so "blocked" and "counted as a
+/// distraction" mean exactly the same thing. If these two drifted apart, a
+/// student could be blocked from a site that never showed up in their
+/// distraction figures, or the reverse — and either would be baffling.
+export function matchesBlocklist(host: string, blocklist: string[]): boolean {
+  if (!host) return false;
+  const clean = host.replace(/^www\./, "").toLowerCase();
+  return blocklist.some((b) => clean === b || clean.endsWith(`.${b}`));
+}
+
+/// Split recorded site time into distracted and the rest.
+///
+/// Using the student's own blocklist as the definition is deliberate. It keeps
+/// the whole app on one principle — everything is measured against their own
+/// choices rather than a general idea of what counts as time wasted. Someone
+/// who unblocks music is not "distracted" by Spotify, and someone who blocks
+/// ESPN is.
+export function splitActivity(
+  entries: { domain: string; seconds: number }[],
+  blocklist: string[],
+): { distractedSeconds: number; focusedSeconds: number } {
+  let distracted = 0;
+  let focused = 0;
+
+  for (const e of entries) {
+    if (matchesBlocklist(e.domain, blocklist)) distracted += e.seconds;
+    else focused += e.seconds;
+  }
+
+  return { distractedSeconds: distracted, focusedSeconds: focused };
+}

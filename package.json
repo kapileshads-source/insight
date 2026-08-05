@@ -8,7 +8,7 @@
     "deploy:migrate": "prisma migrate deploy",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx src/lib/__tests__/crypto.test.mjs && tsx src/lib/__tests__/insights.test.mjs && tsx src/lib/__tests__/ocr.test.mjs && tsx src/lib/__tests__/blocklist.test.mjs && node extension/logic.test.mjs",
+    "test": "tsx src/lib/__tests__/crypto.test.mjs && tsx src/lib/__tests__/insights.test.mjs && tsx src/lib/__tests__/ocr.test.mjs && tsx src/lib/__tests__/blocklist.test.mjs && tsx src/lib/__tests__/distraction.test.mjs && node extension/logic.test.mjs",
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {

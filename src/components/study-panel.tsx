@@ -6,6 +6,8 @@ import { InsightRow } from "@/components/insight-row";
 import { QuickLog } from "@/components/quick-log";
 import { SessionTimer } from "@/components/session-timer";
 import { fetchEncryptedRecords } from "@/app/actions/logs";
+import { getBlocklistPrefs } from "@/app/actions/settings";
+import { buildBlocklist, splitActivity } from "@/lib/blocklist";
 import { requestRecommendation } from "@/app/actions/recommendations";
 import {
   commitPendingDeviceData,
@@ -102,6 +104,32 @@ export function StudyPanel({
       setFailed(false);
       if (!raw) return;
 
+      // The student's own blocklist defines what counts as a distraction, so
+      // the number matches what Focus Mode actually blocks for them.
+      const prefs = await getBlocklistPrefs();
+      const blocklist = buildBlocklist(prefs);
+
+      // Extension records arrive per session, several per session, so they're
+      // summed before being attached.
+      const distractedBySession = new Map<string, number>();
+      for (const row of raw.activity) {
+        try {
+          const p = await reveal<{
+            domains?: { domain: string; seconds: number }[];
+          }>({ cipher: row.payloadCipher, iv: row.payloadIv });
+          const { distractedSeconds } = splitActivity(
+            p.domains ?? [],
+            blocklist,
+          );
+          distractedBySession.set(
+            row.sessionId,
+            (distractedBySession.get(row.sessionId) ?? 0) + distractedSeconds,
+          );
+        } catch {
+          // One unreadable row shouldn't cost the whole dashboard.
+        }
+      }
+
       const sessions = await Promise.all(
         raw.sessions
           .filter((s) => s.payloadCipher && s.payloadIv)
@@ -119,6 +147,11 @@ export function StudyPanel({
               noise: p.noise,
               stress: p.stress,
               wasCram: p.wasCram,
+              // Undefined rather than zero when nothing was measured — a
+              // session studied without the extension is unknown, not focused.
+              distractedMinutes: distractedBySession.has(s.id)
+                ? Math.round((distractedBySession.get(s.id) ?? 0) / 60)
+                : undefined,
             };
           }),
       );
@@ -225,7 +258,14 @@ export function StudyPanel({
             value={stats.meanSleep ? `${stats.meanSleep.toFixed(1)} hrs` : "—"}
             label="Sleep, 7-day"
           />
-          <Stat value={String(stats.outcomesLogged)} label="Scores logged" />
+          {stats.focusShareThisWeek !== null ? (
+            <Stat
+              value={`${Math.round(stats.focusShareThisWeek * 100)}%`}
+              label="On-task time"
+            />
+          ) : (
+            <Stat value={String(stats.outcomesLogged)} label="Scores logged" />
+          )}
         </section>
       )}
 
@@ -251,6 +291,16 @@ export function StudyPanel({
             {recap.scores > 0 &&
               ` ${recap.scores} score${recap.scores === 1 ? "" : "s"} logged.`}
           </p>
+          {recap.distractedMinutes !== null && (
+            <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
+              {recap.distractedMinutes === 0
+                ? "None of your measured time went to blocked sites."
+                : `${formatDuration(recap.distractedMinutes)} of that went to sites you block.`}{" "}
+              <span className="text-text-faint">
+                Measured by the extension rather than typed in.
+              </span>
+            </p>
+          )}
           {recap.headline && (
             <p className="mt-4 border-t border-line pt-4 text-[15px] leading-relaxed text-text-muted">
               {recap.headline.statement}

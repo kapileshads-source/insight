@@ -29,6 +29,10 @@ export type SessionRecord = {
   noise?: NoiseLevel;
   stress?: number;
   wasCram?: boolean;
+  /// Minutes on sites the student blocks, measured by the extension rather
+  /// than reported. Undefined when no extension was running — which is not
+  /// the same as zero, and must never be treated as it.
+  distractedMinutes?: number;
 };
 
 export type OutcomeRecord = {
@@ -74,7 +78,8 @@ export type InsightCategory =
   | "SESSION_LENGTH"
   | "LOCATION"
   | "NOISE"
-  | "PHONE_USAGE";
+  | "PHONE_USAGE"
+  | "DISTRACTION";
 
 export type InsightDirection = "POSITIVE" | "NEGATIVE" | "NEUTRAL";
 
@@ -133,6 +138,9 @@ type Context = {
   noise?: NoiseLevel;
   meanSleep?: number;
   meanScreenTime?: number;
+  /// Share of measured session time spent on blocked sites, 0 to 1. Only
+  /// defined when at least one session in the window was measured.
+  distractedShare?: number;
 };
 
 export function buildContexts(inputs: InsightInputs): Context[] {
@@ -181,6 +189,22 @@ export function buildContexts(inputs: InsightInputs): Context[] {
       meanScreenTime: screens.length
         ? mean(screens.map((n) => n.minutes))
         : undefined,
+      // Only sessions the extension actually measured count toward this.
+      // Averaging an unmeasured session in as zero would quietly reward
+      // studying with the extension switched off.
+      distractedShare: (() => {
+        const measured = related.filter(
+          (s) => s.distractedMinutes !== undefined,
+        );
+        if (measured.length === 0) return undefined;
+        const total = measured.reduce((n, s) => n + s.durationMinutes, 0);
+        if (total <= 0) return undefined;
+        const distracted = measured.reduce(
+          (n, s) => n + (s.distractedMinutes ?? 0),
+          0,
+        );
+        return distracted / total;
+      })(),
     };
   });
 }
@@ -338,6 +362,20 @@ function splits(contexts: Context[]): Split[] {
       }),
     },
     {
+      factor: "distraction_share",
+      category: "DISTRACTION",
+      // A fifth of a session is the threshold: below that is a glance at a
+      // message, above it is a second activity running alongside the studying.
+      classify: (c) =>
+        c.distractedShare === undefined ? undefined : c.distractedShare >= 0.2,
+      phrase: () => ({
+        statement:
+          "Sessions where more than a fifth of your time went to blocked sites came before lower scores than your focused ones.",
+        suggestion:
+          "This one is measured rather than typed in, so it's the most reliable number here. Focus Mode already blocks these — leaving it on is the whole fix.",
+      }),
+    },
+    {
       factor: "screen_time_above_baseline",
       category: "PHONE_USAGE",
       classify: (c) =>
@@ -386,9 +424,25 @@ export function basicStats(inputs: InsightInputs, now: Date = new Date()) {
   const minutes = thisWeek.reduce((n, s) => n + s.durationMinutes, 0);
   const recentSleep = inputs.sleep.filter((s) => s.forDate >= weekAgo);
 
+  // Only measured sessions contribute. Shown as null rather than zero when
+  // nothing was measured, so "no extension" reads differently from "no
+  // distractions" — they are very different facts.
+  const measured = thisWeek.filter((s) => s.distractedMinutes !== undefined);
+  const measuredMinutes = measured.reduce((n, s) => n + s.durationMinutes, 0);
+  const distractedMinutes = measured.reduce(
+    (n, s) => n + (s.distractedMinutes ?? 0),
+    0,
+  );
+
   return {
     sessionsThisWeek: thisWeek.length,
     minutesThisWeek: minutes,
+    measuredSessions: measured.length,
+    distractedMinutesThisWeek: measured.length ? distractedMinutes : null,
+    focusShareThisWeek:
+      measured.length && measuredMinutes > 0
+        ? 1 - distractedMinutes / measuredMinutes
+        : null,
     meanSleep: recentSleep.length
       ? mean(recentSleep.map((s) => s.hours))
       : null,
@@ -416,6 +470,8 @@ export type WeeklyRecap = {
   /// Change against the seven days before, in the same units.
   deltaSessions: number;
   deltaMinutes: number;
+  /// Null when no session that week was measured by a device.
+  distractedMinutes: number | null;
   /// Surfaced insights at the time of the recap, so the email and the
   /// dashboard say the same thing rather than being computed twice.
   headline: ComputedInsight | null;
@@ -456,6 +512,11 @@ export function weeklyRecap(
     meanSleep: nights.length ? mean(nights.map((s) => s.hours)) : null,
     deltaSessions: thisWeek.length - priorWeek.length,
     deltaMinutes: minutes - priorMinutes,
+    distractedMinutes: (() => {
+      const measured = thisWeek.filter((s) => s.distractedMinutes !== undefined);
+      if (measured.length === 0) return null;
+      return measured.reduce((n, s) => n + (s.distractedMinutes ?? 0), 0);
+    })(),
     headline: surfaced[0] ?? null,
   };
 }

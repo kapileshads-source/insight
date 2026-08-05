@@ -141,7 +141,7 @@ export async function fetchEncryptedRecords() {
   const user = await getOrCreateUser();
   if (!user) return null;
 
-  const [sessions, sleep, screenTime, outcomes] = await traced(
+  const [sessions, sleep, screenTime, outcomes, activity] = await traced(
     "records.fetchAll",
     () =>
       Promise.all([
@@ -185,8 +185,20 @@ export async function fetchEncryptedRecords() {
           orderBy: { occurredOn: "desc" },
           take: 300,
         }),
+        // What the extension recorded, so the browser can decrypt it and work
+        // out how much of each session was spent elsewhere.
+        db.extensionActivity.findMany({
+          where: { session: { userId: user.id } },
+          select: {
+            sessionId: true,
+            payloadCipher: true,
+            payloadIv: true,
+          },
+          orderBy: { recordedAt: "desc" },
+          take: 2000,
+        }),
       ]),
   );
 
-  return { sessions, sleep, screenTime, outcomes };
+  return { sessions, sleep, screenTime, outcomes, activity };
 }

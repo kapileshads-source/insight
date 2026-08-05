@@ -1,6 +1,7 @@
 import "server-only";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { traced } from "@/lib/db-errors";
 
 /// Age in whole years on a given date.
 export function ageInYears(birthDate: Date, on: Date = new Date()): number {
@@ -28,10 +29,12 @@ export async function getOrCreateUser() {
   const { userId } = await auth();
   if (!userId) return null;
 
-  const existing = await db.user.findUnique({
-    where: { clerkId: userId },
-    include: { encryptionKey: true, parentConsent: true, school: true },
-  });
+  const existing = await traced("user.findByClerkId", () =>
+    db.user.findUnique({
+      where: { clerkId: userId },
+      include: { encryptionKey: true, parentConsent: true, school: true },
+    }),
+  );
   if (existing) return existing;
 
   const clerkUser = await currentUser();
@@ -51,13 +54,17 @@ export async function getOrCreateUser() {
   // of the address is exactly what Clerk's magic link establishes — the same
   // guarantee any email-based account recovery rests on. Their data key is
   // untouched, so their existing password still opens everything.
-  const byEmail = await db.user.findUnique({ where: { email } });
+  const byEmail = await traced("user.findByEmail", () =>
+    db.user.findUnique({ where: { email } }),
+  );
   if (byEmail) {
-    return db.user.update({
-      where: { id: byEmail.id },
-      data: { clerkId: userId },
-      include: { encryptionKey: true, parentConsent: true, school: true },
-    });
+    return traced("user.relinkClerkId", () =>
+      db.user.update({
+        where: { id: byEmail.id },
+        data: { clerkId: userId },
+        include: { encryptionKey: true, parentConsent: true, school: true },
+      }),
+    );
   }
 
   // A student's very first request fans out into several server calls at once

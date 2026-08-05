@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { traced } from "@/lib/db-errors";
 import { getOrCreateUser } from "@/lib/user";
 
 export type LogResult = { ok: true } | { ok: false; error: string };
@@ -140,7 +141,10 @@ export async function fetchEncryptedRecords() {
   const user = await getOrCreateUser();
   if (!user) return null;
 
-  const [sessions, sleep, screenTime, outcomes] = await Promise.all([
+  const [sessions, sleep, screenTime, outcomes] = await traced(
+    "records.fetchAll",
+    () =>
+      Promise.all([
     db.studySession.findMany({
       where: { userId: user.id, endedAt: { not: null } },
       select: {
@@ -178,10 +182,11 @@ export async function fetchEncryptedRecords() {
         payloadCipher: true,
         payloadIv: true,
       },
-      orderBy: { occurredOn: "desc" },
-      take: 300,
-    }),
-  ]);
+          orderBy: { occurredOn: "desc" },
+          take: 300,
+        }),
+      ]),
+  );
 
   return { sessions, sleep, screenTime, outcomes };
 }

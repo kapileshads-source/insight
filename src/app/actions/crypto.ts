@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { traced } from "@/lib/db-errors";
 import { getOrCreateUser } from "@/lib/user";
 import type { EncryptionSetup } from "@/lib/crypto";
 
@@ -16,18 +17,20 @@ export async function fetchEncryptionSetup(): Promise<EncryptionSetup | null> {
   const user = await getOrCreateUser();
   if (!user) return null;
 
-  const key = await db.encryptionKey.findUnique({
-    where: { userId: user.id },
-    select: {
-      kdf: true,
-      iterations: true,
-      salt: true,
-      wrappedDek: true,
-      wrapIv: true,
-      verifierCipher: true,
-      verifierIv: true,
-    },
-  });
+  const key = await traced("encryptionKey.find", () =>
+    db.encryptionKey.findUnique({
+      where: { userId: user.id },
+      select: {
+        kdf: true,
+        iterations: true,
+        salt: true,
+        wrappedDek: true,
+        wrapIv: true,
+        verifierCipher: true,
+        verifierIv: true,
+      },
+    }),
+  );
 
   return key;
 }

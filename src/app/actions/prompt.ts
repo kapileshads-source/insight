@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import { traced } from "@/lib/db-errors";
 import { getOrCreateUser } from "@/lib/user";
 import { decidePrompt, localDateKey, type PeriodSlot } from "@/lib/schedule";
 
@@ -26,18 +27,20 @@ export async function shouldPrompt(): Promise<PromptState> {
   const todayKey = localDateKey(now, school.timezone);
   const today = new Date(`${todayKey}T00:00:00Z`);
 
-  const [override, districtDay, term] = await Promise.all([
-    db.scheduleOverride.findUnique({
-      where: { schoolId_date: { schoolId: school.id, date: today } },
-    }),
-    db.districtCalendarDay.findUnique({ where: { date: today } }),
+  const [override, districtDay, term] = await traced("prompt.calendar", () =>
+    Promise.all([
+      db.scheduleOverride.findUnique({
+        where: { schoolId_date: { schoolId: school.id, date: today } },
+      }),
+      db.districtCalendarDay.findUnique({ where: { date: today } }),
     // The term containing today, or the most recent one if the year has
     // ended — the post-term prompt needs an end date to compare against.
-    db.term.findFirst({
-      where: { schoolId: school.id, startDate: { lte: today } },
-      orderBy: { startDate: "desc" },
-    }),
-  ]);
+      db.term.findFirst({
+        where: { schoolId: school.id, startDate: { lte: today } },
+        orderBy: { startDate: "desc" },
+      }),
+    ]),
+  );
 
   if (!term) return { show: false };
 

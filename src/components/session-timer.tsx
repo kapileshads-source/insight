@@ -15,6 +15,7 @@ import {
 } from "@/lib/records";
 import {
   discardSession,
+  setFocusMode,
   startSession,
   stopSession,
 } from "@/app/actions/sessions";
@@ -39,7 +40,7 @@ export function SessionTimer({
   running,
   recentSubjects,
 }: {
-  running: { id: string; startedAt: string } | null;
+  running: { id: string; startedAt: string; focusModeActive: boolean } | null;
   recentSubjects: string[];
 }) {
   const router = useRouter();
@@ -54,6 +55,7 @@ export function SessionTimer({
     running ? elapsedSeconds(new Date(running.startedAt)) : 0,
   );
   const [error, setError] = useState<string | null>(null);
+  const [focusMode, setFocus] = useState(running?.focusModeActive ?? true);
 
   const [subject, setSubject] = useState("");
   const [location, setLocation] = useState<Location | null>(null);
@@ -85,6 +87,7 @@ export function SessionTimer({
       setSessionId(res.id);
       setStartedAt(now);
       setSeconds(elapsedSeconds(now));
+      setFocus(true);
     });
   }
 
@@ -173,6 +176,33 @@ export function SessionTimer({
         >
           Discard
         </button>
+      </div>
+
+      <div className="mt-6 rounded-md border border-line bg-bg p-4">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={focusMode}
+            onChange={(e) => {
+              const next = e.target.checked;
+              setFocus(next);
+              if (sessionId) {
+                startTransition(async () => {
+                  await setFocusMode(sessionId, next);
+                });
+              }
+            }}
+            className="mt-1 h-4 w-4 accent-[color:var(--sky)]"
+          />
+          <span className="text-[15px]">
+            Focus Mode
+            <span className="mt-0.5 block text-[14px] leading-relaxed text-text-faint">
+              {focusMode
+                ? "Distracting sites are paused while this session runs. Needs the extension installed."
+                : "Blocking is off for this session, and that's noted so your distraction figures stay honest."}
+            </span>
+          </span>
+        </label>
       </div>
 
       <div className="mt-7 space-y-6">

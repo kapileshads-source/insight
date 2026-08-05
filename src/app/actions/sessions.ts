@@ -33,7 +33,10 @@ export async function startSession(): Promise<SessionResult> {
   if (running) return { ok: true, id: running.id };
 
   const created = await db.studySession.create({
-    data: { userId: user.id, startedAt: new Date() },
+    // Focus Mode starts with the session, per the plan. Making a student
+    // switch it on separately means the one who most needs it is the one who
+    // won't bother — and a blocker nobody enables blocks nothing.
+    data: { userId: user.id, startedAt: new Date(), focusModeActive: true },
   });
 
   revalidatePath("/dashboard");
@@ -76,6 +79,34 @@ export async function stopSession(
   return { ok: true, id: session.id };
 }
 
+/// Turn blocking on or off mid-session.
+///
+/// Deliberately reversible without ending the session. The alternative is a
+/// student who needs one blocked site stopping their timer to get at it, which
+/// loses the session data as well as the focus — a worse outcome on both
+/// counts than letting them switch it off.
+export async function setFocusMode(
+  sessionId: string,
+  active: boolean,
+): Promise<SessionResult> {
+  const user = await requireUser();
+
+  const updated = await db.studySession.updateMany({
+    where: { id: sessionId, userId: user.id, endedAt: null },
+    data: {
+      focusModeActive: active,
+      // Switching it off counts as an override, so the insight engine knows
+      // this session's distraction figures are incomplete rather than low.
+      ...(active ? {} : { focusModeOverride: true }),
+    },
+  });
+
+  if (updated.count === 0) return { ok: false, error: "That session isn't yours." };
+
+  revalidatePath("/dashboard");
+  return { ok: true, id: sessionId };
+}
+
 /// Throw away a session without recording it. A student who started the timer
 /// by accident should be able to remove it — leaving a two-minute "session"
 /// in the data is worse than having no row at all.
@@ -104,7 +135,7 @@ export async function getRunningSession() {
   const running = await db.studySession.findFirst({
     where: { userId: user.id, endedAt: null },
     orderBy: { startedAt: "desc" },
-    select: { id: true, startedAt: true },
+    select: { id: true, startedAt: true, focusModeActive: true },
   });
 
   return running;

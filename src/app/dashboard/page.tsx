@@ -222,7 +222,11 @@ export default async function Dashboard() {
       <StudyPanel
         running={
           running
-            ? { id: running.id, startedAt: running.startedAt.toISOString() }
+            ? {
+                id: running.id,
+                startedAt: running.startedAt.toISOString(),
+                focusModeActive: running.focusModeActive,
+              }
             : null
         }
       />

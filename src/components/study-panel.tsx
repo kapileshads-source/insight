@@ -39,7 +39,11 @@ type Stats = ReturnType<typeof basicStats>;
 export function StudyPanel({
   running,
 }: {
-  running: { id: string; startedAt: string } | null;
+  running: {
+    id: string;
+    startedAt: string;
+    focusModeActive: boolean;
+  } | null;
 }) {
   const { reveal, conceal, status } = useCrypto();
   const [insights, setInsights] = useState<ComputedInsight[] | null>(null);

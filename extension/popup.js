@@ -53,19 +53,37 @@ $("pair").addEventListener("click", async () => {
     return;
   }
 
+  const fail = (message) => {
+    $("pairError").textContent = message;
+    $("pairError").classList.remove("hidden");
+  };
+
   // Verified before it's saved, so a mistyped code fails here rather than
   // looking connected and silently never recording anything.
+  //
+  // The three stages below are caught separately. Wrapping them together
+  // blamed a failed storage write on the network, which sent you looking at
+  // the wrong thing — the same mistake as any error message that guesses.
+  let res;
   try {
-    const res = await fetch(`${apiBase}/api/devices/session`, {
+    res = await fetch(`${apiBase}/api/devices/session`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (res.status === 401) {
-      $("pairError").textContent = "That code wasn't accepted. Generate a new one.";
-      $("pairError").classList.remove("hidden");
-      return;
-    }
-    if (!res.ok) throw new Error("bad response");
+  } catch (e) {
+    fail(`Couldn't reach ${apiBase} — ${e?.message ?? "network error"}`);
+    return;
+  }
 
+  if (res.status === 401) {
+    fail("That code wasn't accepted. Generate a new one on the website.");
+    return;
+  }
+  if (!res.ok) {
+    fail(`The server answered ${res.status}. Check the address is right.`);
+    return;
+  }
+
+  try {
     const data = await res.json();
     await chrome.storage.local.set({
       apiBase,
@@ -76,11 +94,12 @@ $("pair").addEventListener("click", async () => {
       blocked: [],
       lastError: null,
     });
-    await render();
-  } catch {
-    $("pairError").textContent = "Couldn't reach that address. Check it and try again.";
-    $("pairError").classList.remove("hidden");
+  } catch (e) {
+    fail(`Connected, but couldn't save it — ${e?.message ?? "storage error"}`);
+    return;
   }
+
+  await render();
 });
 
 $("unpair").addEventListener("click", async () => {

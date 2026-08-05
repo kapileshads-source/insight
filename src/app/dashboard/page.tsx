@@ -3,12 +3,29 @@ import { redirect } from "next/navigation";
 import { getOrCreateUser, nextOnboardingStep } from "@/lib/user";
 import { getSchoolDayState } from "@/lib/current-period";
 import { getRunningSession } from "@/app/actions/sessions";
+import { getCanvasStatus } from "@/app/actions/canvas";
 import { GapPrompt } from "@/components/gap-prompt";
 import { StudyPanel } from "@/components/study-panel";
 
 export const metadata = { title: "Insight" };
 
-function formatDay(date: Date, timezone: string) {
+/// A calendar date, not an instant.
+///
+/// Postgres `@db.Date` values arrive as midnight UTC. Rendering one in
+/// America/Chicago lands it at 7pm the evening before, so the first day of
+/// school displays as the day before the first day of school. Calendar dates
+/// are formatted in UTC because that is the only zone they were ever in.
+function formatCalendarDate(date: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+/// A real moment, which does belong in the school's zone.
+function formatToday(date: Date, timezone: string) {
   return new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
     weekday: "long",
@@ -32,8 +49,7 @@ async function RightNow({ schoolId }: { schoolId: string }) {
         </h1>
         {state.nextSchoolDay && (
           <p className="mt-5 text-[17px] leading-relaxed text-on-light-muted">
-            Next school day is{" "}
-            {formatDay(state.nextSchoolDay, state.timezone)}.
+            Next school day is {formatCalendarDate(state.nextSchoolDay)}.
           </p>
         )}
       </section>
@@ -164,6 +180,7 @@ export default async function Dashboard() {
 
   const today = new Date();
   const running = await getRunningSession();
+  const canvas = await getCanvasStatus();
 
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-6 pb-32">
@@ -186,7 +203,7 @@ export default async function Dashboard() {
 
       <GapPrompt />
 
-      <FinishSetup hasCanvas={false} />
+      <FinishSetup hasCanvas={canvas.connected} />
 
       <StudyPanel
         running={
@@ -197,7 +214,7 @@ export default async function Dashboard() {
       />
 
       <p className="mt-12 text-[13px] text-text-faint">
-        {formatDay(today, user.school?.timezone ?? "America/Chicago")}
+        {formatToday(today, user.school?.timezone ?? "America/Chicago")}
         {user.gradeLevel ? ` · Grade ${user.gradeLevel}` : ""}
       </p>
     </div>

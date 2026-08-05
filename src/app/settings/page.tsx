@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getOrCreateUser } from "@/lib/user";
-import { getMutedCategories } from "@/app/actions/settings";
+import {
+  getBlocklistPrefs,
+  getMutedCategories,
+} from "@/app/actions/settings";
 import { getCanvasStatus } from "@/app/actions/canvas";
 import { SettingsPanel } from "@/components/settings-panel";
+import { BlocklistEditor } from "@/components/blocklist-editor";
 
 export const metadata = { title: "Settings — Insight" };
 
@@ -11,9 +15,10 @@ export default async function SettingsPage() {
   const user = await getOrCreateUser();
   if (!user) redirect("/sign-in");
 
-  const [muted, canvas] = await Promise.all([
+  const [muted, canvas, blocklist] = await Promise.all([
     getMutedCategories(),
     getCanvasStatus(),
+    getBlocklistPrefs(),
   ]);
 
   return (
@@ -27,7 +32,8 @@ export default async function SettingsPage() {
 
       <h1 className="h1 mt-12 text-[clamp(2rem,5vw,2.75rem)]">Settings</h1>
 
-      <div className="mt-10">
+      <div className="mt-10 space-y-6">
+        <BlocklistEditor prefs={blocklist} />
         <SettingsPanel muted={muted} canvas={canvas} />
       </div>
 

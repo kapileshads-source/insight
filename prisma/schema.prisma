@@ -203,6 +203,20 @@ model User {
   laptopOs LaptopOs?
   phoneOs  PhoneOs?
 
+  /// Focus Mode configuration, necessarily plaintext.
+  ///
+  /// The server builds the list the extension enforces, and the extension has
+  /// no key, so this cannot be encrypted. It sits on the structure side of the
+  /// line for the same reason focusModeActive does: which categories a student
+  /// blocks is a setting, not a record of what they did.
+  ///
+  /// Empty `blockCategories` is indistinguishable from "never chosen", so the
+  /// default is applied at read time rather than stored, letting the default
+  /// change later without a backfill.
+  blockCategories String[]
+  blockExtra      String[]
+  blockAllowed    String[]
+
   /// Baselines and preferences that are private to the student.
   /// Usual sleep and wake times, usual study noise level, usual location.
   profileCipher String?

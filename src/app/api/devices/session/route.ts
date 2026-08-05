@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { authenticateDevice } from "@/lib/device-tokens";
+import { DEFAULT_CATEGORIES, buildBlocklist } from "@/lib/blocklist";
 
 /**
  * What the extension polls to know whether to be recording.
@@ -35,11 +36,28 @@ export async function GET(request: Request) {
     );
   }
 
-  const running = await db.studySession.findFirst({
-    where: { userId: device.userId, endedAt: null },
-    orderBy: { startedAt: "desc" },
-    select: { id: true, startedAt: true, focusModeActive: true },
-  });
+  const [running, prefs] = await Promise.all([
+    db.studySession.findFirst({
+      where: { userId: device.userId, endedAt: null },
+      orderBy: { startedAt: "desc" },
+      select: { id: true, startedAt: true, focusModeActive: true },
+    }),
+    db.user.findUnique({
+      where: { id: device.userId },
+      select: {
+        blockCategories: true,
+        blockExtra: true,
+        blockAllowed: true,
+      },
+    }),
+  ]);
+
+  // An empty array means "never chosen", not "block nothing" — the default is
+  // applied here so it can change later without backfilling every row.
+  const categories =
+    prefs && prefs.blockCategories.length > 0
+      ? prefs.blockCategories
+      : DEFAULT_CATEGORIES;
 
   return NextResponse.json(
     {
@@ -51,28 +69,13 @@ export async function GET(request: Request) {
           }
         : null,
       // Sent every poll so a student changing the list on the website takes
-      // effect without reinstalling anything.
-      blocklist: DEFAULT_BLOCKLIST,
+      // effect within the minute, without touching the extension.
+      blocklist: buildBlocklist({
+        categories,
+        extra: prefs?.blockExtra ?? [],
+        allowed: prefs?.blockAllowed ?? [],
+      }),
     },
     { headers: CORS },
   );
 }
-
-/// Sites blocked while Focus Mode is on.
-///
-/// Deliberately short and obvious. A long list catches more but produces more
-/// false positives, and a blocker that stops something a student legitimately
-/// needed is a blocker they turn off permanently.
-const DEFAULT_BLOCKLIST = [
-  "youtube.com",
-  "tiktok.com",
-  "instagram.com",
-  "reddit.com",
-  "x.com",
-  "twitter.com",
-  "snapchat.com",
-  "twitch.tv",
-  "netflix.com",
-  "discord.com",
-  "roblox.com",
-];

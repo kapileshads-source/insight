@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getOrCreateUser } from "@/lib/user";
+import {
+  DEFAULT_CATEGORIES,
+  isBlockCategory,
+  normalizeSite,
+} from "@/lib/blocklist";
 
 export type SettingsResult = { ok: true } | { ok: false; error: string };
 
@@ -177,6 +182,66 @@ export async function disconnectCanvas(): Promise<SettingsResult> {
   const user = await requireUser();
   await db.canvasConnection.deleteMany({ where: { userId: user.id } });
   revalidatePath("/dashboard");
+  revalidatePath("/settings");
+  return { ok: true };
+}
+
+// --- focus mode blocklist ---------------------------------------------------
+
+const blocklistSchema = z.object({
+  categories: z.array(z.string().max(32)).max(20),
+  extra: z.array(z.string().max(253)).max(100),
+  allowed: z.array(z.string().max(253)).max(100),
+});
+
+export type BlocklistPrefs = {
+  categories: string[];
+  extra: string[];
+  allowed: string[];
+};
+
+export async function getBlocklistPrefs(): Promise<BlocklistPrefs> {
+  const user = await getOrCreateUser();
+  if (!user) {
+    return { categories: [...DEFAULT_CATEGORIES], extra: [], allowed: [] };
+  }
+
+  return {
+    categories:
+      user.blockCategories.length > 0
+        ? user.blockCategories
+        : [...DEFAULT_CATEGORIES],
+    extra: user.blockExtra,
+    allowed: user.blockAllowed,
+  };
+}
+
+/// Save which categories are on, plus any sites added or excepted by hand.
+///
+/// Sites are normalised before storing, so "https://www.YouTube.com/feed"
+/// becomes "youtube.com" and anything that isn't a domain is dropped rather
+/// than saved as a rule that silently never matches.
+export async function saveBlocklistPrefs(
+  input: unknown,
+): Promise<SettingsResult> {
+  const user = await requireUser();
+
+  const parsed = blocklistSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "That didn't look right." };
+
+  const categories = parsed.data.categories.filter(isBlockCategory);
+  const clean = (list: string[]) =>
+    [...new Set(list.map(normalizeSite).filter(Boolean))];
+
+  await db.user.update({
+    where: { id: user.id },
+    data: {
+      blockCategories: categories,
+      blockExtra: clean(parsed.data.extra),
+      blockAllowed: clean(parsed.data.allowed),
+    },
+  });
+
   revalidatePath("/settings");
   return { ok: true };
 }

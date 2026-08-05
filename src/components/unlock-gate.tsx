@@ -118,10 +118,34 @@ export function UnlockGate({ children }: { children: React.ReactNode }) {
   const { status } = useCrypto();
 
   if (status === "checking") {
-    // Deliberately blank rather than a spinner. The check is a single
-    // IndexedDB read, and a flash of loading state on every navigation is
-    // worse than a frame of nothing.
-    return null;
+    // Says something rather than nothing. This waits on a network round trip,
+    // not just an IndexedDB read, so on a slow connection a blank page is
+    // indistinguishable from a broken one.
+    return (
+      <Shell>
+        <p className="text-[17px] text-text-muted">Checking your device…</p>
+      </Shell>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <Shell>
+        <h1 className="h1 text-[clamp(1.75rem,4.5vw,2.25rem)]">
+          Couldn&rsquo;t reach the server.
+        </h1>
+        <p className="mt-4 text-[17px] leading-relaxed text-text-muted">
+          Your data is fine — this is a connection problem, not a lost key.
+          Nothing has been changed or deleted.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="btn-primary mt-7 px-7 py-3.5 text-[16px]"
+        >
+          Try again
+        </button>
+      </Shell>
+    );
   }
 
   if (status === "unsupported") {

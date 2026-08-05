@@ -25,7 +25,8 @@ export type CryptoStatus =
   | "locked" // setup exists, needs the password
   | "unlocked"
   | "no-setup" // account hasn't been through the password step yet
-  | "unsupported"; // no WebCrypto in this context
+  | "unsupported" // no WebCrypto in this context
+  | "error"; // couldn't determine which of the above applies
 
 type CryptoContextValue = {
   status: CryptoStatus;
@@ -53,22 +54,31 @@ export function CryptoProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     (async () => {
-      if (!cryptoAvailable()) {
-        if (!cancelled) setStatus("unsupported");
-        return;
-      }
+      // Everything below is wrapped, because the only state worse than an
+      // error is no state at all. This function reaches the network, and
+      // without a catch a rejected promise leaves `status` on "checking"
+      // forever — which the gate renders as an entirely blank page, with no
+      // message and no way out.
+      try {
+        if (!cryptoAvailable()) {
+          if (!cancelled) setStatus("unsupported");
+          return;
+        }
 
-      const remembered = await recallKey();
-      if (cancelled) return;
-      if (remembered) {
-        setDek(remembered);
-        setStatus("unlocked");
-        return;
-      }
+        const remembered = await recallKey();
+        if (cancelled) return;
+        if (remembered) {
+          setDek(remembered);
+          setStatus("unlocked");
+          return;
+        }
 
-      const setup = await fetchEncryptionSetup();
-      if (cancelled) return;
-      setStatus(setup ? "locked" : "no-setup");
+        const setup = await fetchEncryptionSetup();
+        if (cancelled) return;
+        setStatus(setup ? "locked" : "no-setup");
+      } catch {
+        if (!cancelled) setStatus("error");
+      }
     })();
 
     return () => {

@@ -60,10 +60,34 @@ export async function getOrCreateUser() {
     });
   }
 
-  return db.user.create({
-    data: { clerkId: userId, email },
-    include: { encryptionKey: true, parentConsent: true, school: true },
-  });
+  // A student's very first request fans out into several server calls at once
+  // — the page render, the encryption-key lookup, the period prompt — and each
+  // one lands here. They all find no row, and they all try to create one. The
+  // first wins; the rest violate a unique constraint and 500.
+  //
+  // Reading before writing can't fix that, because the gap between the read
+  // and the write is precisely where the others are. So losing the race is
+  // treated as success: the row now exists, which is what was wanted.
+  try {
+    return await db.user.create({
+      data: { clerkId: userId, email },
+      include: { encryptionKey: true, parentConsent: true, school: true },
+    });
+  } catch (e) {
+    if (
+      typeof e === "object" &&
+      e !== null &&
+      "code" in e &&
+      (e as { code?: string }).code === "P2002"
+    ) {
+      const winner = await db.user.findUnique({
+        where: { clerkId: userId },
+        include: { encryptionKey: true, parentConsent: true, school: true },
+      });
+      if (winner) return winner;
+    }
+    throw e;
+  }
 }
 
 export type OnboardingStep =

@@ -6,9 +6,15 @@ limits are listed so you know where the ceilings are before you hit them.
 Budget about an hour, most of it waiting on student verification and DNS.
 
 The code side is already handled: `npm run build` regenerates the Prisma
-client, `vercel.json` schedules both cron jobs within Hobby-plan limits, and
-the cron endpoint answers Vercel's GET with the bearer token it attaches
-automatically when the secret is named `CRON_SECRET`.
+client **and applies pending migrations**, `vercel.json` schedules both cron
+jobs within Hobby-plan limits, and the cron endpoint answers Vercel's GET with
+the bearer token it attaches automatically when the secret is named
+`CRON_SECRET`.
+
+Add **`DIRECT_DATABASE_URL`** to Vercel alongside `DATABASE_URL`, set to Neon's
+direct (non-pooler) string. Migrations need a session-mode connection and the
+pooled endpoint is PgBouncer in transaction mode. Without it the build warns
+and tries the pooled string anyway, which may fail.
 
 ---
 

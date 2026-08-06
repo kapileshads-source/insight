@@ -21,8 +21,8 @@ two endpoints the extension and the Windows app use, with app names in the
   first — so the absence of that prompt is the proof.
 - **No encryption key, ever.** What it posts lands in `PendingDeviceData`, which
   the server *can* read, and your browser encrypts and deletes on next load.
-- **Nothing on disk except the pairing token**, held in the login keychain — the
-  Mac's answer to the Windows build's DPAPI. The tally lives in memory and is
+- **Nothing on disk except the pairing token**, in an owner-only file (see
+  below for why not the keychain). The tally lives in memory and is
   sent every minute, so the cost of a crash is a minute and the cost of someone
   else picking up the laptop is nothing.
 - **Idle time is not study time.** Ten minutes without input and the clock stops,
@@ -68,6 +68,29 @@ gets refused outright with no way through in the dialog. Right-click the app →
 quarantine flag; `xattr -d com.apple.quarantine Insight.app` clears it. Proper
 signing needs a $99/yr Apple Developer account plus notarisation, which is the
 same wall that makes iOS impossible for this project.
+
+## Why not the keychain
+
+It was the keychain first, and it had to come out.
+
+macOS binds a keychain item to the exact binary that created it, by code
+signature — and an ad-hoc signature is regenerated on every build. Every rebuild
+looked like a different program asking for the old one's secret, so macOS put up
+a password challenge. Always Allow either failed outright or bought exactly one
+build's worth of peace. A student would meet that dialog on every update of a
+sideloaded app, and a security prompt that appears routinely is one people learn
+to click through — worse than not asking.
+
+The token now lives in `~/Library/Application Support/Insight/config.json`,
+owner-only (0600, in a 0700 folder). That is what the Windows build's DPAPI
+amounts to in practice: both keep it from other accounts on a shared laptop,
+neither protects against the student's own other processes, and nothing
+available to an unsigned app would.
+
+What's being guarded is small and revocable on purpose. The token can post
+activity and ask whether a session is running. It cannot read anything a student
+wrote — that's encrypted with a key this app never has — and revoking it from
+Devices kills it instantly.
 
 ## Test
 

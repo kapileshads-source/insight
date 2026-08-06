@@ -149,6 +149,13 @@ owner's GitHub account.** Commits use
 Prisma code at the *front* of the log line. Two wrong diagnoses happened before
 that existed.
 
+**The keychain is unusable from an ad-hoc signed app.** macOS ties a keychain
+entry to the exact binary that made it, and `codesign -s -` mints a new identity
+every build — so every rebuild of the Mac app triggered "Insight wants to use
+your confidential information", and Always Allow either failed or lasted exactly
+one build. The Mac token now sits in an owner-only file, which is what DPAPI
+amounts to on the Windows side anyway. Don't put it back.
+
 **Never render a blank page.** A failed key check left `status: "checking"`
 forever and the gate returned `null`. On an app that can't reset passwords, a
 blank screen where your data should be reads as data loss.
@@ -234,7 +241,8 @@ the two apps' agreement is visible rather than assumed.
 - **Bundle identifiers instead of executable names.** `com.spotify.client` is
   exact where `spotify.exe` is a guess, so `Apps.aliases` is keyed on them, with
   a name table behind it for re-signed builds.
-- **The token lives in the login keychain** rather than under DPAPI.
+- **The token lives in an owner-only file**, not the keychain — see the gotcha
+  above, it was tried.
 - **Gatekeeper is stricter than SmartScreen.** Double-clicking an unsigned app
   is refused with no way through in the dialog; right-click → Open → Open is the
   route, once. Getting rid of that needs the same $99/yr account that makes iOS

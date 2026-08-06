@@ -1,5 +1,4 @@
 import Foundation
-import Security
 
 /// The only thing this app keeps: where Insight is, and the pairing token.
 ///
@@ -8,75 +7,89 @@ import Security
 /// student — has nothing on it saying which apps they used. That costs the
 /// last minute of a session if the app is killed, which is the right trade.
 ///
-/// The address goes in UserDefaults because it is not a secret. The token goes
-/// in the login keychain, which is the Mac's answer to the Windows version's
-/// DPAPI: another account on a shared family laptop can't read it out.
+/// ## Why not the keychain
+///
+/// It was the keychain first, and it had to come out.
+///
+/// macOS binds a keychain item to the exact binary that created it, by code
+/// signature. This app is ad-hoc signed, because a Developer ID costs $99/yr
+/// and this project is free by design — and an ad-hoc signature is regenerated
+/// on every build. So every rebuild looked like a different program asking for
+/// the old one's secret, and macOS challenged it with a password prompt. Always
+/// Allow either failed outright or bought exactly one build's worth of peace.
+/// A student would meet that dialog on every update of a sideloaded app, and a
+/// security prompt that appears routinely is one people learn to click through,
+/// which is worse than not asking.
+///
+/// So: a file only this user can read, which is what the Windows app's DPAPI
+/// amounts to in practice. Both keep it from other accounts on a shared family
+/// laptop. Neither protects against the student's own other processes, and
+/// nothing available here would.
+///
+/// What that's worth guarding is small and revocable on purpose: the token can
+/// post activity and ask whether a session is running. It cannot read anything
+/// a student wrote — that is all encrypted with a key this app never has — and
+/// revoking it from Devices kills it instantly.
 final class Config {
-    private static let service = "app.insight.mac"
-    private static let account = "pairing-token"
-    private static let baseKey = "InsightApiBase"
-
     var apiBase: String
     var token: String
 
     var paired: Bool { !apiBase.isEmpty && !token.isEmpty }
 
+    private static var directory: URL {
+        FileManager.default
+            .homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/Insight", isDirectory: true)
+    }
+
+    private static var fileURL: URL {
+        directory.appendingPathComponent("config.json")
+    }
+
+    private struct Stored: Codable {
+        var apiBase: String
+        var token: String
+    }
+
     init() {
-        apiBase = UserDefaults.standard.string(forKey: Config.baseKey) ?? ""
-        token = Config.readToken() ?? ""
+        let stored = Config.read()
+        apiBase = stored?.apiBase ?? ""
+        token = stored?.token ?? ""
+    }
+
+    private static func read() -> Stored? {
+        guard let data = try? Data(contentsOf: fileURL) else { return nil }
+        return try? JSONDecoder().decode(Stored.self, from: data)
     }
 
     func save() {
-        UserDefaults.standard.set(apiBase, forKey: Config.baseKey)
-        Config.writeToken(token)
+        let stored = Stored(apiBase: apiBase, token: token)
+        guard let data = try? JSONEncoder().encode(stored) else { return }
+
+        let manager = FileManager.default
+
+        // Owner-only, on both the folder and the file. Set at creation rather
+        // than after writing, so there is no instant where the token exists
+        // world-readable.
+        try? manager.createDirectory(
+            at: Config.directory,
+            withIntermediateDirectories: true,
+            attributes: [.posixPermissions: 0o700])
+
+        if manager.fileExists(atPath: Config.fileURL.path) {
+            try? manager.removeItem(at: Config.fileURL)
+        }
+
+        manager.createFile(
+            atPath: Config.fileURL.path,
+            contents: data,
+            attributes: [.posixPermissions: 0o600])
     }
 
     /// Unpairing leaves nothing behind, the same as the extension's popup.
     func clear() {
         apiBase = ""
         token = ""
-        UserDefaults.standard.removeObject(forKey: Config.baseKey)
-        Config.deleteToken()
-    }
-
-    // --- keychain -----------------------------------------------------------
-
-    private static func query() -> [String: Any] {
-        [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-        ]
-    }
-
-    private static func readToken() -> String? {
-        var lookup = query()
-        lookup[kSecReturnData as String] = true
-        lookup[kSecMatchLimit as String] = kSecMatchLimitOne
-
-        var item: CFTypeRef?
-        guard SecItemCopyMatching(lookup as CFDictionary, &item) == errSecSuccess,
-              let data = item as? Data else {
-            return nil
-        }
-        return String(data: data, encoding: .utf8)
-    }
-
-    private static func writeToken(_ token: String) {
-        deleteToken()
-        guard !token.isEmpty else { return }
-
-        var item = query()
-        item[kSecValueData as String] = Data(token.utf8)
-        // Readable without an unlock prompt once the machine is logged in,
-        // because the app polls every minute in the background and a keychain
-        // dialog every time would be intolerable.
-        item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
-
-        SecItemAdd(item as CFDictionary, nil)
-    }
-
-    private static func deleteToken() {
-        SecItemDelete(query() as CFDictionary)
+        try? FileManager.default.removeItem(at: Config.fileURL)
     }
 }

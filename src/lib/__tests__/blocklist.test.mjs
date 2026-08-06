@@ -2,6 +2,8 @@ import {
   BLOCK_CATEGORIES,
   DEFAULT_CATEGORIES,
   buildBlocklist,
+  matchesBlocklist,
+  normalizeEntry,
   normalizeSite,
 } from "../blocklist.ts";
 
@@ -117,6 +119,59 @@ console.log("\nthe list has no duplicates");
   });
   ok("deduplicated", new Set(list).size === list.length);
   ok("sorted", [...list].sort().join() === list.join());
+}
+
+console.log("\napps are blocked the same way sites are");
+{
+  const list = buildBlocklist({
+    categories: DEFAULT_CATEGORIES,
+    extra: [],
+    allowed: [],
+  });
+
+  // The games nobody could block before this existed: they are their own
+  // executables, so a blocklist of hostnames never touched them.
+  ok("blocks valorant", list.includes("valorant"));
+  ok("blocks fortnite", list.includes("fortnite"));
+  ok("blocks minecraft", list.includes("minecraft"));
+  ok("blocks the steam app", list.includes("steam"));
+  ok("blocks discord the app", list.includes("discord"));
+  ok("still blocks discord the site", list.includes("discord.com"));
+  ok(
+    "does not block spotify the app by default, as with the site",
+    !list.includes("spotify"),
+  );
+
+  // The matcher is untouched: an app name is matched by exact equality, so it
+  // can neither miss nor spread.
+  ok("an app name matches itself", matchesBlocklist("Valorant", list));
+  ok("case is ignored", matchesBlocklist("VALORANT", list));
+  ok("a school app is untouched", !matchesBlocklist("Microsoft Word", list));
+  ok("a code editor is untouched", !matchesBlocklist("Visual Studio Code", list));
+  ok(
+    "an app name cannot swallow a hostname",
+    !matchesBlocklist("valorant.example.com", ["valorant"]),
+  );
+}
+
+console.log("\na student can block or allow an app by name");
+{
+  ok("an app name is kept", normalizeEntry("Minecraft") === "minecraft");
+  ok("case and spacing are normalised", normalizeEntry("  Rocket   League ") === "rocket league");
+  ok("punctuation real names use survives", normalizeEntry("osu!") === "osu!");
+  ok("a site still wins where it looks like one", normalizeEntry("YouTube.com") === "youtube.com");
+  ok("a single letter is rejected", normalizeEntry("a") === "");
+  ok("a paste that went wrong is rejected", normalizeEntry("<script>x</script>") === "");
+  ok("empty is rejected", normalizeEntry("   ") === "");
+
+  const list = buildBlocklist({
+    categories: DEFAULT_CATEGORIES,
+    extra: ["Valorant"],
+    allowed: ["VLC", "minecraft"],
+  });
+  ok("an added app appears once", list.filter((s) => s === "valorant").length === 1);
+  ok("an allowed app is removed", !list.includes("minecraft"));
+  ok("an allowed app beats its category", !list.includes("vlc"));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

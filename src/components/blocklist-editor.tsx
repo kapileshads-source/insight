@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { BLOCK_CATEGORIES, ALL_CATEGORIES, normalizeSite } from "@/lib/blocklist";
+import { BLOCK_CATEGORIES, ALL_CATEGORIES, normalizeEntry } from "@/lib/blocklist";
 import {
   saveBlocklistPrefs,
   type BlocklistPrefs,
@@ -59,9 +59,9 @@ export function BlocklistEditor({ prefs }: { prefs: BlocklistPrefs }) {
     key: "extra" | "allowed",
     clear: () => void,
   ) {
-    const site = normalizeSite(value);
+    const site = normalizeEntry(value);
     if (!site) {
-      setError("That doesn't look like a website address.");
+      setError("That doesn't look like a website or an app name.");
       return;
     }
     if (list.includes(site)) {
@@ -89,7 +89,8 @@ export function BlocklistEditor({ prefs }: { prefs: BlocklistPrefs }) {
     (n, c) =>
       n +
       (ALL_CATEGORIES.includes(c as never)
-        ? BLOCK_CATEGORIES[c as keyof typeof BLOCK_CATEGORIES].sites.length
+        ? BLOCK_CATEGORIES[c as keyof typeof BLOCK_CATEGORIES].sites.length +
+          BLOCK_CATEGORIES[c as keyof typeof BLOCK_CATEGORIES].apps.length
         : 0),
     extra.length,
   );
@@ -99,7 +100,7 @@ export function BlocklistEditor({ prefs }: { prefs: BlocklistPrefs }) {
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="h3 text-[17px]">What Focus Mode blocks</h2>
         <span className="label text-text-faint">
-          {Math.max(0, blockedCount - allowed.length)} sites
+          {Math.max(0, blockedCount - allowed.length)} sites and apps
         </span>
       </div>
       <p className="mt-2 text-[15px] leading-relaxed text-text-muted">
@@ -138,6 +139,10 @@ export function BlocklistEditor({ prefs }: { prefs: BlocklistPrefs }) {
         <label htmlFor="add-block" className="label text-text-muted">
           Block something else
         </label>
+        <p className="mt-1 text-[14px] leading-relaxed text-text-faint">
+          A website, or the name of an app on your computer — whatever the app
+          calls itself, like <span className="text-text-muted">Minecraft</span>.
+        </p>
         <div className="mt-2 flex gap-2">
           <input
             id="add-block"
@@ -151,7 +156,7 @@ export function BlocklistEditor({ prefs }: { prefs: BlocklistPrefs }) {
                 );
               }
             }}
-            placeholder="pinterest.com"
+            placeholder="pinterest.com, or Minecraft"
             className={FIELD}
           />
           <button
@@ -186,7 +191,8 @@ export function BlocklistEditor({ prefs }: { prefs: BlocklistPrefs }) {
         </label>
         <p className="mt-1 text-[14px] leading-relaxed text-text-faint">
           For anything on a list above that you genuinely need — a YouTube
-          channel your teacher sets, say. Exceptions beat everything else.
+          channel your teacher sets, or an app like VLC you watch lessons in.
+          Exceptions beat everything else.
         </p>
         <div className="mt-2 flex gap-2">
           <input
@@ -201,7 +207,7 @@ export function BlocklistEditor({ prefs }: { prefs: BlocklistPrefs }) {
                 );
               }
             }}
-            placeholder="youtube.com"
+            placeholder="youtube.com, or VLC"
             className={FIELD}
           />
           <button

@@ -7,7 +7,7 @@ import { getOrCreateUser } from "@/lib/user";
 import {
   DEFAULT_CATEGORIES,
   isBlockCategory,
-  normalizeSite,
+  normalizeEntry,
 } from "@/lib/blocklist";
 
 export type SettingsResult = { ok: true } | { ok: false; error: string };
@@ -230,8 +230,10 @@ export async function saveBlocklistPrefs(
   if (!parsed.success) return { ok: false, error: "That didn't look right." };
 
   const categories = parsed.data.categories.filter(isBlockCategory);
+  // Entries, not just sites: a student can block or allow an app by name
+  // now that Focus Mode reaches native apps.
   const clean = (list: string[]) =>
-    [...new Set(list.map(normalizeSite).filter(Boolean))];
+    [...new Set(list.map(normalizeEntry).filter(Boolean))];
 
   await db.user.update({
     where: { id: user.id },

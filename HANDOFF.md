@@ -24,7 +24,7 @@ current state.
 Everything is on a free tier. The only thing that would cost money is a
 domain, and the plan is to get one free via GitHub Student Pack or eu.org.
 
-`npm test` runs 108 tests. `npm run build` regenerates the Prisma client,
+`npm test` runs 130 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds.
 
 ---
@@ -83,6 +83,8 @@ Website, all deployed and working:
 - Admin schedule/calendar editor at `/admin/schedules` (env allowlist)
 - Privacy pages, student and parent
 - Browser extension (`extension/`), Manifest V3, loaded unpacked
+- Windows app (`windows/`), C# tray app, sideloaded as one self-contained exe
+- macOS app (`mac/`), Swift menu bar app, sideloaded as an ad-hoc signed bundle
 
 Data: 30 FISD campuses seeded, real A/B calendar extracted from the district
 PDF by sampling cell colours — 82 A days against 82 B days, which is the check
@@ -90,7 +92,17 @@ that it's right.
 
 ## What's not built
 
-- **Windows / macOS / Android apps** — next up is Windows
+- **Android app** — the two desktop apps are the pattern to copy
+- **Neither desktop app has had its Focus Mode path exercised.** The Windows app
+  pairs, polls and records on a real laptop; the Mac app builds, passes 32 tests
+  and launches here. What nobody has watched happen is a blocked app being
+  pushed out of the way, an override being recorded, or the ten-minute idle
+  cutoff firing
+- **Nothing in the UI shows what a device recorded.** App time feeds
+  `distractedMinutes`, which only surfaces in the weekly recap and a
+  sample-size-gated insight — so after a single session a student sees no
+  evidence the app did anything at all. This made the Windows app look broken
+  when it wasn't. A per-session device readout is the obvious fix
 - Sleep-and-wake baseline and usual-study-location screens (two dead "Set up"
   links on the dashboard checklist)
 - Privacy page doesn't mention `PendingDeviceData`
@@ -143,41 +155,100 @@ blank screen where your data should be reads as data loss.
 
 ---
 
-## Next task: Windows app
+## The Windows app
 
-Free to build and distribute by sideloading. SmartScreen shows an
-"unrecognised app" warning that users click through; code signing (~$100-300/yr)
-would remove it and is not planned.
+`windows/`, C# on .NET 8, WinForms tray app, published as one self-contained
+exe. It added no endpoints: it pairs at `/devices`, polls
+`GET /api/devices/session`, posts to `POST /api/devices/activity` with app names
+in the `domain` field, and its data lands in `PendingDeviceData` like the
+extension's. `windows/README.md` is the detail; the four constraints from the
+brief are held in `Tracker.cs`, and `GetWindowText` is not imported anywhere in
+the project, which is what makes "app names only" a fact rather than a promise.
 
-**What it does:** tracks active window/process time via Win32 APIs, exactly
-parallel to the browser extension.
+**Three decisions that weren't in the brief:**
 
-**It plugs into infrastructure that already exists.** Do not build new
-endpoints:
+- **Browsers are skipped entirely**, because the extension already counts them.
+  Counting both would double every web minute — and the two would disagree about
+  it, since the extension files YouTube as distracted while a process tracker
+  files chrome.exe as focused. A student with no extension loses their browser
+  time here, which is a gap rather than a wrong answer.
+- **Some apps report their website's name** — Spotify as `spotify.com`, Steam as
+  `steampowered.com`, in `Apps.Aliases`. Focus Mode and the distraction split
+  are both defined by the blocklist, which `normalizeSite` only lets be
+  hostnames, so an app reported as "Spotify" would be unblockable and forever
+  counted as focused. A game launched *through* Steam still reports its own name
+  and still counts as focused; fixing that needs a server-side idea of blocked
+  apps, which means a new endpoint and a new settings screen.
+- **Ten minutes idle stops the clock**, backdated to the last keypress. A
+  desktop has no equivalent of a browser losing focus, so without it a laptop
+  left open on a game bills the whole afternoon.
 
-- Pair via `/devices` → `pairDevice("WINDOWS_APP")`, token shown once, stored
-  hashed (`src/lib/device-tokens.ts`)
-- Poll `GET /api/devices/session` with `Authorization: Bearer <token>` for
-  session state
-- Post to `POST /api/devices/activity` with `{ sessionId, domains, blocked }` —
-  send app names in the `domain` field
-- Data lands in `PendingDeviceData`, the browser encrypts it on next load
-- Distraction measurement and the insight factor already exist
-  (`src/lib/blocklist.ts`, `splitActivity`)
+## Focus Mode reaches apps, not just sites
 
-**Constraints to preserve, in priority order:**
+Each block category in `src/lib/blocklist.ts` carries an `apps` list beside its
+`sites`, and `buildBlocklist` merges both into the one flat list the session
+endpoint already sends. **No code in the matcher changed and no endpoint
+changed** — `matchesBlocklist` lowercases and compares exactly, so an app name
+can never collide with a hostname or vice versa. One list, one matcher, and no
+way for "blocked" and "counted as a distraction" to drift apart.
 
-1. **Nothing recorded without a running session.** Not recorded-and-discarded —
-   the timer must not accumulate. This is a promise the privacy page makes.
-2. **App names only.** Never window titles, never document names. The extension
-   truncates URLs to hostnames for the same reason, enforced in code rather
-   than promised.
-3. **No encryption key on the device, ever.** Staging table only.
-4. Measure elapsed time against a stored timestamp, not a ticker, so sleep and
-   suspension neither invent nor lose minutes.
+This is what finally makes a game blockable. Valorant, Fortnite, Minecraft and
+the rest are their own executables with no website to match on, so a blocklist
+of hostnames never touched them — they were unblockable *and* silently counted
+as focused time, whatever the student chose.
 
-The extension is the reference implementation. `extension/background.js` is
-short and the reasoning is in the comments.
+Two things follow:
+
+- **The app lists carry several spellings each** — "VALORANT", "Riot Client",
+  "League of Legends" — because a desktop app reports whatever its own metadata
+  says, and a name nobody guessed is a game that quietly isn't blocked.
+- **`normalizeEntry` replaces `normalizeSite`** for anything a student types, so
+  they can block *or allow* an app by name. The escape hatch matters more than
+  the addition: the curated list will get something wrong — VLC is on it, and
+  someone watches lessons in VLC — and a student who can't fix that turns Focus
+  Mode off entirely, which blocks nothing.
+
+**`POST /api/devices/activity` now stages rows under the real `DeviceKind`**
+rather than a hardcoded `BROWSER_EXTENSION`. Nothing reads that column yet — the
+browser encrypts whatever is staged — but it was a lie in the one table anybody
+auditing the privacy design reads first.
+
+---
+
+## The Mac app
+
+`mac/`, Swift and AppKit, a menu bar app built with SwiftPM — no Xcode project,
+Command Line Tools is enough. `./build-app.sh` wraps the binary in
+`dist/Insight.app`, about 320KB because AppKit is already on every Mac.
+
+Same rules, same two endpoints, same three decisions as Windows, and
+`Sources/Insight/SelfTest.swift` mirrors `windows/SelfTest.cs` case for case so
+the two apps' agreement is visible rather than assumed.
+
+**Where the Mac differs:**
+
+- **"App names only" is enforced by the OS, not by us.** Reading another app's
+  window titles needs Accessibility permission, which this app never requests —
+  so the absence of that prompt in System Settings is the proof. On Windows the
+  equivalent guarantee is "we didn't import `GetWindowText`", which is weaker.
+- **Bundle identifiers instead of executable names.** `com.spotify.client` is
+  exact where `spotify.exe` is a guess, so `Apps.aliases` is keyed on them, with
+  a name table behind it for re-signed builds.
+- **The token lives in the login keychain** rather than under DPAPI.
+- **Gatekeeper is stricter than SmartScreen.** Double-clicking an unsigned app
+  is refused with no way through in the dialog; right-click → Open → Open is the
+  route, once. Getting rid of that needs the same $99/yr account that makes iOS
+  impossible, so it isn't planned.
+- **Blocked apps are quit, not hidden.** Hiding was the first attempt and it
+  was toothless — one Cmd-Tab and you were back. Both apps now send the polite
+  quit (`terminate()` on the Mac, `CloseMainWindow` on Windows), so an app with
+  unsaved work still gets to put up its save dialog, and an override starts the
+  app again rather than leaving the student to go and find it.
+
+**The bug worth remembering:** the self-exclusion check was
+`bundleId == Bundle.main.bundleIdentifier`, and outside a .app bundle both sides
+are nil — so every app without a bundle id was silently dropped. The self-test
+caught it on its first run.
 
 ---
 

@@ -41,3 +41,14 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# windows app build output
+windows/**/bin/
+windows/**/obj/
+
+# mac app build output
+mac/.build/
+mac/dist/
+
+# the zipped hand-off of the windows build, rebuilt on demand
+windows.zip

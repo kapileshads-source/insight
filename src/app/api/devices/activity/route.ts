@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 import { authenticateDevice } from "@/lib/device-tokens";
 
 /**
- * Where the extension reports what it saw.
+ * Where a paired device reports what it saw — the extension's hostnames, the
+ * Windows app's app names, both in the same `domain` field.
  *
  * It cannot encrypt — it has no key and must never have one — so this writes
  * to a staging table the server *can* read, and the student's browser
@@ -101,7 +102,11 @@ export async function POST(request: Request) {
   await db.pendingDeviceData.create({
     data: {
       userId: device.userId,
-      kind: "BROWSER_EXTENSION",
+      // Whichever device's token was used. The browser doesn't care — it
+      // encrypts whatever is staged — but a row that claims to be from the
+      // extension when it came from the Windows app is a lie in the one table
+      // anybody auditing this would read first.
+      kind: device.kind,
       payload: {
         sessionId: session.id,
         domains: parsed.data.domains,

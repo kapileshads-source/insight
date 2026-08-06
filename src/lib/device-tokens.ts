@@ -40,7 +40,11 @@ export async function createDeviceToken(
   return token;
 }
 
-export type AuthedDevice = { userId: string; deviceTokenId: string };
+export type AuthedDevice = {
+  userId: string;
+  deviceTokenId: string;
+  kind: DeviceKind;
+};
 
 /// Resolve a bearer token to its owner, or null.
 ///
@@ -58,7 +62,7 @@ export async function authenticateDevice(
 
   const row = await db.deviceToken.findUnique({
     where: { tokenHash: hashToken(token) },
-    select: { id: true, userId: true, revokedAt: true },
+    select: { id: true, userId: true, kind: true, revokedAt: true },
   });
 
   if (!row || row.revokedAt) return null;
@@ -68,5 +72,5 @@ export async function authenticateDevice(
     data: { lastSeenAt: new Date() },
   });
 
-  return { userId: row.userId, deviceTokenId: row.id };
+  return { userId: row.userId, deviceTokenId: row.id, kind: row.kind };
 }

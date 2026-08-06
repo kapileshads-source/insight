@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Windows tray app. Publishes as one self-contained .exe so a student
+    downloads a single file and runs it — no .NET install, no installer, no
+    admin rights. SmartScreen shows an "unrecognised app" warning on first run;
+    code signing would remove it and is not planned.
+  -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <AssemblyName>Insight</AssemblyName>
+    <RootNamespace>Insight</RootNamespace>
+    <Product>Insight</Product>
+    <Version>0.1.0</Version>
+
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <!--
+      Without this, the Windows Desktop runtime's native libraries sit beside
+      the exe as five loose DLLs, and "download one file" quietly becomes
+      "download six files, keep them together". They're bundled and extracted
+      at startup instead, which costs a moment on first run.
+    -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!-- Lets the project build and publish from macOS or Linux too. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- DPAPI, for the pairing token at rest. -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      tests/ links these same source files into a project that runs on the
+      host. Without this, its entry point and its build output get swept into
+      this project by the default glob, and the app stops compiling.
+    -->
+    <Compile Remove="tests/**" />
+    <None Remove="tests/**" />
+  </ItemGroup>
+
+</Project>

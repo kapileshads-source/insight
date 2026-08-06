@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The same tests, compiled for whatever machine you're sitting at.
+
+    The app itself targets net8.0-windows and cannot run on a Mac, which would
+    otherwise mean the logic tests only run once a Windows machine is in the
+    room — and this whole app was written on a Mac. So the pure files are
+    linked into a plain net8.0 console app instead. It found a real bug the
+    first time it ran, which is the argument for it existing.
+
+    The linked files are the ones with no desktop in them. Adding a file that
+    touches WinForms here will not compile, which is the intended pressure:
+    decisions about what gets recorded belong in files that can be tested.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Insight</RootNamespace>
+    <AssemblyName>Insight.LogicTests</AssemblyName>
+    <!-- The P/Invokes are declared here but never called off Windows. -->
+    <NoWarn>CA1416</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Apps.cs" />
+    <Compile Include="../ApiClient.cs" />
+    <Compile Include="../Config.cs" />
+    <Compile Include="../Native.cs" />
+    <Compile Include="../SelfTest.cs" />
+  </ItemGroup>
+
+</Project>

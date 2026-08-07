@@ -143,15 +143,22 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
-      <Section title="Under 13">
+      <Section title="You have to be 13">
         <p>
-          We ask everyone&rsquo;s birth date. If you&rsquo;re under 13, we
-          collect nothing at all until a parent or guardian receives an email
-          from us and confirms it.
+          We ask everyone&rsquo;s birth date, and that is the only thing it is
+          used for. Under 13 and the answer is no — the account stops there and
+          nothing else is collected.
         </p>
         <p>
-          A parent can see everything we hold, have it deleted, or withdraw
-          consent — which closes the account and erases the data.
+          That&rsquo;s a rule about privacy law rather than about you.
+          Collecting anything from someone under 13 needs a parent&rsquo;s
+          verified permission, and doing that properly — reaching a real parent
+          in a real inbox, every time — is more than this project can promise
+          today. We&rsquo;d rather say no than half-do it.
+        </p>
+        <p>
+          A parent of any student can still see everything we hold, have it
+          deleted, or close the account.
         </p>
       </Section>
 

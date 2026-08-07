@@ -70,8 +70,8 @@ the server can't read its inputs.
 Website, all deployed and working:
 
 - Auth (Clerk, Google + email code, **no password** — deliberately)
-- Onboarding: birthdate gate → COPPA parent consent → encryption password →
-  school + grade → devices
+- Onboarding: birthdate gate (13+, under-13 turned away) → encryption password
+  → school + grade → devices
 - Unlock screen, with opt-in "stay unlocked on this device" via IndexedDB
 - Session timer, Focus Mode toggle, quick log (sleep / screen time / scores)
 - Screenshot OCR for screen time (Tesseract, client-side, image never uploaded)
@@ -251,6 +251,31 @@ the two apps' agreement is visible rather than assumed.
 `bundleId == Bundle.main.bundleIdentifier`, and outside a .app bundle both sides
 are nil — so every app without a bundle id was silently dropped. The self-test
 caught it on its first run.
+
+---
+
+## Thirteen and over
+
+Under-13 accounts are turned away at the birthdate gate rather than routed
+through parental consent. `isTooYoung` in `src/lib/user.ts` is the whole
+decision; `MINIMUM_AGE` is 13 because that is where COPPA's line sits, not
+because of what year a student is in — some ninth-graders are twelve in August,
+and "high school only" would have let them in.
+
+**The consent flow is dormant, not deleted.** `requiresParentConsent`,
+`ParentConsentStep`, the token route and the email are all still there and still
+work. What made it unusable was never the code: verified parental consent means
+real emails reaching real parents reliably, and this project has no domain yet,
+so Resend delivers to the developer and nobody else. A consent request that goes
+quietly to spam fails in the worst available way — the student is stuck, the
+parent never knew, and nothing anywhere says so.
+
+So the honest position is to decline the age group rather than half-serve it.
+Flip it back when there's a domain, proven delivery, and a legal read.
+
+Knock-on effects, all done: both privacy pages say 13+ and no longer promise a
+consent flow, and the parents page is now a general explainer rather than a
+consent form.
 
 ---
 

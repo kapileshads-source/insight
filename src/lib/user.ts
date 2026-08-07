@@ -13,8 +13,27 @@ export function ageInYears(birthDate: Date, on: Date = new Date()): number {
   return age;
 }
 
-/// COPPA applies below 13. FISD middle schools start at grade 6, so this is a
-/// routine case rather than an edge one.
+/// The youngest Insight accepts.
+///
+/// Thirteen because that is where COPPA's line is, not because of what a
+/// timetable says: a handful of ninth-graders are twelve in August, and
+/// "high school" would let them in.
+export const MINIMUM_AGE = 13;
+
+/// Under 13 is turned away rather than routed through parental consent.
+///
+/// The consent flow below still exists and still works. It is unreachable on
+/// purpose: verified parental consent under COPPA means real parent emails
+/// landing reliably in real inboxes, and a consent request that quietly goes
+/// to spam fails in the worst available way — the student is stuck, the parent
+/// never knew, and nothing anywhere says so. Turning under-13s away is honest
+/// about what a free pilot can actually guarantee. Flip this back the day the
+/// email path is proven and the flow has had a legal read.
+export function isTooYoung(birthDate: Date, on?: Date): boolean {
+  return ageInYears(birthDate, on) < MINIMUM_AGE;
+}
+
+/// Kept for the consent flow itself, which is dormant rather than deleted.
 export function requiresParentConsent(birthDate: Date, on?: Date): boolean {
   return ageInYears(birthDate, on) < 13;
 }
@@ -99,6 +118,7 @@ export async function getOrCreateUser() {
 
 export type OnboardingStep =
   | "BIRTHDATE"
+  | "TOO_YOUNG"
   | "AWAITING_CONSENT"
   | "PASSWORD"
   | "SCHOOL"
@@ -115,9 +135,10 @@ type UserWithRelations = NonNullable<Awaited<ReturnType<typeof getOrCreateUser>>
 export function nextOnboardingStep(user: UserWithRelations): OnboardingStep {
   if (!user.birthDate) return "BIRTHDATE";
 
-  if (requiresParentConsent(user.birthDate) && !user.parentConsent?.confirmedAt) {
-    return "AWAITING_CONSENT";
-  }
+  // Before anything else is asked for, and before anything private exists to
+  // protect. Nothing beyond the birth date itself is ever collected from
+  // someone this answer turns away.
+  if (isTooYoung(user.birthDate)) return "TOO_YOUNG";
 
   if (!user.encryptionKey) return "PASSWORD";
   if (!user.schoolId || user.gradeLevel == null) return "SCHOOL";

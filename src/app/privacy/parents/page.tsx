@@ -17,9 +17,9 @@ export default function ParentsPage() {
         For parents.
       </h1>
       <p className="mt-5 text-[17px] leading-relaxed text-text-muted">
-        Your child has asked to use Insight, and because they&rsquo;re under 13
-        the law requires your permission first. Here&rsquo;s what you&rsquo;re
-        being asked to agree to.
+        Your child has asked to use Insight. Here&rsquo;s what it does, what it
+        keeps, and what you can do about it — in plain terms, without needing to
+        take our word for anything.
       </p>
 
       <div className="mt-10 space-y-8">
@@ -51,6 +51,10 @@ export default function ParentsPage() {
           {
             q: "Is it sold or advertised against?",
             a: "No. Insight doesn't sell data, doesn't run ads, and doesn't use your child's data to train AI models. Their study records are encrypted and unreadable to us, and the site and app names described above are deleted rather than kept — neither is sold, shared or advertised against.",
+          },
+          {
+            q: "How old do they have to be?",
+            a: "Thirteen. We ask everyone's birth date and turn away anyone younger, because collecting data from an under-13 needs a parent's verified permission and we'd rather decline than do that badly. If your child is using it, they told us they're 13 or over.",
           },
           {
             q: "Can I change my mind?",

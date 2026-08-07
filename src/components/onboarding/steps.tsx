@@ -25,7 +25,7 @@ export function OnboardingShell({
   intro,
   children,
 }: {
-  step: (typeof STEP_ORDER)[number] | "AWAITING_CONSENT";
+  step: (typeof STEP_ORDER)[number] | "AWAITING_CONSENT" | "TOO_YOUNG";
   title: string;
   intro?: string;
   children: React.ReactNode;
@@ -79,7 +79,7 @@ export function BirthDateStep() {
     <OnboardingShell
       step="BIRTHDATE"
       title="When were you born?"
-      intro="This decides one thing only: whether we need a parent's permission before collecting anything. Under 13 and the law requires it."
+      intro="This decides one thing only: whether you're old enough to use Insight. It has to be 13 and over, and nothing else is collected until you answer."
     >
       <form action={action}>
         <label htmlFor="birthDate" className="label text-text-muted">
@@ -106,6 +106,40 @@ export function BirthDateStep() {
 }
 
 // --- 2. parent consent ------------------------------------------------------
+
+/// The one screen that is an ending rather than a step.
+///
+/// Deliberately not apologetic-sounding, and deliberately specific about what
+/// was and wasn't kept. A twelve-year-old reading "you can't use this" wants
+/// to know whether they've just handed something over, and the honest answer
+/// is that a date of birth is all that exists.
+export function TooYoungStep({ minimumAge }: { minimumAge: number }) {
+  return (
+    <OnboardingShell
+      step="TOO_YOUNG"
+      title="Not yet, sorry."
+      intro={`Insight is for students ${minimumAge} and over. That's a rule about privacy law rather than about you — collecting anything from someone younger needs a parent's verified permission, and doing that properly is more than this project can promise right now.`}
+    >
+      <div className="rounded-lg border border-line bg-surface p-6">
+        <p className="text-[15px] leading-relaxed text-text-muted">
+          Nothing was collected. Your date of birth is the only thing stored,
+          and it exists so you aren&rsquo;t asked again. No study data, no
+          school, no encryption key — those steps never ran.
+        </p>
+        <p className="mt-4 text-[15px] leading-relaxed text-text-muted">
+          Come back when you turn {minimumAge}. If the date was a typo, write to{" "}
+          <a
+            href="mailto:kapilesh.rajaravi@gmail.com"
+            className="text-sky underline underline-offset-2"
+          >
+            kapilesh.rajaravi@gmail.com
+          </a>{" "}
+          and a person will fix it.
+        </p>
+      </div>
+    </OnboardingShell>
+  );
+}
 
 export function ParentConsentStep({ sentTo }: { sentTo?: string | null }) {
   const [result, action, pending] = useActionState(requestParentConsent, null);

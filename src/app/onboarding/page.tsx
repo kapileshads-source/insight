@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { getOrCreateUser, nextOnboardingStep } from "@/lib/user";
+import { MINIMUM_AGE, getOrCreateUser, nextOnboardingStep } from "@/lib/user";
 import {
   BirthDateStep,
   DevicesStep,
   ParentConsentStep,
   PasswordStep,
   SchoolStep,
+  TooYoungStep,
 } from "@/components/onboarding/steps";
 
 export const metadata = { title: "Set up — Insight" };
@@ -20,6 +21,9 @@ export default async function OnboardingPage() {
   switch (step) {
     case "BIRTHDATE":
       return <BirthDateStep />;
+
+    case "TOO_YOUNG":
+      return <TooYoungStep minimumAge={MINIMUM_AGE} />;
 
     case "AWAITING_CONSENT":
       return <ParentConsentStep sentTo={user.parentConsent?.parentEmail} />;

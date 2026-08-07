@@ -27,10 +27,10 @@ struct RootView: View {
         ZStack {
             Theme.background.ignoresSafeArea()
 
-            if store.paired {
-                StatusView()
-            } else {
-                PairView()
+            switch store.phase {
+            case .unpaired: PairView()
+            case .locked: UnlockView()
+            case .ready: StatusView()
             }
         }
     }

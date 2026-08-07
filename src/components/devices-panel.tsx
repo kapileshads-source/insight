@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { pairDevice, revokeDevice, type DeviceRow } from "@/app/actions/devices";
+import { fetchEncryptionSetup } from "@/app/actions/crypto";
+import { encodePhonePairing } from "@/lib/pairing";
 
 const KIND_LABELS: Record<string, string> = {
   BROWSER_EXTENSION: "Browser extension",
@@ -30,6 +32,42 @@ export function DevicesPanel({
   const [minted, setMinted] = useState<Minted | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /// The phone's code is not the same as a laptop's.
+  ///
+  /// It carries the address and the encryption setup alongside the token, so
+  /// the phone can decrypt without any endpoint ever handing key material to a
+  /// bearer token. Assembled here, in a browser that is already signed in and
+  /// already holds all of it.
+  function pairPhone() {
+    setError(null);
+    setMinted(null);
+    setCopied(false);
+    start(async () => {
+      const setup = await fetchEncryptionSetup();
+      if (!setup) {
+        setError("Set up your encryption password first.");
+        return;
+      }
+
+      const res = await pairDevice("MACOS_APP", "iPhone");
+      if (!res.ok || !res.token) {
+        setError(res.ok ? "Couldn't generate a code." : res.error);
+        return;
+      }
+
+      setMinted({
+        kind: "PHONE",
+        token: encodePhonePairing({
+          v: 1,
+          base: appUrl,
+          token: res.token,
+          setup,
+        }),
+      });
+      router.refresh();
+    });
+  }
 
   function pair(kind: string, label: string) {
     setError(null);
@@ -221,6 +259,58 @@ export function DevicesPanel({
         </p>
 
         {pairingBlock("MACOS_APP", "Mac app", "Generate a Mac code")}
+      </section>
+
+      <section className="rounded-lg border border-line bg-surface p-6">
+        <h2 className="h3 text-[17px]">Install the iPhone app</h2>
+        <p className="mt-2 text-[15px] leading-relaxed text-text-muted">
+          Start and stop sessions, and log last night&rsquo;s sleep before
+          you&rsquo;re out of bed. It can&rsquo;t see which apps you use —
+          iOS doesn&rsquo;t allow that — so your phone time still comes from the
+          Screen Time screenshot.
+        </p>
+
+        <div className="mt-6 border-t border-line pt-5">
+          <button
+            onClick={pairPhone}
+            disabled={pending}
+            className="btn-primary px-6 py-3 text-[15px] disabled:opacity-60"
+          >
+            {pending ? "Generating…" : "Generate a phone code"}
+          </button>
+
+          {error && (
+            <p role="alert" className="mt-3 text-[15px] text-down">
+              {error}
+            </p>
+          )}
+
+          {minted?.kind === "PHONE" && (
+            <div className="mt-5 rounded-md border border-sky/30 bg-sky-soft p-4">
+              <p className="text-[15px] text-text">
+                Copy all of it. It&rsquo;s long, and it&rsquo;s shown once.
+              </p>
+              <code className="mt-3 block max-h-40 overflow-auto rounded bg-bg px-3 py-2.5 text-[12px] break-all text-text">
+                {minted.token}
+              </code>
+              <button
+                onClick={() => {
+                  void navigator.clipboard.writeText(minted.token);
+                  setCopied(true);
+                }}
+                className="btn-secondary mt-3 px-4 py-2 text-[14px] text-text-muted"
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
+              <p className="mt-3 text-[13px] leading-relaxed text-text-faint">
+                This one carries your encryption setup as well as the pairing
+                code, so the app can show your own data back to you. It is
+                useless without your password, which isn&rsquo;t in it — but
+                don&rsquo;t share it.
+              </p>
+            </div>
+          )}
+        </div>
       </section>
 
       <section className="rounded-lg border border-line bg-surface p-6">

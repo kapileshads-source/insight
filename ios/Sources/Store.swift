@@ -1,30 +1,48 @@
+import CryptoKit
 import Foundation
 import SwiftUI
 
-/// What the phone knows, and how often it asks.
+/// What the phone knows, and what it can do about it.
 ///
-/// The website owns session state; this follows, exactly as the extension and
-/// the desktop apps do. Starting a session here and starting one on a laptop
-/// are the same act, and a student should never be told two different things
-/// about whether they are studying.
+/// The website still owns most of this — the blocklist, the settings, the
+/// insights engine. The phone follows, and adds the two things it is genuinely
+/// better at: starting a session from the thing already in your hand, and
+/// logging a night's sleep before you've got out of bed.
 @MainActor
 final class Store: ObservableObject {
+    enum Phase {
+        case unpaired
+        /// Paired, but the key isn't in memory. Closing the app locks it
+        /// again, the same bargain the browser makes.
+        case locked
+        case ready
+    }
+
+    @Published private(set) var phase: Phase
     @Published private(set) var session: SessionState?
     @Published private(set) var lastError: String?
-    @Published private(set) var paired: Bool
-    @Published private(set) var checking = false
+    @Published private(set) var busy = false
+    @Published var useFocusShortcuts: Bool {
+        didSet {
+            config.useFocusShortcuts = useFocusShortcuts
+            config.save()
+        }
+    }
 
     private let config = Config()
     private let api = ApiClient()
+    private var key: SymmetricKey?
     private var timer: Timer?
 
-    /// Fifteen seconds, matching the desktop apps. Focus Mode is switched on
-    /// at the website, and a minute of nothing happening reads as broken.
+    /// Fifteen seconds, matching the desktop apps.
     private static let pollSeconds: TimeInterval = 15
 
     init() {
-        paired = config.paired
+        phase = config.paired ? .locked : .unpaired
+        useFocusShortcuts = config.useFocusShortcuts
     }
+
+    private var phone: PhoneApi { PhoneApi(base: config.apiBase, token: config.token) }
 
     func start() {
         guard timer == nil else { return }
@@ -38,14 +56,76 @@ final class Store: ObservableObject {
         Task { await refresh() }
     }
 
+    // --- pairing and unlocking ----------------------------------------------
+
+    /// The code carries the address, the token and the encryption setup —
+    /// see `src/lib/pairing.ts` for why it isn't an endpoint.
+    func pair(code: String) async -> String? {
+        guard let pairing = Pairing.decode(code) else {
+            return "That code didn't scan right. Copy the whole thing — it's long."
+        }
+        if let problem = Address.problem(with: pairing.base) { return problem }
+
+        // Checked against the server before it's kept, so a stale code fails
+        // here rather than looking connected and never working.
+        let result = await api.poll(base: pairing.base, token: pairing.token)
+        switch result.status {
+        case .unauthorised:
+            return "That code has been revoked. Generate a new one on the website."
+        case .unreachable:
+            return "Couldn't reach \(pairing.base). Check your connection."
+        case .ok:
+            config.apiBase = pairing.base
+            config.token = pairing.token
+            config.setup = pairing.setup
+            config.save()
+
+            session = result.session
+            phase = .locked
+            return nil
+        }
+    }
+
+    /// Deriving the key takes about a second by design, so it happens off the
+    /// main thread. Doing it inline freezes the screen just long enough that
+    /// the button looks broken and gets tapped again.
+    func unlock(password: String) async -> String? {
+        guard let setup = config.setup else { return "This phone isn't paired." }
+
+        do {
+            key = try await Task.detached(priority: .userInitiated) {
+                try Crypto.unlock(password: password, setup: setup)
+            }.value
+
+            phase = .ready
+            await refresh()
+            return nil
+        } catch Crypto.Failure.wrongPassword {
+            return "That password doesn't match."
+        } catch {
+            return "Couldn't unlock. Pair this phone again."
+        }
+    }
+
+    func lock() {
+        key = nil
+        phase = config.paired ? .locked : .unpaired
+    }
+
+    func unpair() {
+        config.clear()
+        key = nil
+        session = nil
+        lastError = nil
+        phase = .unpaired
+    }
+
+    // --- what the phone can do ----------------------------------------------
+
     func refresh() async {
         guard config.paired else { return }
 
-        checking = true
-        defer { checking = false }
-
         let result = await api.poll(base: config.apiBase, token: config.token)
-
         switch result.status {
         case .unauthorised:
             session = nil
@@ -58,33 +138,61 @@ final class Store: ObservableObject {
         }
     }
 
-    /// Verified before it is saved, so a mistyped code fails here rather than
-    /// looking connected and quietly showing nothing forever.
-    func pair(base: String, token: String) async -> String? {
-        if let problem = Address.problem(with: base) { return problem }
+    func startSession() async {
+        busy = true
+        defer { busy = false }
 
-        let result = await api.poll(base: base, token: token)
-        switch result.status {
-        case .unauthorised:
-            return "That code wasn't accepted. Generate a new one on the website."
-        case .unreachable:
-            return "Couldn't reach \(base). Check the address and your connection."
-        case .ok:
-            config.apiBase = base
-            config.token = token
-            config.save()
-            paired = true
-            session = result.session
-            lastError = nil
-            return nil
+        guard let started = await phone.startSession() else {
+            lastError = "Couldn't start a session. Try again."
+            return
         }
+
+        session = started
+        lastError = nil
+        if useFocusShortcuts { Focus.run(Focus.onShortcut) }
     }
 
-    func unpair() {
-        config.clear()
-        paired = false
+    func stopSession() async {
+        guard let key, let running = session else { return }
+
+        busy = true
+        defer { busy = false }
+
+        // Minutes are worked out here and stored, so the insight engine never
+        // recomputes them from timestamps for every row on every load.
+        let minutes = max(1, Int(Date().timeIntervalSince(running.startedAt) / 60))
+
+        guard let sealed = try? Crypto.seal(["durationMinutes": minutes], with: key),
+              await phone.stopSession(id: running.id, sealed: sealed)
+        else {
+            lastError = "Couldn't stop the session. Try again."
+            return
+        }
+
         session = nil
         lastError = nil
+        if useFocusShortcuts { Focus.run(Focus.offShortcut) }
+    }
+
+    /// Sleep for the night before a given morning.
+    func logSleep(hours: Double, date: Date) async -> String? {
+        guard let key else { return "Unlock first." }
+
+        busy = true
+        defer { busy = false }
+
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.dateFormat = "yyyy-MM-dd"
+
+        guard let sealed = try? Crypto.seal(["hours": hours], with: key) else {
+            return "Couldn't encrypt that."
+        }
+
+        let saved = await phone.logSleep(
+            forDate: formatter.string(from: date), sealed: sealed)
+
+        return saved ? nil : "Couldn't save that. Try again."
     }
 
     var insightURL: URL? {

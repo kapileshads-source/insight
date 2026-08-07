@@ -24,7 +24,7 @@ current state.
 Everything is on a free tier. The only thing that would cost money is a
 domain, and the plan is to get one free via GitHub Student Pack or eu.org.
 
-`npm test` runs 193 tests. `npm run build` regenerates the Prisma client,
+`npm test` runs 209 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds.
 
 ---
@@ -353,6 +353,28 @@ password is the browser, not the extension.
 Needs new endpoints, unlike everything else: unlock material, session start and
 stop, and writing sealed records. Build them alongside the app rather than
 ahead of it.
+
+**Built so far:** pairing, unlocking, session start and stop, sleep logging,
+and the Focus handshake. Three endpoints were added under `/api/devices/` —
+`session/start`, `session/stop`, `sleep` — all on the same bearer token the
+extension uses.
+
+**The pairing code is different from the laptops', and deliberately so.** A
+phone shows you your own data, so it needs the encryption key. The obvious way
+to give it one — an endpoint handing key material to a bearer token — would make
+"pairing grants the ability to add, never to read" false for every device, and
+would let a stolen token pull the wrapped key and grind at the password offline.
+So the material rides inside the pairing code, assembled in a browser that is
+already signed in. `src/lib/pairing.ts`. The password is not in it and never
+leaves the student's head.
+
+**`ios/Sources/Crypto.swift` must match `src/lib/crypto.ts` exactly** — PBKDF2
+600k, AES-GCM, NFKC-normalised password, and WebCrypto's ciphertext‖tag layout
+against CryptoKit's separate tag. Verified both directions against the real
+browser code: Swift reads what the browser sealed, the browser reads what Swift
+sealed, and a wrong password fails as a wrong password rather than as corrupt
+data. If that ever drifts, the symptom is a correct password being rejected
+forever, so test interop rather than assuming it.
 
 **The fallback, still on the table:** make the web app an installable PWA. A
 day's work, free, covers Android the same day, and loses only background

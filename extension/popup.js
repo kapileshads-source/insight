@@ -58,6 +58,40 @@ $("pair").addEventListener("click", async () => {
     $("pairError").classList.remove("hidden");
   };
 
+  // Permission for wherever Insight actually lives, asked for here rather
+  // than claimed up front in the manifest.
+  //
+  // This extension used to request every site on the internet, which it never
+  // needed: tab hostnames come from the "tabs" permission, and the only thing
+  // it fetches is the student's own Insight server. An extension that asks for
+  // everything is one a school IT department is right to refuse, and it makes
+  // "we only talk to Insight" a claim rather than a fact.
+  //
+  // Requested before anything is awaited, because the browser only grants this
+  // during a real click and an intervening await can lose that.
+  let origin;
+  try {
+    origin = new URL(apiBase).origin + "/*";
+  } catch {
+    fail("That address doesn't look like a web address.");
+    return;
+  }
+
+  try {
+    // Not preceded by a `contains` check on purpose: requesting something
+    // already granted returns true without prompting, and awaiting anything
+    // first can cost us the click the browser requires.
+    const allowed = await chrome.permissions.request({ origins: [origin] });
+
+    if (!allowed) {
+      fail("Without permission to reach that address, nothing can be recorded.");
+      return;
+    }
+  } catch (e) {
+    fail(`Couldn't ask for permission — ${e?.message ?? "unknown error"}`);
+    return;
+  }
+
   // Verified before it's saved, so a mistyped code fails here rather than
   // looking connected and silently never recording anything.
   //

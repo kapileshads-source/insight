@@ -255,6 +255,35 @@ caught it on its first run.
 
 ---
 
+## Getting the extension onto a student's machine
+
+**"Load unpacked" is a developer workflow, not a distribution plan.** On a
+district-managed laptop or Chromebook, developer mode is usually disabled by
+policy, which means every device feature — activity tracking, Focus Mode, and
+the whole HAC plan, which needs a content script — is unavailable to exactly the
+students the pilot is for.
+
+The two real routes:
+
+- **Chrome Web Store**, a one-time $5 developer registration. Students install
+  in one click, updates ship automatically, and nothing is sideloaded. Unlisted
+  publishing is available if it shouldn't be public.
+- **Force-installed by district IT** via policy, which needs a sponsor but works
+  on managed fleets and takes the decision away from the student.
+
+The manifest is now ready for either. Icons at 16/48/128, and — the part a
+reviewer or an IT department actually looks at — **`<all_urls>` is gone**. It was
+never needed: tab hostnames come from the `tabs` permission, and the only thing
+fetched is the student's own Insight server. `host_permissions` is now just the
+production origin, with anything else requested at pairing time through
+`chrome.permissions.request`. An extension that asks for every site on the
+internet is one a school is right to refuse.
+
+Note for local development: pairing against a dev server on a LAN address now
+triggers a permission prompt in the popup rather than working silently.
+
+---
+
 ## If we do HAC
 
 Not built. But the reconnaissance cost two people real effort, so it lives here

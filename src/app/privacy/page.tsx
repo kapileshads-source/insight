@@ -180,9 +180,9 @@ export default function PrivacyPage() {
           <li>While your account is open, we keep it</li>
           <li>Delete your account and it&rsquo;s erased within 30 days, backups within 90</li>
           <li>
-            Don&rsquo;t use Insight for 18 months and we email you, then delete
-            it 30 days later. That covers graduating or leaving FISD — you
-            don&rsquo;t have to do anything.
+            We don&rsquo;t delete dormant accounts on a timer. If you graduate
+            or leave, delete the account yourself and it goes — we&rsquo;d
+            rather not promise a sweep we haven&rsquo;t built.
           </li>
         </ul>
       </Section>

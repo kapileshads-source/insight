@@ -113,10 +113,12 @@ architecture makes most of that impossible rather than merely prohibited.
 
 Two, found while writing this. A reviewer would ask about both.
 
-**1. Eighteen-month inactivity deletion — promised, not implemented.**
-`/privacy` says: *"Don't use Insight for 18 months and we email you, then delete
-it 30 days later."* No job does this and nothing records a last-active date.
-Either build it or remove the sentence; the sentence is currently false.
+**1. Dormant accounts are never deleted, and the page now says so.** It used to
+promise an email after 18 months and deletion 30 days later; no job did this and
+nothing recorded a last-active date. The claim was removed rather than built,
+which leaves a real question for review: **is indefinite retention of a dormant
+minor's account acceptable, or is a sweep something we should be obliged to
+build?** Deletion by the student works and always has.
 
 **2. Backup retention — unverified.** `/privacy` says deleted data is gone from
 backups within 90 days. Nobody has checked what Neon's free tier actually

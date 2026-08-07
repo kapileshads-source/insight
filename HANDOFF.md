@@ -309,6 +309,57 @@ had deliberately skipped. Any paired device counts now.
 
 ---
 
+## The iPhone app, and what it can never do
+
+Decided, not built. Xcode isn't installed on the build Mac — only Command Line
+Tools — so this waits on a 15GB download.
+
+**The entitlement is the whole story.** Tracking which app is in front, and
+blocking one, both need `FamilyControls` / `DeviceActivity` / `ManagedSettings`.
+That entitlement is *granted by Apple*, not purchased: $99/yr buys the right to
+ask, and they approve parental-control products with a company behind them.
+Assume the answer is no, and design as though it is.
+
+So the iPhone app is a **companion**: start and stop sessions, log sleep and
+screen time and scores, read insights. Which is what a phone is for here anyway —
+nobody studies on their phone. Phone usage keeps arriving the way it does now,
+through the Screen Time screenshot and OCR.
+
+**Blocking, such as it is: iOS Focus modes.** A Focus hides apps from the Home
+Screen and silences their notifications. The app can't set one directly, but it
+can run a Shortcut — `shortcuts://run-shortcut?name=Study` — so the student sets
+up a Study Focus and a shortcut once, and Insight turns it on when a session
+starts and off when it ends.
+
+That's friction rather than a lock, and it fits: Focus Mode on the desktop apps
+was never a hard lock either. Three seconds and a way through, deliberately,
+because a hard lock gets uninstalled. The iPhone arrives at the same philosophy
+through a different door.
+
+So the line to be honest with students about: **desktop and Android measure and
+block; iPhone nudges.**
+
+**Distribution.** Free provisioning installs to your own device and expires after
+seven days, re-signed by plugging into a Mac. $99 buys TestFlight — 100 testers,
+no expiry — which is the actual reason to pay, rather than any capability.
+
+**Auth, when it's built:** pair like the desktop apps, with a code from
+`/devices` and the bearer token `authenticateDevice` already checks. No Clerk
+iOS SDK. The phone *will* hold the encryption key, derived from the password as
+the browser does — that doesn't break the rule, because the rule is that
+unattended trackers never hold a key. A phone the student unlocks with their own
+password is the browser, not the extension.
+
+Needs new endpoints, unlike everything else: unlock material, session start and
+stop, and writing sealed records. Build them alongside the app rather than
+ahead of it.
+
+**The fallback, still on the table:** make the web app an installable PWA. A
+day's work, free, covers Android the same day, and loses only background
+notifications.
+
+---
+
 ## Handing out the desktop apps
 
 `/download` is public, detects the OS from the request's User-Agent, and puts

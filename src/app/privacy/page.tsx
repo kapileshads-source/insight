@@ -77,11 +77,33 @@ export default function PrivacyPage() {
             them say
           </li>
         </ul>
+        <p>Two real exceptions, and this is the honest part of the page.</p>
         <p>
-          One real exception: if you connect Canvas, we hold your Canvas access
-          token in a form our server can read, because our server has to call
-          Canvas for you. It&rsquo;s the only secret of yours we can see. You
-          can disconnect Canvas at any time, which deletes it.
+          <strong className="text-text">Canvas.</strong>{" "}
+          If you connect it, we
+          hold your Canvas access token in a form our server can read, because
+          our server has to call Canvas for you. Disconnect Canvas at any time
+          and it&rsquo;s deleted.
+        </p>
+        <p>
+          <strong className="text-text">
+            What the extension and the desktop apps send.
+          </strong>{" "}
+          None of them can encrypt anything, because encrypting needs your
+          password and we never give it to them — deliberately, since something
+          running on your laptop all day is the last place that key should live.
+          So while a session is running they send us plain site and app names,
+          and those sit in a holding area our server <em>can</em> read until the
+          next time you open Insight. At that point your browser encrypts them
+          and deletes the readable copy. Anything nobody collects is deleted
+          after six hours regardless.
+        </p>
+        <p className="text-text">
+          Which means: for a few hours, we can see that you had YouTube open for
+          twenty minutes during a session on Tuesday. Not what you watched, not
+          which video, and nothing at all from outside a session — but that much,
+          yes. It&rsquo;s the one place this design leaks, and you should hear it
+          from us rather than find it.
         </p>
       </Section>
 

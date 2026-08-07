@@ -7,7 +7,7 @@ import { QuickLog } from "@/components/quick-log";
 import { SessionTimer } from "@/components/session-timer";
 import { fetchEncryptedRecords } from "@/app/actions/logs";
 import { getBlocklistPrefs } from "@/app/actions/settings";
-import { buildBlocklist, splitActivity } from "@/lib/blocklist";
+import { buildBlocklist, matchesBlocklist, splitActivity } from "@/lib/blocklist";
 import { requestRecommendation } from "@/app/actions/recommendations";
 import {
   commitPendingDeviceData,
@@ -33,6 +33,19 @@ import type {
 
 type Stats = ReturnType<typeof basicStats>;
 
+/// What one session's devices actually saw, app by app.
+///
+/// The numbers this feeds already existed — a single distracted total, folded
+/// into the weekly recap and a sample-size-gated insight. That meant a student
+/// who paired a laptop and studied for an hour saw no evidence whatsoever that
+/// it had worked, which is indistinguishable from broken and was reported as
+/// broken. The detail was decrypted and thrown away; this keeps it.
+type DeviceReadout = {
+  startedAt: Date;
+  entries: { name: string; seconds: number; distracted: boolean }[];
+  totalSeconds: number;
+};
+
 /// Fetches ciphertext, decrypts it here, and does the analysis in the browser.
 ///
 /// This component is the whole reason the architecture looks the way it does:
@@ -54,6 +67,7 @@ export function StudyPanel({
   const [alerts, setAlerts] = useState<WellbeingAlert[]>([]);
   const [advice, setAdvice] = useState<string | null>(null);
   const [subjects, setSubjects] = useState<string[]>([]);
+  const [lastDevice, setLastDevice] = useState<DeviceReadout | null>(null);
   const [failed, setFailed] = useState(false);
 
   const collectPendingDeviceData = useCallback(async () => {
@@ -112,6 +126,11 @@ export function StudyPanel({
       // Extension records arrive per session, several per session, so they're
       // summed before being attached.
       const distractedBySession = new Map<string, number>();
+      // Kept per app rather than summed away, so the student can be shown what
+      // their laptop actually saw rather than a single number they have no way
+      // to check.
+      const appsBySession = new Map<string, Map<string, number>>();
+
       for (const row of raw.activity) {
         try {
           const p = await reveal<{
@@ -125,6 +144,12 @@ export function StudyPanel({
             row.sessionId,
             (distractedBySession.get(row.sessionId) ?? 0) + distractedSeconds,
           );
+
+          const apps = appsBySession.get(row.sessionId) ?? new Map<string, number>();
+          for (const d of p.domains ?? []) {
+            apps.set(d.domain, (apps.get(d.domain) ?? 0) + d.seconds);
+          }
+          appsBySession.set(row.sessionId, apps);
         } catch {
           // One unreadable row shouldn't cost the whole dashboard.
         }
@@ -155,6 +180,31 @@ export function StudyPanel({
             };
           }),
       );
+
+      // The most recent session a device reported on — which is usually the one
+      // that just ended, and is the only one a student wants to check.
+      const withDevice = sessions
+        .filter((s) => appsBySession.has(s.id))
+        .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())[0];
+
+      if (withDevice) {
+        const apps = appsBySession.get(withDevice.id)!;
+        const entries = [...apps.entries()]
+          .map(([name, seconds]) => ({
+            name,
+            seconds,
+            distracted: matchesBlocklist(name, blocklist),
+          }))
+          .sort((a, b) => b.seconds - a.seconds);
+
+        setLastDevice({
+          startedAt: withDevice.startedAt,
+          entries,
+          totalSeconds: entries.reduce((n, e) => n + e.seconds, 0),
+        });
+      } else {
+        setLastDevice(null);
+      }
 
       const sleep = await Promise.all(
         raw.sleep.map(async (s) => ({
@@ -306,6 +356,66 @@ export function StudyPanel({
               {recap.headline.statement}
             </p>
           )}
+        </section>
+      )}
+
+      {lastDevice && lastDevice.entries.length > 0 && (
+        <section className="mt-14 rounded-lg border border-line bg-surface p-6">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="h3 text-[17px]">What your devices saw</h2>
+            <span className="label text-text-faint">
+              {lastDevice.startedAt.toLocaleDateString(undefined, {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+              })}
+            </span>
+          </div>
+          <p className="mt-2 text-[15px] leading-relaxed text-text-muted">
+            Your last measured session, {formatDuration(
+              Math.round(lastDevice.totalSeconds / 60),
+            )}{" "}
+            in total. Sites come from the extension, apps from the Windows or
+            Mac app.
+          </p>
+
+          <div className="mt-5">
+            {lastDevice.entries.slice(0, 12).map((e, i) => (
+              <div
+                key={e.name}
+                className={`flex items-baseline justify-between gap-4 py-2.5 ${
+                  i > 0 ? "border-t border-line" : ""
+                }`}
+              >
+                <span className="min-w-0 truncate text-[15px]">
+                  {e.name}
+                  {e.distracted && (
+                    <span className="ml-2 text-[13px] text-butter">
+                      on your blocklist
+                    </span>
+                  )}
+                </span>
+                <span className="shrink-0 text-[15px] text-text-muted tabular-nums">
+                  {e.seconds < 60
+                    ? "under a minute"
+                    : formatDuration(Math.round(e.seconds / 60))}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {lastDevice.entries.length > 12 && (
+            <p className="mt-3 text-[14px] text-text-faint">
+              and {lastDevice.entries.length - 12} more, each under the top
+              twelve.
+            </p>
+          )}
+
+          <p className="mt-4 border-t border-line pt-4 text-[13px] leading-relaxed text-text-faint">
+            Only what was in front while a session was running, and only the
+            name — never a page title or a document name. Encrypted here in your
+            browser, the same as everything else.
+          </p>
         </section>
       )}
 

@@ -30,7 +30,7 @@ export default function ParentsPage() {
           },
           {
             q: "Who can see the data?",
-            a: "Nobody but your child. It's encrypted on their device before it reaches us, using a key made from their password. We hold scrambled data and no way to unscramble it. That includes us, and it would include anyone who broke into our database.",
+            a: "Nobody but your child. It's encrypted on their device before it reaches us, using a key made from their password. We hold scrambled data and no way to unscramble it. That includes us, and it would include anyone who broke into our database. The one exception is the question below about what we can read, and it's worth reading.",
           },
           {
             q: "Does the school see it?",
@@ -42,11 +42,15 @@ export default function ParentsPage() {
           },
           {
             q: "What about browsing?",
-            a: "The optional browser extension records site names only while a study session is actively running, and nothing at any other time. It never records page contents or what they type.",
+            a: "The optional browser extension records site names only while a study session is actively running, and nothing at any other time. It never records page contents or what they type. The same is true of the optional Windows and Mac apps, which record the names of apps that were in front — never window titles, so never which document or which video.",
+          },
+          {
+            q: "Is there anything you can read?",
+            a: "Yes, briefly, and we'd rather say so plainly. The extension and the desktop apps can't encrypt anything — that needs your child's password, and we never give it to them, because a program running on a laptop all day is the last place that key should sit. So while a session is running they send us plain site and app names, and those stay readable to us until the next time your child opens Insight, when their browser encrypts them and deletes the readable copy. Anything not collected is deleted after six hours regardless. In practice that means we could see that a session on Tuesday included twenty minutes of YouTube — not what was watched, and nothing from outside a study session.",
           },
           {
             q: "Is it sold or advertised against?",
-            a: "No. Insight doesn't sell data, doesn't run ads, and doesn't use your child's data to train AI models. We couldn't do any of those things with it even if we wanted to, because we can't read it.",
+            a: "No. Insight doesn't sell data, doesn't run ads, and doesn't use your child's data to train AI models. Their study records are encrypted and unreadable to us, and the site and app names described above are deleted rather than kept — neither is sold, shared or advertised against.",
           },
           {
             q: "Can I change my mind?",

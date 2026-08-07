@@ -98,14 +98,8 @@ that it's right.
   and launches here. What nobody has watched happen is a blocked app being
   pushed out of the way, an override being recorded, or the ten-minute idle
   cutoff firing
-- **Nothing in the UI shows what a device recorded.** App time feeds
-  `distractedMinutes`, which only surfaces in the weekly recap and a
-  sample-size-gated insight — so after a single session a student sees no
-  evidence the app did anything at all. This made the Windows app look broken
-  when it wasn't. A per-session device readout is the obvious fix
 - Sleep-and-wake baseline and usual-study-location screens (two dead "Set up"
-  links on the dashboard checklist)
-- Privacy page doesn't mention `PendingDeviceData`
+  links on the dashboard checklist) — these need schema, unlike the readout
 - Canvas ↔ manual grade reconciliation (schema supports it, no UI)
 - iOS is impossible: Apple's entitlement is granted, not purchased
 

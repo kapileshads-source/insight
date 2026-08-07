@@ -24,7 +24,7 @@ current state.
 Everything is on a free tier. The only thing that would cost money is a
 domain, and the plan is to get one free via GitHub Student Pack or eu.org.
 
-`npm test` runs 209 tests. `npm run build` regenerates the Prisma client,
+`npm test` runs 228 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds.
 
 ---
@@ -92,6 +92,9 @@ Website, all deployed and working:
 - Browser extension (`extension/`), Manifest V3, loaded unpacked
 - Windows app (`windows/`), C# tray app, sideloaded as one self-contained exe
 - macOS app (`mac/`), Swift menu bar app, sideloaded as an ad-hoc signed bundle
+- iPhone app (`ios/`), SwiftUI — pairs, unlocks, starts and stops sessions, logs
+  sleep, and bounces you out of apps via a Shortcuts automation
+- `/download` for the desktop apps, `/bounce` for the iPhone automation
 
 Data: 30 FISD campuses seeded, real A/B calendar extracted from the district
 PDF by sampling cell colours — 82 A days against 82 B days, which is the check
@@ -100,13 +103,17 @@ that it's right.
 ## What's not built
 
 - **Android app** — the two desktop apps are the pattern to copy
-- **Neither desktop app has had its Focus Mode path exercised.** The Windows app
-  pairs, polls and records on a real laptop; the Mac app builds, passes 32 tests
-  and launches here. What nobody has watched happen is a blocked app being
-  pushed out of the way, an override being recorded, or the ten-minute idle
-  cutoff firing
+- **The iPhone app has only ever run in the simulator.** Pairing, unlocking and
+  the crypto are verified against the real browser code; what nobody has done is
+  pair it to a real account and run a session end to end
+- **Untested paths on the desktop apps:** blocking works — it's been used — but
+  nobody has watched an override get recorded, the ten-minute idle cutoff fire,
+  or a session-end flush land
 - Canvas ↔ manual grade reconciliation (schema supports it, no UI)
-- iOS is impossible: Apple's entitlement is granted, not purchased
+- **iOS can never track or block apps** without `FamilyControls`, which Apple
+  grants rather than sells. $99 does buy the *development* capability, so real
+  shielding on your own phone is achievable; shipping it to students needs
+  Apple's approval of the distribution entitlement, which is the uncertain part
 
 ---
 
@@ -375,6 +382,27 @@ browser code: Swift reads what the browser sealed, the browser reads what Swift
 sealed, and a wrong password fails as a wrong password rather than as corrupt
 data. If that ever drifts, the symptom is a correct password being rejected
 forever, so test interop rather than assuming it.
+
+**Blocking, in practice: the bounce.** Shortcuts has a personal automation
+trigger — *when this app is opened* — and with Run Immediately on, opening
+Instagram flips the student straight back out. It lands on `/bounce`, or on
+`insight://bounce?app=Instagram` if the native app is installed.
+
+That is free, needs no entitlement and no developer account, and fires *every
+single time* rather than hiding an icon. It is an interruption rather than a
+wall, and both screens say so out loud — a blocker that hides its own off-switch
+is one you delete in a bad week, and then it protects you from nothing.
+
+The web page is the one that reaches pilot students, since it needs nothing
+installed. The app name is sanitised on both sides (`src/lib/bounce.ts`,
+`Store.cleanAppName`): it arrives in a URL anyone can write and is rendered
+straight back, so a link dressed as an app name would otherwise let Insight's
+own page carry someone else's message.
+
+**Everything free on iOS is either undoable by the student or needs another
+person to hold a passcode.** Focus modes, Screen Time limits, DNS profiles, the
+bounce — all of them. A real wall needs the entitlement. Worth telling students
+plainly rather than implying the iPhone gets what a laptop gets.
 
 **The fallback, still on the table:** make the web app an installable PWA. A
 day's work, free, covers Android the same day, and loses only background

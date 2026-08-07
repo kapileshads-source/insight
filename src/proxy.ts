@@ -15,6 +15,10 @@ const isPublic = createRouteMatcher([
   // Someone sent this link by a friend should be able to read it before
   // deciding whether to sign up.
   "/download",
+  // Opened by a Shortcuts automation the instant a student opens something
+  // they meant to avoid. Requiring a sign-in first would defeat the point —
+  // and a signed-in reader still gets their session details.
+  "/bounce",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/consent(.*)",

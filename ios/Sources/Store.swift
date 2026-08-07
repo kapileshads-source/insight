@@ -22,6 +22,18 @@ final class Store: ObservableObject {
     @Published private(set) var session: SessionState?
     @Published private(set) var lastError: String?
     @Published private(set) var busy = false
+    /// Set when a Shortcuts automation opened us with `insight://bounce`.
+    ///
+    /// Carries a timestamp so a second bounce off the same app re-triggers the
+    /// screen rather than looking like nothing happened — the interruption is
+    /// the entire feature.
+    @Published private(set) var bouncedFrom: Bounce?
+
+    struct Bounce: Equatable {
+        let app: String?
+        let at: Date
+    }
+
     @Published var useFocusShortcuts: Bool {
         didSet {
             config.useFocusShortcuts = useFocusShortcuts
@@ -54,6 +66,46 @@ final class Store: ObservableObject {
         self.timer = timer
 
         Task { await refresh() }
+    }
+
+    /// `insight://bounce?app=Instagram`.
+    ///
+    /// The app name is checked here rather than trusted: it arrives from a URL,
+    /// which anything on the phone can construct, and it gets rendered straight
+    /// back to the reader. Same rule as `src/lib/bounce.ts` on the web.
+    func handle(url: URL) {
+        guard url.scheme == "insight", url.host == "bounce" else { return }
+
+        let raw = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?.first(where: { $0.name == "app" })?.value
+
+        bouncedFrom = Bounce(app: Store.cleanAppName(raw), at: Date())
+    }
+
+    func dismissBounce() {
+        bouncedFrom = nil
+    }
+
+    /// Letters, digits, spaces and the marks real app names use. Anything else
+    /// and we say nothing rather than showing someone else's sentence.
+    static func cleanAppName(_ input: String?) -> String? {
+        guard let input else { return nil }
+
+        let collapsed = input
+            .replacingOccurrences(of: " +", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespaces)
+
+        guard !collapsed.isEmpty, collapsed.count <= 40 else { return nil }
+        guard collapsed.rangeOfCharacter(from: .controlCharacters) == nil else { return nil }
+        guard collapsed.rangeOfCharacter(from: CharacterSet(charactersIn: ":/\\<>")) == nil
+        else { return nil }
+
+        let allowed = CharacterSet.letters
+            .union(.decimalDigits)
+            .union(CharacterSet(charactersIn: " '&+.!-"))
+        guard collapsed.unicodeScalars.allSatisfy({ allowed.contains($0) }) else { return nil }
+
+        return collapsed
     }
 
     // --- pairing and unlocking ----------------------------------------------

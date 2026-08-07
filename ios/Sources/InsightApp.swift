@@ -16,6 +16,7 @@ struct InsightApp: App {
                 .environmentObject(store)
                 .preferredColorScheme(.dark)
                 .task { store.start() }
+                .onOpenURL { store.handle(url: $0) }
         }
     }
 }
@@ -27,10 +28,17 @@ struct RootView: View {
         ZStack {
             Theme.background.ignoresSafeArea()
 
-            switch store.phase {
-            case .unpaired: PairView()
-            case .locked: UnlockView()
-            case .ready: StatusView()
+            // A bounce takes over whatever was on screen, including the pair
+            // and unlock screens. Someone who just got yanked out of Instagram
+            // is owed an explanation before they're asked for a password.
+            if let bounced = store.bouncedFrom {
+                BounceView(app: bounced.app)
+            } else {
+                switch store.phase {
+                case .unpaired: PairView()
+                case .locked: UnlockView()
+                case .ready: StatusView()
+                }
             }
         }
     }

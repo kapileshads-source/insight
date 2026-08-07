@@ -41,3 +41,10 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UIUserInterfaceStyle: Dark
+        # insight://bounce?app=Instagram — what a Shortcuts automation opens
+        # the moment a student opens something they meant to avoid. iOS won't
+        # let any app block another one, so the phone bounces out and lands
+        # here instead.
+        CFBundleURLTypes:
+          - CFBundleURLName: app.insight.ios
+            CFBundleURLSchemes: [insight]

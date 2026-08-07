@@ -51,6 +51,7 @@ internal static class SelfTest
 
         ReportTests();
         BlocklistTests();
+        AddressTests();
         ParseTests();
 
         Console.WriteLine($"\n{_pass} passed, {_fail} failed");
@@ -129,6 +130,44 @@ internal static class SelfTest
             !Apps.IsBlocked("Microsoft Word", withApps));
         Ok("an app entry cannot swallow a hostname",
             !Apps.IsBlocked("valorant.example.com", withApps));
+    }
+
+    /// A pairing code sent over plain http to the internet is readable by
+    /// anyone on the same wifi, so the pairing screen refuses. Local addresses
+    /// stay allowed, because that is how this gets developed.
+    private static void AddressTests()
+    {
+        Ok("https is fine",
+            Address.IsAcceptable("https://insight-study-sleep.vercel.app", out _));
+        Ok("https with a port is fine",
+            Address.IsAcceptable("https://example.org:8443", out _));
+
+        Ok("http to the internet is refused",
+            !Address.IsAcceptable("http://insight-study-sleep.vercel.app", out _));
+        Ok("and says why",
+            !Address.IsAcceptable("http://example.org", out string why)
+                && why.Contains("https"));
+
+        Ok("http to localhost is allowed",
+            Address.IsAcceptable("http://localhost:3000", out _));
+        Ok("http to loopback is allowed",
+            Address.IsAcceptable("http://127.0.0.1:3000", out _));
+        Ok("http to a LAN address is allowed",
+            Address.IsAcceptable("http://192.168.1.138:3000", out _));
+        Ok("http to a 10-net address is allowed",
+            Address.IsAcceptable("http://10.0.0.4:3000", out _));
+        Ok("http to a .local name is allowed",
+            Address.IsAcceptable("http://kapilesh-mac.local:3000", out _));
+
+        Ok("172.20 is private, so allowed",
+            Address.IsAcceptable("http://172.20.1.1:3000", out _));
+        Ok("172.32 is not private, so refused",
+            !Address.IsAcceptable("http://172.32.1.1:3000", out _));
+
+        Ok("other schemes are refused", !Address.IsAcceptable("ftp://example.org", out _));
+        Ok("a file path is refused", !Address.IsAcceptable("file:///etc/passwd", out _));
+        Ok("nonsense is refused", !Address.IsAcceptable("not an address", out _));
+        Ok("empty is refused", !Address.IsAcceptable("", out _));
     }
 
     private static void ParseTests()

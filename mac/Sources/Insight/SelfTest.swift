@@ -42,6 +42,7 @@ enum SelfTest {
 
         reportTests()
         blocklistTests()
+        addressTests()
         parseTests()
 
         print("\n\(passed) passed, \(failed) failed")
@@ -114,6 +115,37 @@ enum SelfTest {
         ok("a school app is untouched", !Apps.isBlocked("Pages", blocklist: withApps))
         ok("an app entry cannot swallow a hostname",
            !Apps.isBlocked("valorant.example.com", blocklist: withApps))
+    }
+
+    /// A pairing code sent over plain http to the internet is readable by
+    /// anyone on the same wifi, so the pairing screen refuses. Local addresses
+    /// stay allowed, because that is how this gets developed.
+    private static func addressTests() {
+        ok("https is fine", Address.problem(with: "https://insight-study-sleep.vercel.app") == nil)
+        ok("https with a port is fine", Address.problem(with: "https://example.org:8443") == nil)
+
+        ok("http to the internet is refused",
+           Address.problem(with: "http://insight-study-sleep.vercel.app") != nil)
+        ok("and says why",
+           Address.problem(with: "http://example.org")?.contains("https") == true)
+
+        ok("http to localhost is allowed", Address.problem(with: "http://localhost:3000") == nil)
+        ok("http to loopback is allowed", Address.problem(with: "http://127.0.0.1:3000") == nil)
+        ok("http to a LAN address is allowed",
+           Address.problem(with: "http://192.168.1.138:3000") == nil)
+        ok("http to a 10-net address is allowed",
+           Address.problem(with: "http://10.0.0.4:3000") == nil)
+        ok("http to a .local name is allowed",
+           Address.problem(with: "http://kapilesh-mac.local:3000") == nil)
+
+        ok("172.20 is private, so allowed", Address.problem(with: "http://172.20.1.1:3000") == nil)
+        ok("172.32 is not private, so refused",
+           Address.problem(with: "http://172.32.1.1:3000") != nil)
+
+        ok("other schemes are refused", Address.problem(with: "ftp://example.org") != nil)
+        ok("a file path is refused", Address.problem(with: "file:///etc/passwd") != nil)
+        ok("nonsense is refused", Address.problem(with: "not an address") != nil)
+        ok("empty is refused", Address.problem(with: "") != nil)
     }
 
     private static func parseTests() {

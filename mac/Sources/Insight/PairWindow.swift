@@ -115,8 +115,8 @@ final class PairWindow: NSWindowController {
             fail("Both fields are needed.")
             return
         }
-        guard base.hasPrefix("https://") || base.hasPrefix("http://") else {
-            fail("The address should start with https://")
+        if let problem = Address.problem(with: base) {
+            fail(problem)
             return
         }
 

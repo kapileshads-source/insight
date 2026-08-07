@@ -30,6 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../Address.cs" />
     <Compile Include="../Apps.cs" />
     <Compile Include="../ApiClient.cs" />
     <Compile Include="../Config.cs" />

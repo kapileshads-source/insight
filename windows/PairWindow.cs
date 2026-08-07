@@ -181,10 +181,9 @@ internal sealed class PairWindow : Form
             Fail("Both fields are needed.");
             return;
         }
-        if (!apiBase.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
-            !apiBase.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        if (!Address.IsAcceptable(apiBase, out string problem))
         {
-            Fail("The address should start with https://");
+            Fail(problem);
             return;
         }
 

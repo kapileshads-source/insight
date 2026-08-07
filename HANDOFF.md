@@ -463,6 +463,14 @@ Still unknown: whether the assignments table has a header row to bind to, and
 whether ungraded work appears there at all. Both are answerable by opening the
 page in DevTools once school starts.
 
+**Pairing refuses plain http to anything but a local address.** Both desktop
+apps used to accept any `http://` address, which meant the pairing code and then
+every app name in every session crossed the network in clear text — readable by
+anyone else on the school's wifi, and chosen by a student typing "http" out of
+habit rather than by anyone weighing it up. `Address` in each app now allows
+https anywhere, and http only to localhost, `.local` names and private LAN
+ranges, so developing against a laptop on the same network still works.
+
 **One thing not to copy:** `SumitNalavade/FriscoISDHACAPI` passes username and
 password as URL query parameters, which land in server logs and browser history.
 Don't, and don't point students at any hosted instance of it.

@@ -24,7 +24,7 @@ current state.
 Everything is on a free tier. The only thing that would cost money is a
 domain, and the plan is to get one free via GitHub Student Pack or eu.org.
 
-`npm test` runs 130 tests. `npm run build` regenerates the Prisma client,
+`npm test` runs 159 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds.
 
 ---
@@ -55,8 +55,9 @@ Three deliberate exceptions, all documented in `prisma/schema.prisma`:
 **`PendingDeviceData` is the weak point.** The extension can't encrypt, so it
 posts plaintext to a staging table that the student's browser collects,
 encrypts and deletes on next load. Rows expire in six hours. This is the one
-place device data is server-readable, and **the privacy page does not yet say
-so** — that should be fixed before real students use it.
+place device data is server-readable. Both privacy pages now say so in as many
+words, including what it means in practice — a reader should not have to infer
+it from the schema.
 
 Consequence of all this: the insight engine runs **in the browser**
 (`src/lib/insights.ts`, called from `src/components/study-panel.tsx`), because
@@ -251,6 +252,55 @@ the two apps' agreement is visible rather than assumed.
 `bundleId == Bundle.main.bundleIdentifier`, and outside a .app bundle both sides
 are nil — so every app without a bundle id was silently dropped. The self-test
 caught it on its first run.
+
+---
+
+## If we do HAC
+
+Not built. But the reconnaissance cost two people real effort, so it lives here
+rather than in a chat log. `src/lib/assignment-match.ts` is written and tested;
+nothing imports it yet.
+
+**Never take a HAC password.** It is the student's district identity — often the
+same credential as their district Google account — and it unlocks schedule,
+attendance and discipline records. It is not comparable to the Canvas token,
+which is scoped, revocable and expires in 90 days. The one design that avoids it
+entirely: a **content script on `hac.friscoisd.org`**, reading pages the student
+is already logged into. Same-origin, so cookies apply and CORS never enters it,
+and no login handshake is needed — which also skips the whole
+`__RequestVerificationToken` / `Database: "10"` / hidden-fields dance that
+server-side scrapers need. A plain web page cannot do this: HAC sends no CORS
+headers and its session cookie is `HttpOnly`. The extension is what makes it
+possible.
+
+**Upcoming work is at `/HomeAccess/Home/WeekView`, not `Assignments.aspx`.** It
+takes `?startDate=MM/DD/YYYY`, so a semester is a loop over week starts, no
+`__VIEWSTATE` postback. Each row carries a multiline `title=""` attribute with
+due date, max points, category, type, droppable and extra-credit flags, plus
+course, period and teacher on the same row — richer than the gradebook page, and
+it avoids joining courses on name alone.
+
+**On `Assignments.aspx`: cell 0 is the due date, cell 1 is the assigned date.**
+Rows are `tr.sg-asp-table-data-row`, course from `div.AssignmentClass`,
+score and points in cells 4 and 5. `span.sg-header-sub-heading` on each course
+header is a last-updated stamp, which is a staleness signal worth keeping.
+
+**There is no stable assignment id.** Two independent parsers of HAC capture
+none, which is decent negative evidence. Hence the matcher.
+
+Three traps found in existing scrapers, all worth not repeating: a `points`
+value defaulting to `100.0` when unparseable (a 5-point warm-up silently becomes
+a 100-point assignment); recomputing course grades when HAC never exposes
+category weights; and parsing by positional cell index, which fails *silently*
+when a column is inserted — bind to header labels instead.
+
+Still unknown: whether the assignments table has a header row to bind to, and
+whether ungraded work appears there at all. Both are answerable by opening the
+page in DevTools once school starts.
+
+**One thing not to copy:** `SumitNalavade/FriscoISDHACAPI` passes username and
+password as URL query parameters, which land in server logs and browser history.
+Don't, and don't point students at any hosted instance of it.
 
 ---
 

@@ -78,6 +78,36 @@ export type ProfilePayload = {
   usualLocation?: Location;
 };
 
+/// "23:20" -> 1400. Null for anything an `<input type="time">` wouldn't emit.
+export function parseTimeToMinutes(value: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+
+  return hours * 60 + minutes;
+}
+
+/// 1400 -> "23:20", which is what an `<input type="time">` wants back.
+export function minutesToTimeValue(minutes: number): string {
+  const clamped = ((minutes % 1440) + 1440) % 1440;
+  const h = Math.floor(clamped / 60);
+  const m = clamped % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/// How long a night is, in minutes, given a bedtime and a wake time.
+///
+/// Bedtimes cross midnight and wake times don't, so plain subtraction gives a
+/// negative night — which would have shown a student sleeping minus four
+/// hours. Wrapping is the normal case here, not the edge case.
+export function nightLength(sleepMinutes: number, wakeMinutes: number): number {
+  const raw = wakeMinutes - sleepMinutes;
+  return raw > 0 ? raw : raw + 1440;
+}
+
 /// "1400" -> "11:20 PM"
 export function formatMinutes(minutes: number): string {
   const h24 = Math.floor(minutes / 60) % 24;

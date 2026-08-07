@@ -24,7 +24,7 @@ current state.
 Everything is on a free tier. The only thing that would cost money is a
 domain, and the plan is to get one free via GitHub Student Pack or eu.org.
 
-`npm test` runs 159 tests. `npm run build` regenerates the Prisma client,
+`npm test` runs 181 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds.
 
 ---
@@ -81,6 +81,7 @@ Website, all deployed and working:
 - Canvas: token connect, sync, 401 → `DataGap`, 90-day expiry warnings
 - Settings: lock device, change password, mute insights, export, delete,
   blocklist editor
+- Baseline at `/baseline` — usual sleep and wake times, usual place and noise
 - Admin schedule/calendar editor at `/admin/schedules` (env allowlist)
 - Privacy pages, student and parent
 - Browser extension (`extension/`), Manifest V3, loaded unpacked
@@ -99,8 +100,6 @@ that it's right.
   and launches here. What nobody has watched happen is a blocked app being
   pushed out of the way, an override being recorded, or the ten-minute idle
   cutoff firing
-- Sleep-and-wake baseline and usual-study-location screens (two dead "Set up"
-  links on the dashboard checklist) — these need schema, unlike the readout
 - Canvas ↔ manual grade reconciliation (schema supports it, no UI)
 - iOS is impossible: Apple's entitlement is granted, not purchased
 
@@ -252,6 +251,31 @@ the two apps' agreement is visible rather than assumed.
 `bundleId == Bundle.main.bundleIdentifier`, and outside a .app bundle both sides
 are nil — so every app without a bundle id was silently dropped. The self-test
 caught it on its first run.
+
+---
+
+## The baseline, and why the checklist has one row where it used to have two
+
+`/baseline` fills in `User.profileCipher` — usual sleep and wake times, usual
+place and noise. **No migration was needed**: the column and `ProfilePayload`
+already existed and had simply never been written to.
+
+The dashboard checklist had two dead rows for this, and it now has one, because
+of the encryption model rather than laziness. The server can see that a baseline
+exists and nothing whatsoever about what is in it, so "sleep times done, place
+not yet" is not a question it can answer. The alternatives were a plaintext flag
+per half — putting a fact about a student's data on the structure side of the
+line for the sake of a tick — or decrypting the checklist in the browser, which
+means a client component that shows nothing useful while the app is locked. One
+row, one page, saved in a single go, so done means done.
+
+Times are minutes from midnight, like the bell schedules. `nightLength` wraps
+past midnight: bedtimes cross it and wake times don't, so plain subtraction
+would have told a student they slept minus four hours.
+
+Also fixed while in there: "Install the extension" was ticked only by a browser
+extension, so a student on the Mac app was nagged forever about a checkbox they
+had deliberately skipped. Any paired device counts now.
 
 ---
 

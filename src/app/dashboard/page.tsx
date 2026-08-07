@@ -5,6 +5,7 @@ import { getSchoolDayState } from "@/lib/current-period";
 import { getRunningSession } from "@/app/actions/sessions";
 import { getCanvasStatus } from "@/app/actions/canvas";
 import { listDevices } from "@/app/actions/devices";
+import { hasProfile } from "@/app/actions/profile";
 import { GapPrompt } from "@/components/gap-prompt";
 import { StudyPanel } from "@/components/study-panel";
 
@@ -105,9 +106,11 @@ async function RightNow({ schoolId }: { schoolId: string }) {
 function FinishSetup({
   hasCanvas,
   hasExtension,
+  hasBaseline,
 }: {
   hasCanvas: boolean;
   hasExtension: boolean;
+  hasBaseline: boolean;
 }) {
   const items: {
     title: string;
@@ -122,20 +125,14 @@ function FinishSetup({
       href: "/canvas",
     },
     {
-      title: "Sleep and wake times",
-      body: "The baseline every night gets measured against.",
-      done: false,
-      href: null,
+      title: "Your usual week",
+      body: "Sleep and wake times, and where you usually study — the baseline everything else is measured against.",
+      done: hasBaseline,
+      href: "/baseline",
     },
     {
-      title: "Where you usually study",
-      body: "Location and noise, so those can be compared later.",
-      done: false,
-      href: null,
-    },
-    {
-      title: "Install the extension",
-      body: "Tracks laptop time during a session, and powers Focus Mode.",
+      title: "Pair a device",
+      body: "The extension, or the Windows or Mac app. Tracks time during a session, and powers Focus Mode.",
       done: hasExtension,
       href: "/devices",
     },
@@ -189,6 +186,7 @@ export default async function Dashboard() {
   const running = await getRunningSession();
   const canvas = await getCanvasStatus();
   const devices = await listDevices();
+  const hasBaseline = await hasProfile();
 
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-6 pb-32">
@@ -216,7 +214,11 @@ export default async function Dashboard() {
 
       <FinishSetup
         hasCanvas={canvas.connected}
-        hasExtension={devices.some((d) => d.kind === "BROWSER_EXTENSION")}
+        // Any paired device counts. A student on a Mac who never installs the
+        // extension has still done this, and nagging them for a checkbox they
+        // deliberately skipped is how a checklist gets ignored entirely.
+        hasExtension={devices.length > 0}
+        hasBaseline={hasBaseline}
       />
 
       <StudyPanel

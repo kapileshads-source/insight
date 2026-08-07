@@ -148,10 +148,10 @@ export function DevicesPanel({
 
         <ol className="mt-5 space-y-3 text-[15px] leading-relaxed text-text-muted">
           <li>
-            <span className="text-text">1.</span> Download{" "}
-            <code className="rounded bg-bg px-1.5 py-0.5 text-[14px] text-text">
-              Insight.exe
-            </code>{" "}
+            <span className="text-text">1.</span>{" "}
+            <a href="/download" className="text-sky underline underline-offset-2">
+              Download Insight.exe
+            </a>{" "}
             and put it somewhere you won&rsquo;t delete by accident. There is no
             installer and it needs no admin rights.
           </li>
@@ -191,10 +191,10 @@ export function DevicesPanel({
 
         <ol className="mt-5 space-y-3 text-[15px] leading-relaxed text-text-muted">
           <li>
-            <span className="text-text">1.</span> Download{" "}
-            <code className="rounded bg-bg px-1.5 py-0.5 text-[14px] text-text">
-              Insight.app
-            </code>{" "}
+            <span className="text-text">1.</span>{" "}
+            <a href="/download" className="text-sky underline underline-offset-2">
+              Download Insight.app
+            </a>{" "}
             and drag it to your Applications folder.
           </li>
           <li>

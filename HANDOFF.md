@@ -24,7 +24,7 @@ current state.
 Everything is on a free tier. The only thing that would cost money is a
 domain, and the plan is to get one free via GitHub Student Pack or eu.org.
 
-`npm test` runs 181 tests. `npm run build` regenerates the Prisma client,
+`npm test` runs 193 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds.
 
 ---
@@ -301,6 +301,30 @@ would have told a student they slept minus four hours.
 Also fixed while in there: "Install the extension" was ticked only by a browser
 extension, so a student on the Mac app was nagged forever about a checkbox they
 had deliberately skipped. Any paired device counts now.
+
+---
+
+## Handing out the desktop apps
+
+`/download` is public, detects the OS from the request's User-Agent, and puts
+that one first. It leads with the fact that both operating systems will call
+the app suspicious, because a student who meets an unexplained "Windows
+protected your PC" box concludes the download is broken — or that it's malware.
+
+**The two files are not in the repo, and shouldn't be.** The Windows exe is
+68MB and cannot be made smaller — .NET refuses to trim WinForms builds, which I
+tried. Committing it would bloat every clone forever and ride along in every
+deploy. Upload both to object storage — Cloudflare R2 or Vercel Blob, free at
+this size — and set:
+
+```
+NEXT_PUBLIC_DOWNLOAD_WINDOWS_URL
+NEXT_PUBLIC_DOWNLOAD_MAC_URL
+```
+
+Until those exist the page says so in a sentence rather than offering a dead
+button. GitHub Releases would work for anyone off the school network, but
+github.com is blocked on district wifi, so it's the wrong host for this.
 
 ---
 

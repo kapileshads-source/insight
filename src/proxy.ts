@@ -12,6 +12,9 @@ const isPublic = createRouteMatcher([
   "/",
   "/privacy",
   "/privacy/parents",
+  // Someone sent this link by a friend should be able to read it before
+  // deciding whether to sign up.
+  "/download",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/consent(.*)",

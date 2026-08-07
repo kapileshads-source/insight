@@ -320,7 +320,14 @@ The two real routes:
 - **Force-installed by district IT** via policy, which needs a sponsor but works
   on managed fleets and takes the decision away from the student.
 
-The manifest is now ready for either. Icons at 16/48/128, and — the part a
+`extension/STORE.md` has every field the store form asks for, written out to
+paste: listing copy, the single-purpose statement, a justification per
+permission, the two data-usage disclosures that are true (authentication
+information for the pairing code, web history for session hostnames), and the
+zip command — zip the *contents*, not the folder, or the manifest isn't at the
+root. Publish it **unlisted**: installable by link, not findable by search.
+
+The manifest is ready for either. Icons at 16/48/128, and — the part a
 reviewer or an IT department actually looks at — **`<all_urls>` is gone**. It was
 never needed: tab hostnames come from the `tabs` permission, and the only thing
 fetched is the student's own Insight server. `host_permissions` is now just the

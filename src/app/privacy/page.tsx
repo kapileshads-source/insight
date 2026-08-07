@@ -95,8 +95,9 @@ export default function PrivacyPage() {
           So while a session is running they send us plain site and app names,
           and those sit in a holding area our server <em>can</em> read until the
           next time you open Insight. At that point your browser encrypts them
-          and deletes the readable copy. Anything nobody collects is deleted
-          after six hours regardless.
+          and deletes the readable copy. Anything nobody collects expires after six
+          hours and is swept away — whenever a device next reports, and once a
+          day regardless.
         </p>
         <p className="text-text">
           Which means: for a few hours, we can see that you had YouTube open for

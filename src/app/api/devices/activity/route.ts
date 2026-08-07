@@ -99,6 +99,15 @@ export async function POST(request: Request) {
     );
   }
 
+  // Clear this student's expired staging rows on the way past.
+  //
+  // The daily sweep exists for people who stop using Insight; this is what
+  // makes the six hours real for everyone else, since an active device posts
+  // every minute. Neither is a substitute for the other.
+  await db.pendingDeviceData.deleteMany({
+    where: { userId: device.userId, expiresAt: { lte: new Date() } },
+  });
+
   await db.pendingDeviceData.create({
     data: {
       userId: device.userId,

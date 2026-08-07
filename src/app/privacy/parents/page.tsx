@@ -46,7 +46,7 @@ export default function ParentsPage() {
           },
           {
             q: "Is there anything you can read?",
-            a: "Yes, briefly, and we'd rather say so plainly. The extension and the desktop apps can't encrypt anything — that needs your child's password, and we never give it to them, because a program running on a laptop all day is the last place that key should sit. So while a session is running they send us plain site and app names, and those stay readable to us until the next time your child opens Insight, when their browser encrypts them and deletes the readable copy. Anything not collected is deleted after six hours regardless. In practice that means we could see that a session on Tuesday included twenty minutes of YouTube — not what was watched, and nothing from outside a study session.",
+            a: "Yes, briefly, and we'd rather say so plainly. The extension and the desktop apps can't encrypt anything — that needs your child's password, and we never give it to them, because a program running on a laptop all day is the last place that key should sit. So while a session is running they send us plain site and app names, and those stay readable to us until the next time your child opens Insight, when their browser encrypts them and deletes the readable copy. Anything not collected expires after six hours and is swept away — whenever a device next reports, and once a day regardless. In practice that means we could see that a session on Tuesday included twenty minutes of YouTube — not what was watched, and nothing from outside a study session.",
           },
           {
             q: "Is it sold or advertised against?",

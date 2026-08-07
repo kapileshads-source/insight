@@ -59,6 +59,11 @@ place device data is server-readable. Both privacy pages now say so in as many
 words, including what it means in practice — a reader should not have to infer
 it from the schema.
 
+Expired rows are now actually deleted, too: swept whenever a device reports and
+again in the daily cron. They used to be filtered out of reads and left in the
+table forever, so plaintext device data persisted indefinitely for any student
+who stopped opening Insight, while both pages claimed six hours.
+
 Consequence of all this: the insight engine runs **in the browser**
 (`src/lib/insights.ts`, called from `src/components/study-panel.tsx`), because
 the server can't read its inputs.
@@ -425,6 +430,10 @@ Don't, and don't point students at any hosted instance of it.
   reconstructed, not published.
 - **Five calendar dates** the extractor couldn't resolve, listed on that same
   page.
-- **Legal review** of the COPPA consent flow before real under-13 students.
+- **Legal review.** Turning under-13s away removes COPPA, not every obligation —
+  Texas HB 18 covers minors under 18. `DATA.md` is written for this: hand it over
+  with the two privacy pages and it's an hour of reading rather than an hour of
+  questions. It also lists two places where the pages promise something the code
+  doesn't do.
 - **Log real sessions.** The insight engine has passed 108 tests and never seen
   a human.

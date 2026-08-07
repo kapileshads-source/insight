@@ -25,6 +25,24 @@ function authorised(request: Request): boolean {
   return request.headers.get("authorization") === `Bearer ${secret}`;
 }
 
+/// Delete staged device data nobody collected.
+///
+/// `PendingDeviceData` is the one table holding plaintext a student would
+/// consider private — the sites and apps they used during a session — and it
+/// carries an `expiresAt` six hours out. Reads have always filtered on it, and
+/// rows are deleted the moment a browser collects them.
+///
+/// What was missing is this: a student who stops opening Insight leaves rows
+/// nobody ever collects, and a filtered read is not a deletion. They sat in
+/// Postgres indefinitely while both privacy pages said "anything nobody
+/// collects is deleted after six hours regardless". Now that is true.
+async function runStagingCleanup(): Promise<number> {
+  const { count } = await db.pendingDeviceData.deleteMany({
+    where: { expiresAt: { lte: new Date() } },
+  });
+  return count;
+}
+
 async function runCanvasExpiryWarnings(): Promise<number> {
   const now = new Date();
   const horizon = new Date(now);
@@ -101,7 +119,18 @@ async function handle(request: Request) {
 
   try {
     if (job === "canvas-expiry") {
-      return NextResponse.json({ sent: await runCanvasExpiryWarnings() });
+      // The staging sweep rides along here rather than in a job of its own:
+      // Vercel's Hobby plan allows two cron entries and both are spoken for.
+      // It is unrelated work sharing a schedule, which is worth knowing when
+      // one of them fails.
+      const purged = await runStagingCleanup();
+      return NextResponse.json({
+        sent: await runCanvasExpiryWarnings(),
+        purged,
+      });
+    }
+    if (job === "staging-cleanup") {
+      return NextResponse.json({ purged: await runStagingCleanup() });
     }
     if (job === "weekly-recap") {
       // `?force=1` lets you trigger it by hand on a Tuesday to check it works,
@@ -110,7 +139,10 @@ async function handle(request: Request) {
       return NextResponse.json({ sent: await runWeeklyRecaps(force) });
     }
     return NextResponse.json(
-      { error: "Unknown job. Use ?job=canvas-expiry or ?job=weekly-recap" },
+      {
+        error:
+          "Unknown job. Use ?job=canvas-expiry, ?job=weekly-recap or ?job=staging-cleanup",
+      },
       { status: 400 },
     );
   } catch (e) {

@@ -1,0 +1,43 @@
+# XcodeGen spec. The .xcodeproj is generated rather than committed — a pbxproj
+# is unreadable in a diff and merges badly, and this file says the same thing
+# in twenty lines.
+#
+#   brew install xcodegen && cd ios && xcodegen generate
+#
+name: Insight
+options:
+  bundleIdPrefix: app.insight
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+targets:
+  Insight:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      # Shared with the Mac app rather than copied. Both are pure Foundation,
+      # and the two apps talking to the same endpoints with the same rules
+      # about what a safe address is should not be able to drift apart.
+      - path: ../mac/Sources/Insight/ApiClient.swift
+      - path: ../mac/Sources/Insight/Address.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.insight.ios
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        # Free provisioning needs a team; set yours in Xcode's Signing tab and
+        # it lands here. Empty builds fine for the simulator.
+        DEVELOPMENT_TEAM: ""
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Insight
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIUserInterfaceStyle: Dark

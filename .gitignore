@@ -52,3 +52,8 @@ mac/dist/
 
 # the zipped hand-off of the windows build, rebuilt on demand
 windows.zip
+
+# ios app: the project file is generated from project.yml
+ios/Insight.xcodeproj/
+ios/Info.plist
+ios/build/

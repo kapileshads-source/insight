@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Familjen_Grotesk } from "next/font/google";
 import { CryptoProvider } from "@/components/crypto-provider";
+import { ServiceWorker } from "@/components/service-worker";
 import "./globals.css";
 
 const familjen = Familjen_Grotesk({
@@ -13,6 +14,32 @@ export const metadata: Metadata = {
   title: "Insight",
   description:
     "Track how you study and what you score, and see where the two line up.",
+  // iOS ignores the web manifest for the home screen icon and for whether the
+  // app opens without Safari's chrome. These are the tags it does read.
+  appleWebApp: {
+    capable: true,
+    title: "Insight",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
+  other: {
+    // Next emits the modern `mobile-web-app-capable`, which current Safari
+    // honours. The Apple-prefixed one is deprecated and still the only thing
+    // older iOS reads — and a pilot runs on whatever phones students already
+    // have, which includes hand-me-downs.
+    "apple-mobile-web-app-capable": "yes",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0e0f11",
+  // Installed to a home screen, the app runs under the notch and past the home
+  // indicator; `viewport-fit` is what lets the safe-area insets apply.
+  viewportFit: "cover",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -54,6 +81,7 @@ export default function RootLayout({
               notably from the signup password step straight to the dashboard,
               which would otherwise ask for the password a student just set. */}
           <CryptoProvider>{children}</CryptoProvider>
+          <ServiceWorker />
         </ClerkProvider>
       </body>
     </html>

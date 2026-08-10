@@ -404,9 +404,18 @@ person to hold a passcode.** Focus modes, Screen Time limits, DNS profiles, the
 bounce — all of them. A real wall needs the entitlement. Worth telling students
 plainly rather than implying the iPhone gets what a laptop gets.
 
-**The fallback, still on the table:** make the web app an installable PWA. A
-day's work, free, covers Android the same day, and loses only background
-notifications.
+**The web app is installable now**, which is what pilot students actually get:
+`src/app/manifest.ts`, icons in `public/`, and the Apple meta tags iOS reads
+instead of the manifest. Add to Home Screen and it opens without Safari's
+chrome, updates the moment we deploy, never expires, and costs nothing.
+
+**The service worker caches almost nothing, deliberately.** It exists because
+Chrome won't offer to install an app without a fetch handler. The obvious next
+step — caching pages for offline use — is one this app must not take: every page
+worth caching shows decrypted study data, and a cache is a copy on disk that
+outlives the tab and isn't covered by anything the privacy page promises. So one
+dull offline page is pre-cached, navigations go to the network, and nothing else
+is stored.
 
 ---
 

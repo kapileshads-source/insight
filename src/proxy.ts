@@ -19,6 +19,8 @@ const isPublic = createRouteMatcher([
   // they meant to avoid. Requiring a sign-in first would defeat the point —
   // and a signed-in reader still gets their session details.
   "/bounce",
+  // Cached on the device and shown when the network is gone.
+  "/offline",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/consent(.*)",

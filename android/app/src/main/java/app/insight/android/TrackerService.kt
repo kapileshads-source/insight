@@ -47,8 +47,17 @@ class TrackerService : android.app.Service() {
     private var blocklist: List<String> = emptyList()
 
     private val tally = mutableMapOf<String, Int>()
+    private val blockedEvents = mutableListOf<BlockEvent>()
     private var currentApp: String? = null
     private var currentSince = 0L
+
+    /// Apps the student overrode, cleared when the session ends: an override
+    /// is a decision about this session, not a permanent hole in a blocklist.
+    private val allowed = mutableSetOf<String>()
+
+    /// Re-opening a blocked app shouldn't file a fresh event every second, or
+    /// throw the screen up in a loop.
+    private val lastBlockedAt = mutableMapOf<String, Long>()
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -92,7 +101,17 @@ class TrackerService : android.app.Service() {
         super.onDestroy()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int) = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_OVERRIDE) {
+            val app = intent.getStringExtra(BlockedActivity.EXTRA_APP)
+            if (app != null) {
+                allowed += app
+                blockedEvents += BlockEvent(app, overrideUsed = true)
+                CoroutineScope(Dispatchers.IO).launch { flush() }
+            }
+        }
+        return START_STICKY
+    }
 
     // --- counting ------------------------------------------------------------
 
@@ -115,8 +134,45 @@ class TrackerService : android.app.Service() {
         if (app == null || app == currentApp) return
 
         closeSlice()
+
+        if (running.focusMode && app !in allowed && Apps.isBlocked(app, blocklist)) {
+            enforce(app)
+            return
+        }
+
         currentApp = app
         currentSince = System.currentTimeMillis()
+    }
+
+    /**
+     * Put our own screen in front of a blocked app.
+     *
+     * No entitlement and nobody's approval, which is the whole difference
+     * between Android and iPhone here. It needs the overlay permission, which
+     * the student granted in Settings and can take back there — and which is
+     * also what lets a background service start an activity at all since
+     * Android 10.
+     *
+     * The app is left running. Killing it would lose whatever was in it and
+     * feels punitive, and a punitive tool gets uninstalled — at which point it
+     * blocks nothing. Same reasoning as the extension redirecting a tab.
+     */
+    private fun enforce(app: String) {
+        val now = System.currentTimeMillis()
+        val last = lastBlockedAt[app] ?: 0L
+        if (now - last < BLOCK_COOLDOWN_MS) {
+            // Handled a moment ago. Still don't count the time.
+            return
+        }
+        lastBlockedAt[app] = now
+
+        blockedEvents += BlockEvent(app, overrideUsed = false)
+
+        startActivity(
+            Intent(this, BlockedActivity::class.java)
+                .putExtra(BlockedActivity.EXTRA_APP, app)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        )
     }
 
     private fun closeSlice() {
@@ -191,6 +247,8 @@ class TrackerService : android.app.Service() {
                 if (previous != null && previous.id != result.session?.id) {
                     closeSlice()
                     flush(previous.id)
+                    allowed.clear()
+                    lastBlockedAt.clear()
                 }
 
                 update(
@@ -213,10 +271,13 @@ class TrackerService : android.app.Service() {
      */
     private fun flush(sessionIdOverride: String? = null) {
         val sessionId = sessionIdOverride ?: session?.id ?: return
-        if (!config.paired || tally.isEmpty()) return
+        if (!config.paired) return
+        if (tally.isEmpty() && blockedEvents.isEmpty()) return
 
         val sent = tally.toMap()
+        val sentBlocked = blockedEvents.toList()
         tally.clear()
+        blockedEvents.clear()
 
         val domains = sent.entries
             .filter { it.value > 0 }
@@ -224,11 +285,16 @@ class TrackerService : android.app.Service() {
             .take(MAX_DOMAINS)
             .map { DomainTime(it.key, minOf(it.value, 86_400)) }
 
-        if (domains.isEmpty()) return
+        if (domains.isEmpty() && sentBlocked.isEmpty()) return
 
-        val ok = api.postActivity(config.apiBase, config.token, sessionId, domains)
+        val ok = api.postActivity(
+            config.apiBase, config.token, sessionId, domains, sentBlocked)
+
         if (!ok) {
+            // Put it back, merging with anything counted meanwhile: a dropped
+            // connection should delay the data rather than destroy it.
             for ((app, seconds) in sent) tally[app] = (tally[app] ?: 0) + seconds
+            blockedEvents.addAll(0, sentBlocked)
         }
     }
 
@@ -277,6 +343,12 @@ class TrackerService : android.app.Service() {
 
         /// The endpoint accepts 200 entries; more loses the whole batch.
         private const val MAX_DOMAINS = 200
+
+        /// Long enough that re-opening a blocked app doesn't fill the batch
+        /// with identical rows or flicker the screen in a loop.
+        private const val BLOCK_COOLDOWN_MS = 30_000L
+
+        const val ACTION_OVERRIDE = "app.insight.android.OVERRIDE"
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, TrackerService::class.java))

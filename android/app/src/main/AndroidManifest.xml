@@ -18,6 +18,15 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!--
+      Draw over other apps. Two jobs: it is how a blocked app gets replaced
+      with our own screen, and since Android 10 it is also what allows a
+      background service to start an activity at all.
+
+      Granted in Settings, like usage access, and revocable in the same place.
+    -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions"
@@ -39,6 +48,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+          What a blocked app is replaced with. Not in Recents: it is an
+          interruption rather than somewhere you navigate to, and finding it
+          in the app switcher afterwards would be confusing.
+        -->
+        <activity
+            android:name=".BlockedActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Insight" />
 
         <!--
           The tracker runs as a foreground service with a permanent

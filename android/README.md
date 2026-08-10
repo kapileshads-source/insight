@@ -60,17 +60,33 @@ which addresses are safe to send a pairing code to. They mirror the Windows and
 Mac suites case for case, because five clients that are supposed to agree
 should be seen to agree.
 
-## What's built, and what isn't
+## Blocking, which iPhone can't do
 
-Built: pairing, the permission flow, the status screen, and the tracker
-service — counting, batching and reporting.
+Open a blocked app during a session with Focus Mode on, and Insight's own
+screen replaces it. No entitlement, no approval, no company behind it — the
+whole difference between this and the iPhone, where the best available is a
+Shortcuts automation that bounces you out.
 
-Not built: **blocking**. This is where Android beats iOS outright — a blocked
-app can be replaced with our own screen, properly, no entitlement needed. It
-wants `SYSTEM_ALERT_WINDOW` (draw over other apps), which is a second
-Settings-granted permission, and a full-screen activity like the desktop apps'
-blocked window with the same three-second override.
+It needs a second Settings-granted permission, `SYSTEM_ALERT_WINDOW`, asked for
+separately and only once usage access is on. Counting works without it; nothing
+is blocked without it. A student who wants the measurement and not the blocking
+can stop at the first permission, and one who wants Focus Mode is told plainly
+that it does nothing until this is granted.
 
-Also not done: nobody has run this on a real phone or an emulator. It builds
-and its logic is tested; the service, the permission flow and the usage-events
-sampling are unexercised.
+Since Android 10 that permission is also what allows a background service to
+start an activity at all, so it is load-bearing twice over.
+
+The blocked app is left running rather than killed — losing whatever was in it
+feels punitive, and a punitive tool gets uninstalled, at which point it blocks
+nothing. The override is the same three-second countdown as the extension and
+both desktop apps, and it's recorded, so the session's figures reflect what
+happened rather than what was intended. Back is disabled on that screen: it
+would drop you into the app that was just blocked, which makes the block look
+broken. "Back to work" sends you home.
+
+## What isn't done
+
+Nobody has run this on a phone or an emulator. It builds, and 16 unit tests
+cover what gets reported and what gets blocked — but the service, both
+permission flows, the usage-events sampling and the blocked screen itself are
+all unexercised.

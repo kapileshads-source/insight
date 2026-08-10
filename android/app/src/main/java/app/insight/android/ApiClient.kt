@@ -17,6 +17,8 @@ data class PollResult(
 
 data class DomainTime(val domain: String, val seconds: Int)
 
+data class BlockEvent(val site: String, val overrideUsed: Boolean)
+
 /**
  * The two endpoints, over the platform's own HTTP client.
  *
@@ -54,12 +56,18 @@ class ApiClient {
         token: String,
         sessionId: String,
         domains: List<DomainTime>,
+        blocked: List<BlockEvent> = emptyList(),
     ): Boolean {
         return try {
             val body = JSONObject().apply {
                 put("sessionId", sessionId)
                 put("domains", domains.fold(org.json.JSONArray()) { array, d ->
                     array.put(JSONObject().put("domain", d.domain).put("seconds", d.seconds))
+                })
+                put("blocked", blocked.fold(org.json.JSONArray()) { array, b ->
+                    array.put(
+                        JSONObject().put("site", b.site).put("overrideUsed", b.overrideUsed)
+                    )
                 })
             }
 

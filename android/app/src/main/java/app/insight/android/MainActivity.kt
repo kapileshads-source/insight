@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.net.Uri
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -48,11 +49,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             var paired by remember { mutableStateOf(config.paired) }
             var hasUsageAccess by remember { mutableStateOf(usageAccessGranted()) }
+            var canDrawOver by remember { mutableStateOf(Settings.canDrawOverlays(this)) }
 
-            // Re-checked on every resume, because the student grants it in
-            // Settings and comes back — there is no callback for it.
+            // Re-checked on every resume, because both are granted in Settings
+            // and the student walks back in — there is no callback for either.
             LifecycleResumeEffect(Unit) {
                 hasUsageAccess = usageAccessGranted()
+                canDrawOver = Settings.canDrawOverlays(this@MainActivity)
                 onPauseOrDispose {}
             }
 
@@ -61,7 +64,9 @@ class MainActivity : ComponentActivity() {
                     StatusScreen(
                         config = config,
                         hasUsageAccess = hasUsageAccess,
+                        canDrawOver = canDrawOver,
                         onGrant = { openUsageSettings() },
+                        onGrantOverlay = { openOverlaySettings() },
                         onUnpair = {
                             TrackerService.stop(this@MainActivity)
                             config.clear()
@@ -93,6 +98,15 @@ class MainActivity : ComponentActivity() {
 
     private fun openUsageSettings() {
         startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+    }
+
+    private fun openOverlaySettings() {
+        startActivity(
+            Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName"),
+            )
+        )
     }
 }
 
@@ -187,7 +201,9 @@ private fun PairScreen(config: Config, onPaired: () -> Unit) {
 private fun StatusScreen(
     config: Config,
     hasUsageAccess: Boolean,
+    canDrawOver: Boolean,
     onGrant: () -> Unit,
+    onGrantOverlay: () -> Unit,
     onUnpair: () -> Unit,
 ) {
     Column(
@@ -231,6 +247,39 @@ private fun StatusScreen(
                     "Nothing is recorded at any other time.",
                 color = Insight.textMuted, fontSize = 16.sp,
             )
+        }
+
+        if (hasUsageAccess && !canDrawOver) {
+            // Separate from usage access on purpose. Counting works without
+            // this; blocking doesn't. A student who wants the measurement and
+            // not the blocking should be able to stop here, and one who wants
+            // Focus Mode should be told plainly that it does nothing until
+            // this is on.
+            Column(
+                Modifier.fillMaxWidth()
+                    .background(Insight.surface, RoundedCornerShape(12.dp))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text("Focus Mode needs one more", color = Insight.text, fontSize = 17.sp)
+                Text(
+                    "To put a screen in front of a blocked app, Android needs " +
+                        "permission to draw over other apps. Without it, sessions are " +
+                        "still counted — nothing is blocked.",
+                    color = Insight.textMuted, fontSize = 15.sp,
+                )
+                Text(
+                    "It lets us show our own screen over another app, and nothing " +
+                        "else. Revocable in the same place.",
+                    color = Insight.textFaint, fontSize = 13.sp,
+                )
+                Button(
+                    onClick = onGrantOverlay,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Insight.surface, contentColor = Insight.accent),
+                    shape = RoundedCornerShape(10.dp),
+                ) { Text("Allow blocking", fontSize = 16.sp) }
+            }
         }
 
         Text(

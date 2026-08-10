@@ -118,9 +118,12 @@ it's right.
 
 ## What's not built, and what's untested
 
-- **Nothing on the phones has been fully exercised.** The Android app is being
-  tested on a real device now; the iPhone app has only ever run in the simulator
-  against a synthetic pairing code.
+- **Android has been tested on a real phone** — a Nothing Phone 2a — and app
+  blocking works: a blocked app closes and Insight's screen replaces it. **Site
+  blocking does not start on that device**, and is the one open bug. See below.
+- **The iPhone app has only ever run in the simulator** against a synthetic
+  pairing code. Pairing, unlocking and the crypto are verified against the real
+  browser code; a real session end to end is not.
 - **Untested on the desktops:** blocking works and has been used, but nobody has
   watched an override get recorded, the ten-minute idle cutoff fire, or a
   session-end flush land.
@@ -234,10 +237,29 @@ doing nothing.
   reboot left a status screen saying all was well with nothing running.
 - The Android VPN was built, wired up, and could never start, because nothing
   ever asked for the consent it needs.
+- Then it crash-looped instead: `FocusVpnService.stop()` reaches the service by
+  *starting* it, every poll without a focused session called it, and Android
+  refuses a background service start — which threw out of the polling coroutine
+  and killed the process every fifteen seconds.
+- Then the fix for that made it silent again, because the refusal was caught and
+  nothing was recorded.
+- And the status screen that was supposed to explain all this read its state
+  once, on resume, while everything it describes is written by a service seconds
+  later. A working diagnostic looked like a broken one.
 
 The pattern is worth internalising: **when something can't work, say so on
-screen.** Half the bugs on this list were invisible until someone happened to
-check.
+screen** — and make sure the screen can still be *read* when the failure
+happens. Most of the bugs on this list were invisible until someone happened to
+check, and two of them were introduced by fixing the previous one.
+
+**How to debug the phones without guessing.** Three rounds of "try this and tell
+me what it says" is the cost of diagnostics that only record failures. The
+Android app now records *progress* — a numbered breadcrumb at each step of
+starting the tunnel — so whatever the status screen shows last is where it
+stopped. Cheaper than a cable, and it survives being handed to a student.
+
+`adb` is at `~/Library/Android/sdk/platform-tools/adb` if a real log is needed;
+the phone wants USB debugging turned on in Developer options.
 
 ### Toolchain notes
 
@@ -251,6 +273,36 @@ check.
   with `JAVA_HOME=/opt/homebrew/opt/openjdk@21`.
 - **XcodeGen** generates `ios/Insight.xcodeproj` from `project.yml`. The project
   file isn't committed; a pbxproj is unreadable in a diff.
+
+---
+
+## The open bug: site blocking on Nothing OS
+
+App blocking works on the test phone. The DNS tunnel does not start, and no
+second notification appears.
+
+Ruled out so far: no other VPN installed, Chrome rather than Opera, battery set
+to Unrestricted, all six preconditions green on the status screen, and no crash
+recorded.
+
+Still to establish — the current build answers this without a cable — is how far
+`FocusVpnService.start` gets. It writes a numbered breadcrumb at each step, and
+the number it stops at names the cause:
+
+1–3 mean the tracker asked and Android accepted, so the service should be
+running. 4 means it ran. 5 means it couldn't go foreground, with the exception.
+6–7 are about the blocklist arriving. 8 means it reached `establish()`, and
+stopping there means Android refused the tunnel itself.
+
+Worth knowing while chasing it: Android 13+ needs `POST_NOTIFICATIONS` granted
+at runtime before any foreground service can show a notification, so "no
+notification appeared" was never proof that the service didn't start. The app now
+asks for it on launch.
+
+If it turns out Nothing OS simply won't permit this, that is a finding rather
+than a defeat: app blocking is the half that matters, phones from other makers
+may allow it, and the limitation belongs on `/download` next to the DNS-over-HTTPS
+one.
 
 ---
 

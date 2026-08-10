@@ -66,6 +66,7 @@ class MainActivity : ComponentActivity() {
             // Re-checked on every resume, because both are granted in Settings
             // and the student walks back in — there is no callback for either.
             var trackerQuiet by remember { mutableStateOf(false) }
+            var lastCrash by remember { mutableStateOf(config.lastCrash) }
             var sessionRunning by remember { mutableStateOf(config.sessionRunning) }
             var focusMode by remember { mutableStateOf(config.focusMode) }
             var blocklistSize by remember { mutableIntStateOf(config.blocklistSize) }
@@ -88,6 +89,7 @@ class MainActivity : ComponentActivity() {
                 // means it isn't running — not that the network is slow.
                 val since = System.currentTimeMillis() - config.lastTickAt
                 trackerQuiet = config.paired && since > 120_000
+                lastCrash = config.lastCrash
                 sessionRunning = config.sessionRunning
                 focusMode = config.focusMode
                 blocklistSize = config.blocklistSize
@@ -104,6 +106,8 @@ class MainActivity : ComponentActivity() {
                         canDrawOver = canDrawOver,
                         trackerQuiet = trackerQuiet,
                         canBlockSites = canBlockSites,
+                        lastCrash = lastCrash,
+                        onDismissCrash = { config.clearCrash(); lastCrash = null },
                         sessionRunning = sessionRunning,
                         focusMode = focusMode,
                         blocklistSize = blocklistSize,
@@ -251,6 +255,8 @@ private fun StatusScreen(
     canDrawOver: Boolean,
     trackerQuiet: Boolean,
     canBlockSites: Boolean,
+    lastCrash: String?,
+    onDismissCrash: () -> Unit,
     sessionRunning: Boolean,
     focusMode: Boolean,
     blocklistSize: Int,
@@ -396,6 +402,34 @@ private fun StatusScreen(
                     "the lookups never reach us and blocked sites load anyway.",
                 color = Insight.textFaint, fontSize = 13.sp,
             )
+        }
+
+        if (lastCrash != null) {
+            // Android tells a student "Insight keeps stopping" and tells us
+            // nothing at all. A trace lives in logcat, which needs a cable and
+            // a laptop — so the app keeps its own and puts it where a
+            // screenshot will reach it.
+            Column(
+                Modifier.fillMaxWidth()
+                    .background(Insight.surface, RoundedCornerShape(12.dp))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text("It crashed last time", color = Insight.bad, fontSize = 17.sp)
+                Text(
+                    "Send this to whoever is fixing it — a screenshot is enough.",
+                    color = Insight.textMuted, fontSize = 14.sp,
+                )
+                Text(
+                    lastCrash,
+                    color = Insight.textFaint,
+                    fontSize = 11.sp,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                )
+                TextButton(onClick = onDismissCrash) {
+                    Text("Dismiss", color = Insight.textMuted, fontSize = 15.sp)
+                }
+            }
         }
 
         // Blocking has five preconditions and four of them are invisible. When

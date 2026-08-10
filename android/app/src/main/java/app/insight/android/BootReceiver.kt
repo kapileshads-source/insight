@@ -17,6 +17,8 @@ class BootReceiver : BroadcastReceiver() {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
         if (!Config(context).paired) return
 
+        // TrackerService.start swallows the refusal Android 12+ can throw
+        // here; the app starts it again next time it's opened.
         TrackerService.start(context)
     }
 }

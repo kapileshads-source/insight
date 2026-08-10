@@ -64,6 +64,17 @@ class TrackerService : android.app.Service() {
     /// system again.
     private var previousPackage: String = ""
 
+    /// Whether we've asked for the DNS tunnel.
+    ///
+    /// This was the crash. `stop()` reaches the VPN service by *starting* it,
+    /// and every poll without a focused session called it — so once the app
+    /// was in the background, Android refused to start a background service
+    /// and threw out of the polling coroutine, killing the process.
+    /// START_STICKY brought it back, fifteen seconds later it happened again,
+    /// and the phone eventually said "Insight keeps stopping". Now we only ask
+    /// to stop something we asked to start.
+    private var vpnStarted = false
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
@@ -76,20 +87,29 @@ class TrackerService : android.app.Service() {
             var secondsSincePoll = 0
 
             while (isActive) {
-                tick()
+                // Nothing in here is worth dying for. An exception thrown in a
+                // coroutine kills the process, START_STICKY restarts it, and
+                // the phone ends up saying "Insight keeps stopping" — which
+                // tells a student nothing and costs them every session in
+                // between.
+                try {
+                    tick()
 
-                secondsSinceFlush++
-                secondsSincePoll++
+                    secondsSinceFlush++
+                    secondsSincePoll++
 
-                if (secondsSinceFlush >= FLUSH_EVERY_SECONDS) {
-                    secondsSinceFlush = 0
-                    secondsSincePoll = 0
-                    closeSlice()
-                    flush()
-                    poll()
-                } else if (secondsSincePoll >= POLL_EVERY_SECONDS) {
-                    secondsSincePoll = 0
-                    poll()
+                    if (secondsSinceFlush >= FLUSH_EVERY_SECONDS) {
+                        secondsSinceFlush = 0
+                        secondsSincePoll = 0
+                        closeSlice()
+                        flush()
+                        poll()
+                    } else if (secondsSincePoll >= POLL_EVERY_SECONDS) {
+                        secondsSincePoll = 0
+                        poll()
+                    }
+                } catch (_: Throwable) {
+                    // Try again in a second.
                 }
 
                 delay(1_000)
@@ -102,6 +122,7 @@ class TrackerService : android.app.Service() {
         // student swiped the app away should still keep its final minute.
         closeSlice()
         CoroutineScope(Dispatchers.IO).launch { flush() }
+        if (vpnStarted) FocusVpnService.stop(this)
         job?.cancel()
         super.onDestroy()
     }
@@ -307,8 +328,10 @@ class TrackerService : android.app.Service() {
                 // which is a good part of what makes it defensible.
                 if (result.session?.focusMode == true && blocklist.isNotEmpty()) {
                     FocusVpnService.start(this, blocklist)
-                } else {
+                    vpnStarted = true
+                } else if (vpnStarted) {
                     FocusVpnService.stop(this)
+                    vpnStarted = false
                 }
 
                 update(
@@ -415,15 +438,29 @@ class TrackerService : android.app.Service() {
         /// Called from the DNS tunnel when it refuses a lookup, so a blocked
         /// site is recorded exactly like a blocked app.
         fun reportBlockedSite(context: Context, host: String) {
+            // Called from the VPN's own thread, where a throw takes the
+            // process with it — and starting a service is refused outright
+            // when the app is in the background.
+            try {
             context.startService(
                 Intent(context, TrackerService::class.java)
                     .setAction(ACTION_BLOCKED_SITE)
                     .putExtra(EXTRA_HOST, host)
             )
+            } catch (_: Throwable) {
+                // The block still happened; only the record of it is lost.
+            }
         }
 
         fun start(context: Context) {
-            context.startForegroundService(Intent(context, TrackerService::class.java))
+            try {
+                context.startForegroundService(Intent(context, TrackerService::class.java))
+            } catch (_: Throwable) {
+                // Android 12 and later refuse this from the background in
+                // several situations, including some paths out of
+                // BOOT_COMPLETED. It starts next time the app is opened, and
+                // the status screen says when it hasn't been running.
+            }
         }
 
         fun stop(context: Context) {

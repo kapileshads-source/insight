@@ -93,7 +93,16 @@ class FocusVpnService : VpnService() {
         } ?: return
 
         running = true
-        worker = thread(name = "insight-dns") { pump() }
+        worker = thread(name = "insight-dns") {
+            // An uncaught exception on this thread kills the whole app, and a
+            // student sees "Insight keeps stopping" with no clue that a DNS
+            // packet was involved.
+            try {
+                pump()
+            } catch (_: Throwable) {
+                teardown()
+            }
+        }
     }
 
     private fun teardown() {
@@ -203,16 +212,27 @@ class FocusVpnService : VpnService() {
         fun start(context: Context, blocklist: List<String>) {
             if (prepare(context) != null) return  // not agreed to yet
 
-            context.startService(
-                Intent(context, FocusVpnService::class.java)
-                    .putStringArrayListExtra(EXTRA_BLOCKLIST, ArrayList(blocklist))
-            )
+            // Starting a service is refused when the app is in the background,
+            // which is most of the time for a tracker. The caller is a
+            // foreground service so this is normally allowed — normally is not
+            // a good enough reason to risk the process.
+            try {
+                context.startService(
+                    Intent(context, FocusVpnService::class.java)
+                        .putStringArrayListExtra(EXTRA_BLOCKLIST, ArrayList(blocklist))
+                )
+            } catch (_: Throwable) {
+                // Site blocking is off for this session. Apps still block.
+            }
         }
 
         fun stop(context: Context) {
-            context.startService(
-                Intent(context, FocusVpnService::class.java).setAction(ACTION_STOP)
-            )
+            try {
+                context.startService(
+                    Intent(context, FocusVpnService::class.java).setAction(ACTION_STOP)
+                )
+            } catch (_: Throwable) {
+            }
         }
     }
 }

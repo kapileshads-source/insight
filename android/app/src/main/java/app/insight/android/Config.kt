@@ -63,6 +63,15 @@ class Config(context: Context) {
         get() = prefs.getInt("blocklistSize", 0)
         set(value) = prefs.edit().putInt("blocklistSize", value).apply()
 
+    /**
+     * The last crash, so a screenshot of the status screen is enough to fix
+     * it. Android tells a student "Insight keeps stopping" and nothing else,
+     * and a stack trace otherwise needs a cable and a laptop.
+     */
+    val lastCrash: String? get() = prefs.getString("lastCrash", null)
+
+    fun clearCrash() = prefs.edit().remove("lastCrash").remove("lastCrashAt").apply()
+
     /** Unpairing leaves nothing behind, the same as the extension's popup. */
     fun clear() = prefs.edit().clear().apply()
 }

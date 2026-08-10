@@ -167,6 +167,27 @@ So the status screen lists all six with a tick or a cross, and says what to do
 about each miss. "It isn't blocking" is otherwise undiagnosable without holding
 the phone — which is exactly where an evening goes.
 
+## "Insight keeps stopping"
+
+Found on a real phone, and worth writing down because the shape recurs.
+
+`FocusVpnService.stop()` reaches the VPN service by *starting* it — that's how
+you send a service a command. Every poll without a focused session called it, so
+once the app was in the background Android refused to start a background service
+and threw, out of the polling coroutine, killing the process. START_STICKY
+brought it back, fifteen seconds later the same thing happened, and eventually
+the phone gave up on the app entirely. Nothing recorded, nothing blocked.
+
+Three changes, in increasing order of generality:
+
+1. The tracker only asks to stop a tunnel it asked to start.
+2. Every background start is wrapped, and the polling loop catches everything —
+   a tracker that limps is worth far more than one that dies.
+3. **The app records its own crashes.** Android tells a student "Insight keeps
+   stopping" and tells us nothing; a stack trace lives in logcat, which needs a
+   cable and a laptop. `InsightApplication` writes the last one to preferences
+   and the status screen shows it, so a screenshot is enough to fix it.
+
 ## What isn't done
 
 Nobody has run this on a phone or an emulator. It builds, and 16 unit tests

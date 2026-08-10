@@ -41,6 +41,28 @@ class Config(context: Context) {
         get() = prefs.getLong("lastTickAt", 0L)
         set(value) = prefs.edit().putLong("lastTickAt", value).apply()
 
+    /**
+     * What the tracker last saw, written so the status screen can say *why*
+     * nothing is being blocked.
+     *
+     * Blocking has five preconditions and four of them are invisible: a
+     * session running, Focus Mode on, a blocklist that isn't empty, and two
+     * permissions granted in Settings. "It isn't blocking" was impossible to
+     * diagnose from the outside, and guessing at someone else's phone is a
+     * poor way to spend an evening.
+     */
+    var sessionRunning: Boolean
+        get() = prefs.getBoolean("sessionRunning", false)
+        set(value) = prefs.edit().putBoolean("sessionRunning", value).apply()
+
+    var focusMode: Boolean
+        get() = prefs.getBoolean("focusMode", false)
+        set(value) = prefs.edit().putBoolean("focusMode", value).apply()
+
+    var blocklistSize: Int
+        get() = prefs.getInt("blocklistSize", 0)
+        set(value) = prefs.edit().putInt("blocklistSize", value).apply()
+
     /** Unpairing leaves nothing behind, the same as the extension's popup. */
     fun clear() = prefs.edit().clear().apply()
 }

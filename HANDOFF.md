@@ -3,9 +3,8 @@
 Read this first in a new session. It covers what exists, why it's shaped this
 way, and what bit us — most of which is not obvious from the code.
 
-Built by Kapilesh Rajaravisankar and Sahas Raghav Vijayakumar, for a Frisco ISD
-pilot. `PLAN.md`-equivalent lives in the original brief; this file is the
-current state.
+Built by Kapilesh Rajaravisankar and Sahas Raghav Vijayakumar for a Frisco ISD
+pilot. Everything runs on free tiers.
 
 ---
 
@@ -21,11 +20,9 @@ current state.
 | Email | Resend — only delivers to the developer until a domain exists |
 | LLM | Groq free tier |
 
-Everything is on a free tier. The only thing that would cost money is a
-domain, and the plan is to get one free via GitHub Student Pack or eu.org.
-
 `npm test` runs 240 tests. `npm run build` regenerates the Prisma client,
-**applies pending migrations**, then builds.
+**applies pending migrations**, then builds. Each native app has its own suite:
+53 on Windows, 52 on Mac, 25 on Android, 16 in the extension.
 
 ---
 
@@ -33,50 +30,58 @@ domain, and the plan is to get one free via GitHub Student Pack or eu.org.
 
 **Student data is encrypted in the browser. The server cannot read it.**
 
-A password derives a key-encryption key, which unwraps a random data key,
-which encrypts the payloads. The password never leaves the device, so there is
-no reset and no recovery. `src/lib/crypto.ts`.
+A password derives a key-encryption key, which unwraps a random data key, which
+encrypts the payloads. The password never leaves the device, so there is no
+reset and no recovery. `src/lib/crypto.ts`.
 
-The rule applied throughout the schema is **structure is plaintext, content is
-not**. Row existence, foreign keys, and the timestamps needed for ordering and
-de-duplication stay readable so the database is still queryable. Anything a
-student would consider private lives in a single encrypted JSON blob per row.
+The rule throughout the schema is **structure is plaintext, content is not**.
+Row existence, foreign keys and the timestamps needed for ordering and
+de-duplication stay readable so the database is queryable. Anything a student
+would consider private lives in an encrypted blob.
 
-Three deliberate exceptions, all documented in `prisma/schema.prisma`:
+Four deliberate exceptions, all documented in `prisma/schema.prisma`:
 
 1. **`CanvasConnection.accessToken`** — encrypted with a *server* key, because
-   the server has to call Canvas on the student's behalf.
-2. **`StudySession.focusModeActive` / `focusModeOverride`** — the extension has
-   no key and must never have one, so the server has to answer "should I be
-   blocking?" without decrypting.
-3. **`User.blockCategories` / `blockExtra` / `blockAllowed`** — same reason;
-   the server builds the list the extension enforces.
+   the server calls Canvas on the student's behalf.
+2. **`StudySession.focusModeActive` / `focusModeOverride`** — the trackers have
+   no key and must never have one, so the server answers "should I be blocking?"
+   without decrypting.
+3. **`User.blockCategories` / `blockExtra` / `blockAllowed`** — same reason; the
+   server builds the list the trackers enforce.
+4. **`PendingDeviceData`** — the weak point, below.
 
-**`PendingDeviceData` is the weak point.** The extension can't encrypt, so it
-posts plaintext to a staging table that the student's browser collects,
-encrypts and deletes on next load. Rows expire in six hours. This is the one
-place device data is server-readable. Both privacy pages now say so in as many
-words, including what it means in practice — a reader should not have to infer
-it from the schema.
+Consequence: the insight engine runs **in the browser** (`src/lib/insights.ts`,
+called from `src/components/study-panel.tsx`), because the server can't read its
+inputs.
 
-Expired rows are now actually deleted, too: swept whenever a device reports and
-again in the daily cron. They used to be filtered out of reads and left in the
-table forever, so plaintext device data persisted indefinitely for any student
-who stopped opening Insight, while both pages claimed six hours.
+### The weak point, stated plainly
 
-Consequence of all this: the insight engine runs **in the browser**
-(`src/lib/insights.ts`, called from `src/components/study-panel.tsx`), because
-the server can't read its inputs.
+The extension and the desktop/mobile trackers can't encrypt — they have no key,
+deliberately, because a program running on a student's machine all day is the
+last place one should live. So they post plaintext site and app names to
+`PendingDeviceData`, which the student's browser collects, encrypts and deletes
+on next load.
+
+Rows expire after six hours and are swept whenever any device reports and again
+in the daily cron. They used to be filtered out of reads and never deleted, so
+plaintext persisted forever for anyone who stopped opening Insight while both
+privacy pages claimed six hours. Both pages now describe this in as many words,
+including what it means in practice.
+
+**The phone app is the exception that proves the rule:** it *does* hold a key,
+because it shows a student their own data. That's consistent — the rule is that
+*unattended trackers* never hold one, not that no device may. See "the pairing
+code that isn't like the others", below.
 
 ---
 
 ## What's built
 
-Website, all deployed and working:
+**Website**, deployed and working:
 
 - Auth (Clerk, Google + email code, **no password** — deliberately)
-- Onboarding: birthdate gate (13+, under-13 turned away) → encryption password
-  → school + grade → devices
+- Onboarding: birthdate gate (13+, under-13 turned away) → encryption password →
+  school + grade → devices
 - Unlock screen, with opt-in "stay unlocked on this device" via IndexedDB
 - Session timer, Focus Mode toggle, quick log (sleep / screen time / scores)
 - Screenshot OCR for screen time (Tesseract, client-side, image never uploaded)
@@ -87,551 +92,246 @@ Website, all deployed and working:
 - Settings: lock device, change password, mute insights, export, delete,
   blocklist editor
 - Baseline at `/baseline` — usual sleep and wake times, usual place and noise
+- Per-session device readout: what your devices saw, app by app
 - Admin schedule/calendar editor at `/admin/schedules` (env allowlist)
 - Privacy pages, student and parent
-- Browser extension (`extension/`), Manifest V3, loaded unpacked
-- Windows app (`windows/`), C# tray app, sideloaded as one self-contained exe
-- macOS app (`mac/`), Swift menu bar app, sideloaded as an ad-hoc signed bundle
-- iPhone app (`ios/`), SwiftUI — pairs, unlocks, starts and stops sessions, logs
-  sleep, and bounces you out of apps via a Shortcuts automation
-- Android app (`android/`), Kotlin and Compose — pairs, counts time per app,
-  and blocks. The only phone that can do either honestly
-- `/download` for the desktop apps and the APK, `/bounce` for the iPhone
-  automation, `/iphone` for the setup that replaces an app Apple won't allow
+- **Installable as a PWA** — manifest, icons, Apple meta tags
+- `/download` (three binaries), `/iphone` (setup guide), `/bounce` (the iPhone
+  interruption), `/offline`
 
-Data: 30 FISD campuses seeded, real A/B calendar extracted from the district
-PDF by sampling cell colours — 82 A days against 82 B days, which is the check
-that it's right.
+**Five clients**, all pairing with a token minted at `/devices` and talking to
+the same two endpoints:
 
-## What's not built
+| | Counts | Blocks apps | Blocks sites | Notes |
+|---|---|---|---|---|
+| Extension (`extension/`) | sites | — | yes | MV3. Store listing written, not submitted |
+| Windows (`windows/`) | apps | yes | — | C#, one 68MB exe, no admin needed |
+| Mac (`mac/`) | apps | yes | — | Swift, 320KB bundle, ad-hoc signed |
+| Android (`android/`) | apps + browsers | yes | yes, via DNS | The only phone that can do any of it |
+| iPhone (`ios/`) | — | — | — | Companion only. Apple forbids the rest |
 
-- **Nobody has run the Android app on a phone or an emulator.** It builds, and
-  16 unit tests cover what gets reported and blocked; the service, the
-  permission flow and the usage-events sampling are unexercised
-- **The iPhone app has only ever run in the simulator.** Pairing, unlocking and
-  the crypto are verified against the real browser code; what nobody has done is
-  pair it to a real account and run a session end to end
-- **Untested paths on the desktop apps:** blocking works — it's been used — but
-  nobody has watched an override get recorded, the ten-minute idle cutoff fire,
-  or a session-end flush land
-- Canvas ↔ manual grade reconciliation (schema supports it, no UI)
+Data: 30 FISD campuses seeded, real A/B calendar extracted from the district PDF
+by sampling cell colours — 82 A days against 82 B days, which is the check that
+it's right.
+
+---
+
+## What's not built, and what's untested
+
+- **Nothing on the phones has been fully exercised.** The Android app is being
+  tested on a real device now; the iPhone app has only ever run in the simulator
+  against a synthetic pairing code.
+- **Untested on the desktops:** blocking works and has been used, but nobody has
+  watched an override get recorded, the ten-minute idle cutoff fire, or a
+  session-end flush land.
+- **HAC** — reconnaissance done, matcher built and tested, parser not written.
+  See the section at the end.
+- Canvas ↔ manual grade reconciliation (schema supports it, no UI).
 - **iOS can never track or block apps** without `FamilyControls`, which Apple
-  grants rather than sells. $99 does buy the *development* capability, so real
+  grants rather than sells. $99 buys the *development* capability, so real
   shielding on your own phone is achievable; shipping it to students needs
-  Apple's approval of the distribution entitlement, which is the uncertain part
+  Apple's approval of the distribution entitlement, which is the uncertain part.
+
+---
+
+## How blocking works, per platform
+
+One matcher, five enforcers. `src/lib/blocklist.ts` builds a single flat list of
+hostnames *and* app names; `matchesBlocklist` lowercases and compares exactly, so
+an app name can never collide with a hostname or the reverse. That's what lets a
+game be blockable at all — Valorant is its own executable with no website to
+match on.
+
+- **Extension** redirects the tab to a page that explains itself. URL-level, the
+  most precise of the five.
+- **Windows** sends `CloseMainWindow` — the polite close, so unsaved work still
+  prompts. Falls back to minimising.
+- **Mac** sends `terminate()`, the same one Cmd-Q sends.
+- **Android** replaces the app with our own screen *and* calls
+  `killBackgroundProcesses`, because covering an app left it running behind the
+  screen, holding its place. It also blocks *sites* through a local VPN that
+  carries nothing but DNS — see `android/README.md`.
+- **iPhone** can't block anything. A Shortcuts automation bounces the student to
+  `/bounce`, and a Focus shortcut quiets the phone. Friction, not a wall, and
+  `/iphone` says so before anything else.
+
+Everywhere, the override is three seconds, is recorded, and holds for the rest
+of that session. A hard lock gets uninstalled, and an uninstalled app blocks
+nothing.
+
+---
+
+## The pairing code that isn't like the others
+
+A laptop tracker only ever *adds* — that's why the pairing screen can say
+"pairing grants the ability to add, never to read".
+
+A phone shows a student their own data, so it needs the key. An endpoint handing
+key material to a bearer token would make that sentence false for every device
+and let a stolen token grind at a password offline. So the phone's pairing code
+**carries the encryption setup inside it**, assembled in a browser that is
+already signed in. `src/lib/pairing.ts`. The password is not in it.
+
+`ios/Sources/Crypto.swift` must match `src/lib/crypto.ts` exactly — PBKDF2 600k,
+AES-GCM, NFKC-normalised password, and WebCrypto's ciphertext‖tag layout against
+CryptoKit's separate tag. Verified in both directions against the real browser
+code. If it ever drifts the symptom is a correct password being rejected
+forever, so test interop rather than assuming it.
 
 ---
 
 ## Gotchas, all learned the hard way
 
-**Next.js 16 renamed middleware to `proxy.ts`.** `AGENTS.md` warns that this
-version differs from training data. It was right. Read
-`node_modules/next/dist/docs/` before writing anything framework-shaped.
+**Next.js 16 renamed middleware to `proxy.ts`.** `AGENTS.md` warns this version
+differs from training data. It was right. Read `node_modules/next/dist/docs/`
+before writing anything framework-shaped.
 
 **Prisma 7 requires driver adapters.** `new PrismaClient({ adapter })`, and
-destructive CLI commands demand explicit user consent via
-`PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`.
+destructive CLI commands demand `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`.
 
-**Migrations must reach production.** Twice, code shipped selecting a column
-Neon didn't have, and both times the symptom was a 500 that looked like
-something else. `npm run build` now runs `prisma migrate deploy` first. Set
-`DIRECT_DATABASE_URL` in Vercel — the pooled endpoint is PgBouncer and can't
-run DDL.
+**Migrations must reach production.** Twice, code shipped selecting a column Neon
+didn't have, and both times the symptom was a 500 that looked like something
+else. `npm run build` runs `prisma migrate deploy` first. Set
+`DIRECT_DATABASE_URL` in Vercel — the pooled endpoint is PgBouncer and can't run
+DDL.
 
 **`@db.Date` values are UTC midnight.** Formatting one in `America/Chicago`
-shifts it to the previous evening, which announced the first day of school as
-the day before it. Calendar dates format in UTC; only real instants use the
-school's zone.
+shifts it to the previous evening, which announced the first day of school as the
+day before it. Calendar dates format in UTC; only real instants use the school's
+zone.
 
 **First page load fans out into concurrent `getOrCreateUser` calls.** They all
 miss, all insert, and the losers throw `P2002`. Handled by treating a lost race
-as success. Only ever fires on a user's *first* request, which is why local
-testing never saw it.
+as success. Only fires on a user's *first* request, which is why local testing
+never saw it.
 
 **Clerk dev instances cap at 100 users and can't migrate users to production.**
-`getOrCreateUser` re-points an existing row when the Clerk id changes for a
-known email, so the eventual switch doesn't orphan anyone's data.
+`getOrCreateUser` re-points an existing row when the Clerk id changes for a known
+email, so the eventual switch doesn't orphan anyone's data.
 
 **Vercel blocks deploys when the commit author email doesn't map to the project
 owner's GitHub account.** Commits use
 `312205265+kapileshads-source@users.noreply.github.com`.
 
 **Truncated production errors are useless.** `src/lib/db-errors.ts` puts the
-Prisma code at the *front* of the log line. Two wrong diagnoses happened before
-that existed.
+Prisma code at the *front* of the log line.
 
 **The keychain is unusable from an ad-hoc signed app.** macOS ties a keychain
 entry to the exact binary that made it, and `codesign -s -` mints a new identity
-every build — so every rebuild of the Mac app triggered "Insight wants to use
-your confidential information", and Always Allow either failed or lasted exactly
-one build. The Mac token now sits in an owner-only file, which is what DPAPI
-amounts to on the Windows side anyway. Don't put it back.
+every build. The Mac token sits in an owner-only file instead, which is what
+DPAPI amounts to on Windows anyway. Don't put it back.
 
-**Never render a blank page.** A failed key check left `status: "checking"`
-forever and the gate returned `null`. On an app that can't reset passwords, a
-blank screen where your data should be reads as data loss.
+**Never render a blank page, and never fail silently.** This is the recurring
+theme, and every instance has been the same shape: something looks healthy while
+doing nothing.
 
----
+- A failed key check left `status: "checking"` forever and the gate returned
+  `null`.
+- The Windows app worked perfectly and looked broken, because nothing in the UI
+  showed what a device recorded.
+- Expired `PendingDeviceData` was filtered from reads and never deleted.
+- The Android tracker only started at the moment of pairing, so a reinstall or a
+  reboot left a status screen saying all was well with nothing running.
+- The Android VPN was built, wired up, and could never start, because nothing
+  ever asked for the consent it needs.
 
-## The Windows app
+The pattern is worth internalising: **when something can't work, say so on
+screen.** Half the bugs on this list were invisible until someone happened to
+check.
 
-`windows/`, C# on .NET 8, WinForms tray app, published as one self-contained
-exe. It added no endpoints: it pairs at `/devices`, polls
-`GET /api/devices/session`, posts to `POST /api/devices/activity` with app names
-in the `domain` field, and its data lands in `PendingDeviceData` like the
-extension's. `windows/README.md` is the detail; the four constraints from the
-brief are held in `Tracker.cs`, and `GetWindowText` is not imported anywhere in
-the project, which is what makes "app names only" a fact rather than a promise.
+### Toolchain notes
 
-**Three decisions that weren't in the brief:**
-
-- **Browsers are skipped entirely**, because the extension already counts them.
-  Counting both would double every web minute — and the two would disagree about
-  it, since the extension files YouTube as distracted while a process tracker
-  files chrome.exe as focused. A student with no extension loses their browser
-  time here, which is a gap rather than a wrong answer.
-- **Some apps report their website's name** — Spotify as `spotify.com`, Steam as
-  `steampowered.com`, in `Apps.Aliases`. Focus Mode and the distraction split
-  are both defined by the blocklist, which `normalizeSite` only lets be
-  hostnames, so an app reported as "Spotify" would be unblockable and forever
-  counted as focused. A game launched *through* Steam still reports its own name
-  and still counts as focused; fixing that needs a server-side idea of blocked
-  apps, which means a new endpoint and a new settings screen.
-- **Ten minutes idle stops the clock**, backdated to the last keypress. A
-  desktop has no equivalent of a browser losing focus, so without it a laptop
-  left open on a game bills the whole afternoon.
-
-## Focus Mode reaches apps, not just sites
-
-Each block category in `src/lib/blocklist.ts` carries an `apps` list beside its
-`sites`, and `buildBlocklist` merges both into the one flat list the session
-endpoint already sends. **No code in the matcher changed and no endpoint
-changed** — `matchesBlocklist` lowercases and compares exactly, so an app name
-can never collide with a hostname or vice versa. One list, one matcher, and no
-way for "blocked" and "counted as a distraction" to drift apart.
-
-This is what finally makes a game blockable. Valorant, Fortnite, Minecraft and
-the rest are their own executables with no website to match on, so a blocklist
-of hostnames never touched them — they were unblockable *and* silently counted
-as focused time, whatever the student chose.
-
-Two things follow:
-
-- **The app lists carry several spellings each** — "VALORANT", "Riot Client",
-  "League of Legends" — because a desktop app reports whatever its own metadata
-  says, and a name nobody guessed is a game that quietly isn't blocked.
-- **`normalizeEntry` replaces `normalizeSite`** for anything a student types, so
-  they can block *or allow* an app by name. The escape hatch matters more than
-  the addition: the curated list will get something wrong — VLC is on it, and
-  someone watches lessons in VLC — and a student who can't fix that turns Focus
-  Mode off entirely, which blocks nothing.
-
-**`POST /api/devices/activity` now stages rows under the real `DeviceKind`**
-rather than a hardcoded `BROWSER_EXTENSION`. Nothing reads that column yet — the
-browser encrypts whatever is staged — but it was a lie in the one table anybody
-auditing the privacy design reads first.
+- **.NET 8 SDK** at `~/.dotnet` (Homebrew's cask needs sudo; the install script
+  doesn't). Windows builds cross-compile from macOS via `EnableWindowsTargeting`.
+- **Xcode** refuses to run on macOS 27 unless it's a beta build — get it from
+  `developer.apple.com/download`. `xcodebuild` and `simctl` work fine regardless,
+  so simulator testing never needs the GUI.
+- **Android** needs JDK 17–21. The JDK 25 on this machine and Homebrew's Gradle
+  9.7 are both too new for AGP, so the wrapper is pinned to 8.11.1 and builds run
+  with `JAVA_HOME=/opt/homebrew/opt/openjdk@21`.
+- **XcodeGen** generates `ios/Insight.xcodeproj` from `project.yml`. The project
+  file isn't committed; a pbxproj is unreadable in a diff.
 
 ---
 
-## The Mac app
-
-`mac/`, Swift and AppKit, a menu bar app built with SwiftPM — no Xcode project,
-Command Line Tools is enough. `./build-app.sh` wraps the binary in
-`dist/Insight.app`, about 320KB because AppKit is already on every Mac.
-
-Same rules, same two endpoints, same three decisions as Windows, and
-`Sources/Insight/SelfTest.swift` mirrors `windows/SelfTest.cs` case for case so
-the two apps' agreement is visible rather than assumed.
-
-**Where the Mac differs:**
-
-- **"App names only" is enforced by the OS, not by us.** Reading another app's
-  window titles needs Accessibility permission, which this app never requests —
-  so the absence of that prompt in System Settings is the proof. On Windows the
-  equivalent guarantee is "we didn't import `GetWindowText`", which is weaker.
-- **Bundle identifiers instead of executable names.** `com.spotify.client` is
-  exact where `spotify.exe` is a guess, so `Apps.aliases` is keyed on them, with
-  a name table behind it for re-signed builds.
-- **The token lives in an owner-only file**, not the keychain — see the gotcha
-  above, it was tried.
-- **Gatekeeper is stricter than SmartScreen.** Double-clicking an unsigned app
-  is refused with no way through in the dialog; right-click → Open → Open is the
-  route, once. Getting rid of that needs the same $99/yr account that makes iOS
-  impossible, so it isn't planned.
-- **Blocked apps are quit, not hidden.** Hiding was the first attempt and it
-  was toothless — one Cmd-Tab and you were back. Both apps now send the polite
-  quit (`terminate()` on the Mac, `CloseMainWindow` on Windows), so an app with
-  unsaved work still gets to put up its save dialog, and an override starts the
-  app again rather than leaving the student to go and find it.
-
-**The bug worth remembering:** the self-exclusion check was
-`bundleId == Bundle.main.bundleIdentifier`, and outside a .app bundle both sides
-are nil — so every app without a bundle id was silently dropped. The self-test
-caught it on its first run.
-
----
-
-## Thirteen and over
-
-Under-13 accounts are turned away at the birthdate gate rather than routed
-through parental consent. `isTooYoung` in `src/lib/user.ts` is the whole
-decision; `MINIMUM_AGE` is 13 because that is where COPPA's line sits, not
-because of what year a student is in — some ninth-graders are twelve in August,
-and "high school only" would have let them in.
-
-**The consent flow is dormant, not deleted.** `requiresParentConsent`,
-`ParentConsentStep`, the token route and the email are all still there and still
-work. What made it unusable was never the code: verified parental consent means
-real emails reaching real parents reliably, and this project has no domain yet,
-so Resend delivers to the developer and nobody else. A consent request that goes
-quietly to spam fails in the worst available way — the student is stuck, the
-parent never knew, and nothing anywhere says so.
-
-So the honest position is to decline the age group rather than half-serve it.
-Flip it back when there's a domain, proven delivery, and a legal read.
-
-Knock-on effects, all done: both privacy pages say 13+ and no longer promise a
-consent flow, and the parents page is now a general explainer rather than a
-consent form.
-
----
-
-## The baseline, and why the checklist has one row where it used to have two
-
-`/baseline` fills in `User.profileCipher` — usual sleep and wake times, usual
-place and noise. **No migration was needed**: the column and `ProfilePayload`
-already existed and had simply never been written to.
-
-The dashboard checklist had two dead rows for this, and it now has one, because
-of the encryption model rather than laziness. The server can see that a baseline
-exists and nothing whatsoever about what is in it, so "sleep times done, place
-not yet" is not a question it can answer. The alternatives were a plaintext flag
-per half — putting a fact about a student's data on the structure side of the
-line for the sake of a tick — or decrypting the checklist in the browser, which
-means a client component that shows nothing useful while the app is locked. One
-row, one page, saved in a single go, so done means done.
-
-Times are minutes from midnight, like the bell schedules. `nightLength` wraps
-past midnight: bedtimes cross it and wake times don't, so plain subtraction
-would have told a student they slept minus four hours.
-
-Also fixed while in there: "Install the extension" was ticked only by a browser
-extension, so a student on the Mac app was nagged forever about a checkbox they
-had deliberately skipped. Any paired device counts now.
-
----
-
-## The iPhone app, and what it can never do
-
-Decided, not built. Xcode isn't installed on the build Mac — only Command Line
-Tools — so this waits on a 15GB download.
-
-**The entitlement is the whole story.** Tracking which app is in front, and
-blocking one, both need `FamilyControls` / `DeviceActivity` / `ManagedSettings`.
-That entitlement is *granted by Apple*, not purchased: $99/yr buys the right to
-ask, and they approve parental-control products with a company behind them.
-Assume the answer is no, and design as though it is.
-
-So the iPhone app is a **companion**: start and stop sessions, log sleep and
-screen time and scores, read insights. Which is what a phone is for here anyway —
-nobody studies on their phone. Phone usage keeps arriving the way it does now,
-through the Screen Time screenshot and OCR.
-
-**Blocking, such as it is: iOS Focus modes.** A Focus hides apps from the Home
-Screen and silences their notifications. The app can't set one directly, but it
-can run a Shortcut — `shortcuts://run-shortcut?name=Study` — so the student sets
-up a Study Focus and a shortcut once, and Insight turns it on when a session
-starts and off when it ends.
-
-That's friction rather than a lock, and it fits: Focus Mode on the desktop apps
-was never a hard lock either. Three seconds and a way through, deliberately,
-because a hard lock gets uninstalled. The iPhone arrives at the same philosophy
-through a different door.
-
-So the line to be honest with students about: **desktop and Android measure and
-block; iPhone nudges.**
-
-**Distribution.** Free provisioning installs to your own device and expires after
-seven days, re-signed by plugging into a Mac. $99 buys TestFlight — 100 testers,
-no expiry — which is the actual reason to pay, rather than any capability.
-
-**The key rules on the phone**, since it's the only client that holds one: in
-memory only, dropped after two minutes in the background, the config file
-excluded from iCloud backups, the pairing code wiped from the clipboard after
-use, https enforced because iOS blocks cleartext anyway, and the KDF iteration
-count bounded rather than trusted. `ios/README.md` argues each one.
-
-**Auth, when it's built:** pair like the desktop apps, with a code from
-`/devices` and the bearer token `authenticateDevice` already checks. No Clerk
-iOS SDK. The phone *will* hold the encryption key, derived from the password as
-the browser does — that doesn't break the rule, because the rule is that
-unattended trackers never hold a key. A phone the student unlocks with their own
-password is the browser, not the extension.
-
-Needs new endpoints, unlike everything else: unlock material, session start and
-stop, and writing sealed records. Build them alongside the app rather than
-ahead of it.
-
-**Built so far:** pairing, unlocking, session start and stop, sleep logging,
-and the Focus handshake. Three endpoints were added under `/api/devices/` —
-`session/start`, `session/stop`, `sleep` — all on the same bearer token the
-extension uses.
-
-**The pairing code is different from the laptops', and deliberately so.** A
-phone shows you your own data, so it needs the encryption key. The obvious way
-to give it one — an endpoint handing key material to a bearer token — would make
-"pairing grants the ability to add, never to read" false for every device, and
-would let a stolen token pull the wrapped key and grind at the password offline.
-So the material rides inside the pairing code, assembled in a browser that is
-already signed in. `src/lib/pairing.ts`. The password is not in it and never
-leaves the student's head.
-
-**`ios/Sources/Crypto.swift` must match `src/lib/crypto.ts` exactly** — PBKDF2
-600k, AES-GCM, NFKC-normalised password, and WebCrypto's ciphertext‖tag layout
-against CryptoKit's separate tag. Verified both directions against the real
-browser code: Swift reads what the browser sealed, the browser reads what Swift
-sealed, and a wrong password fails as a wrong password rather than as corrupt
-data. If that ever drifts, the symptom is a correct password being rejected
-forever, so test interop rather than assuming it.
-
-**The Focus buttons on the session screen** appear only on an iPhone, worked
-out from the request's User-Agent. They open `shortcuts://run-shortcut`, which
-needs a tap and a confirmation every time — nothing we control runs on the phone
-at the moment a session starts, so a session begun on a laptop can never quiet a
-phone by itself. The shortcut names are shared with `ios/Sources/Focus.swift`
-and a test reads the Swift to check they still match: if they drift, the buttons
-open Shortcuts and find nothing, and a student decides the feature is broken.
-
-**Blocking, in practice: the bounce.** Shortcuts has a personal automation
-trigger — *when this app is opened* — and with Run Immediately on, opening
-Instagram flips the student straight back out. It lands on `/bounce`, or on
-`insight://bounce?app=Instagram` if the native app is installed.
-
-That is free, needs no entitlement and no developer account, and fires *every
-single time* rather than hiding an icon. It is an interruption rather than a
-wall, and both screens say so out loud — a blocker that hides its own off-switch
-is one you delete in a bad week, and then it protects you from nothing.
-
-The web page is the one that reaches pilot students, since it needs nothing
-installed. The app name is sanitised on both sides (`src/lib/bounce.ts`,
-`Store.cleanAppName`): it arrives in a URL anyone can write and is rendered
-straight back, so a link dressed as an app name would otherwise let Insight's
-own page carry someone else's message.
-
-**Everything free on iOS is either undoable by the student or needs another
-person to hold a passcode.** Focus modes, Screen Time limits, DNS profiles, the
-bounce — all of them. A real wall needs the entitlement. Worth telling students
-plainly rather than implying the iPhone gets what a laptop gets.
-
-**The web app is installable now**, which is what pilot students actually get:
-`src/app/manifest.ts`, icons in `public/`, and the Apple meta tags iOS reads
-instead of the manifest. Add to Home Screen and it opens without Safari's
-chrome, updates the moment we deploy, never expires, and costs nothing.
-
-**The service worker caches almost nothing, deliberately.** It exists because
-Chrome won't offer to install an app without a fetch handler. The obvious next
-step — caching pages for offline use — is one this app must not take: every page
-worth caching shows decrypted study data, and a cache is a copy on disk that
-outlives the tab and isn't covered by anything the privacy page promises. So one
-dull offline page is pre-cached, navigations go to the network, and nothing else
-is stored.
-
----
-
-## Handing out the desktop apps
-
-`/download` is public, detects the OS from the request's User-Agent, and puts
-that one first. It leads with the fact that both operating systems will call
-the app suspicious, because a student who meets an unexplained "Windows
-protected your PC" box concludes the download is broken — or that it's malware.
-
-**The two files are not in the repo, and shouldn't be.** The Windows exe is
-68MB and cannot be made smaller — .NET refuses to trim WinForms builds, which I
-tried. Committing it would bloat every clone forever and ride along in every
-deploy. Upload both to object storage — Cloudflare R2 or Vercel Blob, free at
-this size — and set:
-
-```
-NEXT_PUBLIC_DOWNLOAD_WINDOWS_URL
-NEXT_PUBLIC_DOWNLOAD_MAC_URL
-```
-
-Until those exist the page says so in a sentence rather than offering a dead
-button. GitHub Releases would work for anyone off the school network, but
-github.com is blocked on district wifi, so it's the wrong host for this.
-
----
-
-## The Android app
-
-`android/`, Kotlin and Compose, Gradle wrapper pinned to 8.11.1 because the
-Android plugin lags newer Gradle and Homebrew's is well ahead. Needs JDK 17–21;
-JDK 25 and 26 are both too new for AGP, so builds run with
-`JAVA_HOME=/opt/homebrew/opt/openjdk@21`.
-
-**The permission is the feature.** `PACKAGE_USAGE_STATS` is not granted by
-tapping Allow — the student goes to Settings and turns on usage access for
-Insight by name, and can take it back in the same screen. That friction is kept
-rather than routed around, because it is the same act as the promise. The
-tracker also runs as a foreground service with a permanent notification, which
-Android requires and which is right: an app counting what you use should not be
-able to do it invisibly.
-
-**Android blocks sites as well as apps, through DNS.** `FocusVpnService` is a
-local VPN carrying nothing but DNS: it refuses lookups for anything on the
-blocklist and forwards the rest to the phone's own resolver. It runs only while
-a session is running with Focus Mode on, the tunnel routes exactly one address
-so nothing but DNS enters the process, and nothing is recorded but the blocks.
-
-This is why the same trick isn't on Windows or the Mac: there the extension
-already does it better, with URL-level precision and a real block page, and
-doing it at the network layer would need admin rights on Windows or Apple's
-Network Extension entitlement on macOS — the same wall as iOS. `VpnService` is
-an ordinary app API with a consent dialog, which makes Android the one place
-this is available at all.
-
-Limitation worth knowing: a browser on DNS-over-HTTPS never asks us and never
-sees the block.
-
-**Browsers are counted on Android and skipped on the desktops.** Not an
-inconsistency: the desktop rule exists because the extension counts browsers
-there, and Chrome for Android can't run extensions. Skipping them made a
-student's entire phone browsing invisible and unblockable. A browser can be
-blocked whole, if the student names it — anything finer means reading a URL out
-of another app, which needs an accessibility service, which reads the screen.
-That is the line no client here crosses.
-
-**Nothing counts while the screen is off.** A phone in a pocket still names a
-foreground app, so without that a student is billed for the walk home. It is
-the Android equivalent of the desktop apps' ten-minute idle rule.
-
-**Blocking is real here, and it's the one thing Android does better than the
-iPhone.** A blocked app is replaced by `BlockedActivity` — no entitlement, no
-approval. It needs `SYSTEM_ALERT_WINDOW`, asked for separately from usage
-access and only after it, because counting works without it and blocking
-doesn't; since Android 10 that permission is also what lets a background
-service start an activity at all. The blocked app is closed rather than
-covered — `killBackgroundProcesses` after our screen is in front, since that
-call only reaches background processes and by then it is one. Covering it left
-the app running behind the screen holding its place, so going back resumed
-where you were: a curtain rather than a door. The override relaunches it, and
-is the same three seconds as everywhere else.
-
-**Foreground app comes from `queryEvents`, not `queryUsageStats`.** The
-aggregated stats round to an interval and lag by minutes — long enough that
-switching apps credits the previous one with the next one's time.
-
----
-
-## Getting the extension onto a student's machine
-
-**"Load unpacked" is a developer workflow, not a distribution plan.** On a
-district-managed laptop or Chromebook, developer mode is usually disabled by
-policy, which means every device feature — activity tracking, Focus Mode, and
-the whole HAC plan, which needs a content script — is unavailable to exactly the
-students the pilot is for.
-
-The two real routes:
-
-- **Chrome Web Store**, a one-time $5 developer registration. Students install
-  in one click, updates ship automatically, and nothing is sideloaded. Unlisted
-  publishing is available if it shouldn't be public.
-- **Force-installed by district IT** via policy, which needs a sponsor but works
-  on managed fleets and takes the decision away from the student.
-
-`extension/STORE.md` has every field the store form asks for, written out to
-paste: listing copy, the single-purpose statement, a justification per
-permission, the two data-usage disclosures that are true (authentication
-information for the pairing code, web history for session hostnames), and the
-zip command — zip the *contents*, not the folder, or the manifest isn't at the
-root. Publish it **unlisted**: installable by link, not findable by search.
-
-The manifest is ready for either. Icons at 16/48/128, and — the part a
-reviewer or an IT department actually looks at — **`<all_urls>` is gone**. It was
-never needed: tab hostnames come from the `tabs` permission, and the only thing
-fetched is the student's own Insight server. `host_permissions` is now just the
-production origin, with anything else requested at pairing time through
-`chrome.permissions.request`. An extension that asks for every site on the
-internet is one a school is right to refuse.
-
-Note for local development: pairing against a dev server on a LAN address now
-triggers a permission prompt in the popup rather than working silently.
+## Distribution
+
+Students are on **their own machines**, and get everything from the website.
+
+- **Desktop apps and the APK:** `/download`. The three binaries are *not* in the
+  repo — the Windows exe is 68MB and can't be trimmed (.NET refuses on WinForms).
+  Upload them to Cloudflare R2 or Vercel Blob and set
+  `NEXT_PUBLIC_DOWNLOAD_WINDOWS_URL`, `_MAC_URL`, `_ANDROID_URL`. Until those
+  exist the page says so rather than offering a dead button.
+- **The extension can't be handed out as a file.** Chrome removed self-hosted
+  `.crx` installs, and "Load unpacked" needs developer mode. It has to go through
+  the Web Store: $5 once, publish **unlisted**. `extension/STORE.md` has every
+  field the form asks for, written out to paste.
+- **The APK triggers Google Play Protect** on install — "hasn't seen an app from
+  this developer before". Students tap through via *Install anyway*. A one-time
+  $25 Play Console registration and an internal-testing track would remove it.
+- **The iPhone gets no app.** `/iphone` is the setup instead.
+- **GitHub is blocked on the district network**, so it's the wrong host for any
+  of this.
 
 ---
 
 ## If we do HAC
 
-Not built. But the reconnaissance cost two people real effort, so it lives here
-rather than in a chat log. `src/lib/assignment-match.ts` is written and tested;
-nothing imports it yet.
+Not built. `src/lib/assignment-match.ts` is written and tested; nothing imports
+it yet. The reconnaissance cost two people real effort, so it lives here.
 
-**Never take a HAC password.** It is the student's district identity — often the
-same credential as their district Google account — and it unlocks schedule,
-attendance and discipline records. It is not comparable to the Canvas token,
-which is scoped, revocable and expires in 90 days. The one design that avoids it
-entirely: a **content script on `hac.friscoisd.org`**, reading pages the student
-is already logged into. Same-origin, so cookies apply and CORS never enters it,
-and no login handshake is needed — which also skips the whole
-`__RequestVerificationToken` / `Database: "10"` / hidden-fields dance that
-server-side scrapers need. A plain web page cannot do this: HAC sends no CORS
-headers and its session cookie is `HttpOnly`. The extension is what makes it
-possible.
+**Never take a HAC password.** It is the student's district identity and unlocks
+schedule, attendance and discipline records. It is not comparable to the Canvas
+token, which is scoped, revocable and expires in 90 days. The design that avoids
+it entirely: a **content script on `hac.friscoisd.org`**, reading pages the
+student is already logged into. Same-origin, so cookies apply and CORS never
+enters it, and no login handshake is needed. A plain web page cannot do this —
+HAC sends no CORS headers and its session cookie is `HttpOnly`.
 
 **Upcoming work is at `/HomeAccess/Home/WeekView`, not `Assignments.aspx`.** It
-takes `?startDate=MM/DD/YYYY`, so a semester is a loop over week starts, no
-`__VIEWSTATE` postback. Each row carries a multiline `title=""` attribute with
-due date, max points, category, type, droppable and extra-credit flags, plus
-course, period and teacher on the same row — richer than the gradebook page, and
-it avoids joining courses on name alone.
+takes `?startDate=MM/DD/YYYY`, so a semester is a loop over week starts. Each row
+carries a multiline `title=""` attribute with due date, max points, category,
+type, droppable and extra-credit flags, plus course, period and teacher.
 
 **On `Assignments.aspx`: cell 0 is the due date, cell 1 is the assigned date.**
-Rows are `tr.sg-asp-table-data-row`, course from `div.AssignmentClass`,
-score and points in cells 4 and 5. `span.sg-header-sub-heading` on each course
-header is a last-updated stamp, which is a staleness signal worth keeping.
+Rows are `tr.sg-asp-table-data-row`, course from `div.AssignmentClass`, score and
+points in cells 4 and 5. `span.sg-header-sub-heading` is a last-updated stamp.
 
-**There is no stable assignment id.** Two independent parsers of HAC capture
-none, which is decent negative evidence. Hence the matcher.
+**There is no stable assignment id.** Two independent parsers capture none.
 
-Three traps found in existing scrapers, all worth not repeating: a `points`
-value defaulting to `100.0` when unparseable (a 5-point warm-up silently becomes
-a 100-point assignment); recomputing course grades when HAC never exposes
-category weights; and parsing by positional cell index, which fails *silently*
-when a column is inserted — bind to header labels instead.
+Three traps found in existing scrapers: a `points` value defaulting to `100.0`
+when unparseable; recomputing course grades when HAC never exposes category
+weights; and parsing by positional cell index, which fails *silently* when a
+column is inserted — bind to header labels instead.
 
-Still unknown: whether the assignments table has a header row to bind to, and
-whether ungraded work appears there at all. Both are answerable by opening the
-page in DevTools once school starts.
+Still unknown, and answerable in DevTools once the gradebook has anything in it:
+whether the assignments table has a header row to bind to, and whether ungraded
+work appears there at all.
 
-**Pairing refuses plain http to anything but a local address.** Both desktop
-apps used to accept any `http://` address, which meant the pairing code and then
-every app name in every session crossed the network in clear text — readable by
-anyone else on the school's wifi, and chosen by a student typing "http" out of
-habit rather than by anyone weighing it up. `Address` in each app now allows
-https anywhere, and http only to localhost, `.local` names and private LAN
-ranges, so developing against a laptop on the same network still works.
-
-**One thing not to copy:** `SumitNalavade/FriscoISDHACAPI` passes username and
-password as URL query parameters, which land in server logs and browser history.
-Don't, and don't point students at any hosted instance of it.
+**Don't copy `SumitNalavade/FriscoISDHACAPI`'s auth** — it passes username and
+password as URL query parameters.
 
 ---
 
 ## Outstanding, for Kapilesh
 
-- **Rotate the leaked credentials.** Neon database password, Groq and Resend
-  keys, and one extension pairing code all appeared in screenshots pasted into
-  chat.
-- **Get a domain** — GitHub Student Pack (days) or eu.org (1-2 weeks). Unblocks
-  Clerk production *and* real parent emails.
-- **Real bell times** into `/admin/schedules`. The seeded ones match the
-  district calendar's start and end times but the internal period splits were
-  reconstructed, not published.
-- **Five calendar dates** the extractor couldn't resolve, listed on that same
-  page.
+- **Rotate the leaked credentials.** Neon password, Groq and Resend keys, and one
+  extension pairing code all appeared in screenshots pasted into chat. A phone
+  pairing code has since gone through a messaging app too.
+- **Host the three binaries** and set the three env vars, or `/download` offers
+  nothing.
+- **The Chrome Web Store**, $5 and twenty minutes, using `extension/STORE.md`.
+- **Real bell times** into `/admin/schedules`. The seeded ones match the district
+  calendar's start and end times but the internal period splits were
+  reconstructed, not published — so "you studied during 3rd period" is a guess.
+- **Five calendar dates** the extractor couldn't resolve, listed on that page.
 - **Legal review.** Turning under-13s away removes COPPA, not every obligation —
-  Texas HB 18 covers minors under 18. `DATA.md` is written for this: hand it over
-  with the two privacy pages and it's an hour of reading rather than an hour of
-  questions. It also lists two places where the pages promise something the code
-  doesn't do.
-- **Log real sessions.** The insight engine has passed 108 tests and never seen
-  a human.
+  Texas HB 18 covers minors under 18. `DATA.md` is written for exactly this:
+  every field, whether it's encrypted, what leaves the system, and the questions
+  worth an attorney's hour. It also lists two places where the pages and the code
+  still disagree.
+- **A domain**, eventually. No longer urgent — the parent-consent email path is
+  gone — but Clerk's dev instance caps at 100 users.
+- **Log real sessions.** The insight engine has passed 240 tests and never seen a
+  human. Everything downstream is calibrated against data that doesn't exist yet.

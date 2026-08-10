@@ -66,6 +66,9 @@ class MainActivity : ComponentActivity() {
             // Re-checked on every resume, because both are granted in Settings
             // and the student walks back in — there is no callback for either.
             var trackerQuiet by remember { mutableStateOf(false) }
+            var sessionRunning by remember { mutableStateOf(config.sessionRunning) }
+            var focusMode by remember { mutableStateOf(config.focusMode) }
+            var blocklistSize by remember { mutableIntStateOf(config.blocklistSize) }
             var canBlockSites by remember {
                 mutableStateOf(FocusVpnService.consentIntent(this) == null)
             }
@@ -85,6 +88,9 @@ class MainActivity : ComponentActivity() {
                 // means it isn't running — not that the network is slow.
                 val since = System.currentTimeMillis() - config.lastTickAt
                 trackerQuiet = config.paired && since > 120_000
+                sessionRunning = config.sessionRunning
+                focusMode = config.focusMode
+                blocklistSize = config.blocklistSize
                 canBlockSites = FocusVpnService.consentIntent(this@MainActivity) == null
 
                 onPauseOrDispose {}
@@ -98,6 +104,9 @@ class MainActivity : ComponentActivity() {
                         canDrawOver = canDrawOver,
                         trackerQuiet = trackerQuiet,
                         canBlockSites = canBlockSites,
+                        sessionRunning = sessionRunning,
+                        focusMode = focusMode,
+                        blocklistSize = blocklistSize,
                         onAllowSiteBlocking = {
                             FocusVpnService.consentIntent(this@MainActivity)
                                 ?.let { askForVpn.launch(it) }
@@ -242,6 +251,9 @@ private fun StatusScreen(
     canDrawOver: Boolean,
     trackerQuiet: Boolean,
     canBlockSites: Boolean,
+    sessionRunning: Boolean,
+    focusMode: Boolean,
+    blocklistSize: Int,
     onAllowSiteBlocking: () -> Unit,
     onRestart: () -> Unit,
     onGrant: () -> Unit,
@@ -386,6 +398,39 @@ private fun StatusScreen(
             )
         }
 
+        // Blocking has five preconditions and four of them are invisible. When
+        // any is missing, say which — "it isn't blocking" is otherwise
+        // impossible to diagnose without someone else's phone in your hand.
+        val blockingReady =
+            hasUsageAccess && canDrawOver && sessionRunning && focusMode && blocklistSize > 0
+
+        Column(
+            Modifier.fillMaxWidth()
+                .background(Insight.surface, RoundedCornerShape(12.dp))
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                if (blockingReady) "Blocking is on" else "Why nothing is being blocked",
+                color = if (blockingReady) Insight.good else Insight.text,
+                fontSize = 17.sp,
+            )
+
+            Check("A session is running", sessionRunning, "Start one on Insight")
+            Check("Focus Mode is on", focusMode, "Turn it on with the session")
+            Check("Your blocklist reached us", blocklistSize > 0, "Nothing to block yet")
+            Check("Can see which app is in front", hasUsageAccess, "Usage access, above")
+            Check("Can put a screen in front of one", canDrawOver, "Drawing over apps, above")
+            Check("Can block websites", canBlockSites, "Optional — needs the VPN")
+
+            if (blocklistSize > 0) {
+                Text(
+                    "$blocklistSize sites and apps on your list.",
+                    color = Insight.textFaint, fontSize = 13.sp,
+                )
+            }
+        }
+
         Text(
             "Paired to ${config.apiBase.removePrefix("https://")}",
             color = Insight.textFaint, fontSize = 13.sp,
@@ -393,6 +438,20 @@ private fun StatusScreen(
 
         TextButton(onClick = onUnpair) {
             Text("Unpair this phone", color = Insight.textMuted, fontSize = 16.sp)
+        }
+    }
+}
+
+@Composable
+private fun Check(label: String, ok: Boolean, missing: String) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(if (ok) "✓" else "✗", color = if (ok) Insight.good else Insight.bad, fontSize = 15.sp)
+        Column {
+            Text(label, color = Insight.textMuted, fontSize = 15.sp)
+            if (!ok) Text(missing, color = Insight.textFaint, fontSize = 13.sp)
         }
     }
 }

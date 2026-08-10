@@ -288,6 +288,10 @@ class TrackerService : android.app.Service() {
                 session = result.session
                 blocklist = result.blocklist
 
+                config.sessionRunning = result.session != null
+                config.focusMode = result.session?.focusMode == true
+                config.blocklistSize = result.blocklist.size
+
                 // A session ended, or a different one began. Either way the
                 // tally belongs to the old id, and posting it afterwards loses
                 // the last minute of every session.

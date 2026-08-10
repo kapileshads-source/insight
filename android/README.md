@@ -157,6 +157,16 @@ status screen calls it out if that stamp is minutes old, with a button to start
 it again. An hour nobody measured is indistinguishable from an hour of perfect
 focus by the time it reaches the insight engine, so silence has to be visible.
 
+## Why nothing is being blocked
+
+Blocking has five preconditions and four of them are invisible from outside the
+app: a session running, Focus Mode on, a blocklist that arrived, usage access,
+and drawing over other apps. Website blocking adds a sixth, the VPN consent.
+
+So the status screen lists all six with a tick or a cross, and says what to do
+about each miss. "It isn't blocking" is otherwise undiagnosable without holding
+the phone — which is exactly where an evening goes.
+
 ## What isn't done
 
 Nobody has run this on a phone or an emulator. It builds, and 16 unit tests

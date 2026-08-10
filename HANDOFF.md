@@ -96,7 +96,8 @@ Website, all deployed and working:
   sleep, and bounces you out of apps via a Shortcuts automation
 - Android app (`android/`), Kotlin and Compose — pairs, counts time per app,
   and blocks. The only phone that can do either honestly
-- `/download` for the desktop apps, `/bounce` for the iPhone automation
+- `/download` for the desktop apps and the APK, `/bounce` for the iPhone
+  automation, `/iphone` for the setup that replaces an app Apple won't allow
 
 Data: 30 FISD campuses seeded, real A/B calendar extracted from the district
 PDF by sampling cell colours — 82 A days against 82 B days, which is the check

@@ -262,6 +262,25 @@ export function DevicesPanel({
       </section>
 
       <section className="rounded-lg border border-line bg-surface p-6">
+        <h2 className="h3 text-[17px]">On an iPhone</h2>
+        <p className="mt-2 text-[15px] leading-relaxed text-text-muted">
+          There&rsquo;s nothing to pair. Apple doesn&rsquo;t let any app see
+          which app you&rsquo;re using or block one, so an iPhone can&rsquo;t
+          measure or block the way a laptop or an Android phone can.
+        </p>
+        <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
+          What it can do is quiet itself while you work and bounce you out of
+          the apps you were avoiding — about ten minutes of setup, done once.
+        </p>
+        <a
+          href="/iphone"
+          className="btn-secondary mt-5 inline-block px-5 py-2.5 text-[15px] text-text"
+        >
+          Set up your iPhone
+        </a>
+      </section>
+
+      <section className="rounded-lg border border-line bg-surface p-6">
         <h2 className="h3 text-[17px]">Install the Android app</h2>
         <p className="mt-2 text-[15px] leading-relaxed text-text-muted">
           The only phone that can measure its own use, and the only one where

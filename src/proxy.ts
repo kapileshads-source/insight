@@ -21,6 +21,9 @@ const isPublic = createRouteMatcher([
   "/bounce",
   // Cached on the device and shown when the network is gone.
   "/offline",
+  // Setup instructions, which are most useful to someone deciding whether
+  // Insight is worth signing up for on the phone they actually own.
+  "/iphone",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/consent(.*)",

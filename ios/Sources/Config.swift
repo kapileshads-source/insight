@@ -85,6 +85,17 @@ final class Config {
         try? FileManager.default.createDirectory(
             at: directory, withIntermediateDirectories: true)
         try? data.write(to: Config.fileURL, options: .completeFileProtection)
+
+        // Kept out of iCloud backups. The wrapped key in here is useless
+        // without the password, but a backup is a copy that leaves the phone
+        // and sits somewhere neither the student nor we control — and an
+        // offline copy is exactly what makes grinding at a password worth
+        // someone's time. The cost is re-pairing after restoring a phone,
+        // which is a minute, and arguably the right default anyway.
+        var url = Config.fileURL
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? url.setResourceValues(values)
     }
 
     func clear() {

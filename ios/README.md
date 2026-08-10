@@ -49,6 +49,35 @@ have no interface attached.
 Pairing, and the status screen — am I connected, am I recording. Same two
 questions the extension popup and both tray apps answer.
 
+## What it does with your key
+
+The phone is the only client that holds one, so the rules are worth stating.
+
+- **In memory only.** Never written down. Killing the app locks it.
+- **Dropped after two minutes in the background.** Long enough to run a
+  shortcut or answer a message and come back; short enough that a phone left on
+  a desk is locked by the time someone else picks it up.
+- **What is on disk** — the address, the device token, and the encryption setup
+  — sits in the app container with complete file protection and is **excluded
+  from iCloud backups**. The wrapped key is useless without the password, but a
+  backup is an offline copy that leaves the phone, and an offline copy is what
+  makes grinding at a password worth someone's time. Cost: re-pair after
+  restoring a phone.
+- **The pairing code is cleared** from the field and from the system clipboard
+  once it's been used, since Universal Clipboard otherwise hands it to every
+  Apple device on the account.
+- **https only.** `Address` allows plain http to a local address, which is
+  right on a laptop and impossible here — iOS refuses cleartext outright, so
+  allowing it would only produce "couldn't reach" and send someone to check
+  their wifi over a problem no wifi will fix.
+- **The iteration count in a pairing code is bounded**, floor and ceiling. It
+  arrives inside the code, so a doctored one could otherwise hand the phone a
+  KDF weak enough to brute-force, or heavy enough that unlocking looks like a
+  hang.
+
+Not done, and worth knowing: the app switcher snapshot isn't hidden, so
+whatever was on screen when you switched away is briefly stored by iOS.
+
 ## What's next
 
 - Session start and stop, which needs endpoints that don't exist yet

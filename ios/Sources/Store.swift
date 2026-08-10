@@ -45,6 +45,14 @@ final class Store: ObservableObject {
     private let api = ApiClient()
     private var key: SymmetricKey?
     private var timer: Timer?
+    private var leftAt: Date?
+
+    /// How long the app can be in the background before the key is dropped.
+    ///
+    /// Long enough to run a shortcut, answer a message, or check something and
+    /// come back. Short enough that a phone left on a desk is locked by the
+    /// time anyone picks it up.
+    private static let graceSeconds: TimeInterval = 120
 
     /// Fifteen seconds, matching the desktop apps.
     private static let pollSeconds: TimeInterval = 15
@@ -108,6 +116,17 @@ final class Store: ObservableObject {
         return collapsed
     }
 
+    func wentAway() {
+        leftAt = Date()
+    }
+
+    func cameBack() {
+        guard let left = leftAt else { return }
+        leftAt = nil
+
+        if Date().timeIntervalSince(left) > Store.graceSeconds { lock() }
+    }
+
     // --- pairing and unlocking ----------------------------------------------
 
     /// The code carries the address, the token and the encryption setup —
@@ -117,6 +136,15 @@ final class Store: ObservableObject {
             return "That code didn't scan right. Copy the whole thing — it's long."
         }
         if let problem = Address.problem(with: pairing.base) { return problem }
+
+        // Address allows plain http to a local address, which is right on a
+        // laptop and impossible here: iOS refuses cleartext connections
+        // outright. Without this the attempt fails inside URLSession and
+        // surfaces as "couldn't reach", sending someone to check their wifi
+        // over a problem no amount of wifi will fix.
+        guard pairing.base.lowercased().hasPrefix("https://") else {
+            return "A phone needs an https address — iOS refuses plain http."
+        }
 
         // Checked against the server before it's kept, so a stale code fails
         // here rather than looking connected and never working.

@@ -9,6 +9,7 @@ import SwiftUI
 @main
 struct InsightApp: App {
     @StateObject private var store = Store()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
@@ -17,6 +18,23 @@ struct InsightApp: App {
                 .preferredColorScheme(.dark)
                 .task { store.start() }
                 .onOpenURL { store.handle(url: $0) }
+                .onChange(of: scenePhase) { _, phase in
+                    // The key lives in memory only, and until now it stayed
+                    // there for as long as iOS kept the app alive — which can
+                    // be days. A phone handed to someone, or picked up off a
+                    // desk, would open straight into a student's data.
+                    //
+                    // Locking on every switch away would be worse than
+                    // useless: running the Focus shortcut leaves the app for a
+                    // second, and asking for a password on the way back would
+                    // teach people to turn the feature off. So it's a grace
+                    // period, and the clock starts when the app goes away.
+                    switch phase {
+                    case .background: store.wentAway()
+                    case .active: store.cameBack()
+                    default: break
+                    }
+                }
         }
     }
 }

@@ -62,8 +62,21 @@ struct PairView: View {
     private func pair() {
         working = true
         Task {
-            problem = await store.pair(code: code)
+            let pasted = code
+            problem = await store.pair(code: pasted)
             working = false
+
+            guard problem == nil else { return }
+
+            // Cleared once it's been used. The code carries the wrapped key,
+            // and leaving it in a text field and on the system clipboard —
+            // where any app can read it, and where Universal Clipboard hands
+            // it to every other Apple device on the account — outlives every
+            // reason it existed.
+            code = ""
+            if UIPasteboard.general.string == pasted {
+                UIPasteboard.general.string = ""
+            }
         }
     }
 }

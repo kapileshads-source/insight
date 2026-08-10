@@ -350,6 +350,12 @@ block; iPhone nudges.**
 seven days, re-signed by plugging into a Mac. $99 buys TestFlight — 100 testers,
 no expiry — which is the actual reason to pay, rather than any capability.
 
+**The key rules on the phone**, since it's the only client that holds one: in
+memory only, dropped after two minutes in the background, the config file
+excluded from iCloud backups, the pairing code wiped from the clipboard after
+use, https enforced because iOS blocks cleartext anyway, and the KDF iteration
+count bounded rather than trusted. `ios/README.md` argues each one.
+
 **Auth, when it's built:** pair like the desktop apps, with a code from
 `/devices` and the bearer token `authenticateDevice` already checks. No Clerk
 iOS SDK. The phone *will* hold the encryption key, derived from the password as

@@ -24,7 +24,13 @@ struct Pairing: Decodable {
               let pairing = try? JSONDecoder().decode(Pairing.self, from: data),
               pairing.v == 1,
               !pairing.base.isEmpty,
-              !pairing.token.isEmpty
+              !pairing.token.isEmpty,
+              // The iteration count arrives inside the code, so a doctored one
+              // could hand the phone a KDF weak enough to brute-force — or one
+              // so heavy the app appears to hang on every unlock. Both ends are
+              // checked rather than trusted; the real value is 600,000.
+              pairing.setup.iterations >= 100_000,
+              pairing.setup.iterations <= 5_000_000
         else {
             return nil
         }

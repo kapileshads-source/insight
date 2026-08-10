@@ -199,6 +199,17 @@ Three changes, in increasing order of generality:
    cable and a laptop. `InsightApplication` writes the last one to preferences
    and the status screen shows it, so a screenshot is enough to fix it.
 
+## The status screen reads state on a timer
+
+Everything it shows is written by a service on its own schedule: the poll lands
+up to fifteen seconds after the app opens, and the tunnel a moment after that.
+It used to read once, on resume — so it showed the state from *before* any of
+that happened, and a failure that was being recorded correctly appeared as "the
+app didn't record why".
+
+That cost a full round trip with a real tester. Any panel describing something
+asynchronous has to re-read while it's on screen, not when it opens.
+
 ## What isn't done
 
 Nobody has run this on a phone or an emulator. It builds, and 16 unit tests

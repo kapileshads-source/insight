@@ -63,8 +63,8 @@ class MainActivity : ComponentActivity() {
             var hasUsageAccess by remember { mutableStateOf(usageAccessGranted()) }
             var canDrawOver by remember { mutableStateOf(Settings.canDrawOverlays(this)) }
 
-            // Re-checked on every resume, because both are granted in Settings
-            // and the student walks back in — there is no callback for either.
+            // Permissions still need the resume, because both are granted in
+            // Settings and the student walks back in — there is no callback.
             var trackerQuiet by remember { mutableStateOf(false) }
             var lastCrash by remember { mutableStateOf(config.lastCrash) }
             var siteBlockingActive by remember { mutableStateOf(config.siteBlockingActive) }
@@ -74,6 +74,30 @@ class MainActivity : ComponentActivity() {
             var blocklistSize by remember { mutableIntStateOf(config.blocklistSize) }
             var canBlockSites by remember {
                 mutableStateOf(FocusVpnService.consentIntent(this) == null)
+            }
+
+            // Re-read while the screen is open, not only when it opens.
+            //
+            // Everything here is written by a service on its own schedule: the
+            // poll lands up to fifteen seconds after the app is opened, and the
+            // tunnel comes up a moment after that. Reading once on resume meant
+            // the panel showed the state from before any of it happened — so a
+            // failure that *was* being recorded looked like a failure to record
+            // it, which cost a round trip.
+            LaunchedEffect(Unit) {
+                while (true) {
+                    lastCrash = config.lastCrash
+                    siteBlockingActive = config.siteBlockingActive
+                    siteBlockingProblem = config.siteBlockingProblem
+                    sessionRunning = config.sessionRunning
+                    focusMode = config.focusMode
+                    blocklistSize = config.blocklistSize
+
+                    val since = System.currentTimeMillis() - config.lastTickAt
+                    trackerQuiet = config.paired && since > 120_000
+
+                    kotlinx.coroutines.delay(2_000)
+                }
             }
 
             // Android will only hand out the VPN consent dialog to an
@@ -91,12 +115,7 @@ class MainActivity : ComponentActivity() {
                 // means it isn't running — not that the network is slow.
                 val since = System.currentTimeMillis() - config.lastTickAt
                 trackerQuiet = config.paired && since > 120_000
-                lastCrash = config.lastCrash
-                siteBlockingActive = config.siteBlockingActive
-                siteBlockingProblem = config.siteBlockingProblem
-                sessionRunning = config.sessionRunning
-                focusMode = config.focusMode
-                blocklistSize = config.blocklistSize
+
                 canBlockSites = FocusVpnService.consentIntent(this@MainActivity) == null
 
                 onPauseOrDispose {}

@@ -46,6 +46,16 @@ class MainActivity : ComponentActivity() {
 
         val config = Config(this)
 
+        // Started here, not only when pairing succeeds.
+        //
+        // That was the bug: the service was launched once, from the pairing
+        // callback, so a paired student who reinstalled the app — or simply
+        // rebooted — opened it to a status screen saying everything was fine
+        // while nothing was running. Silence that looks like health is the
+        // worst failure this app can have, because the missing time reads as
+        // focused time later.
+        if (config.paired) TrackerService.start(this)
+
         setContent {
             var paired by remember { mutableStateOf(config.paired) }
             var hasUsageAccess by remember { mutableStateOf(usageAccessGranted()) }
@@ -53,9 +63,17 @@ class MainActivity : ComponentActivity() {
 
             // Re-checked on every resume, because both are granted in Settings
             // and the student walks back in — there is no callback for either.
+            var trackerQuiet by remember { mutableStateOf(false) }
+
             LifecycleResumeEffect(Unit) {
                 hasUsageAccess = usageAccessGranted()
                 canDrawOver = Settings.canDrawOverlays(this@MainActivity)
+
+                // Polls run every fifteen seconds, so two minutes of silence
+                // means it isn't running — not that the network is slow.
+                val since = System.currentTimeMillis() - config.lastTickAt
+                trackerQuiet = config.paired && since > 120_000
+
                 onPauseOrDispose {}
             }
 
@@ -65,6 +83,8 @@ class MainActivity : ComponentActivity() {
                         config = config,
                         hasUsageAccess = hasUsageAccess,
                         canDrawOver = canDrawOver,
+                        trackerQuiet = trackerQuiet,
+                        onRestart = { TrackerService.start(this@MainActivity) },
                         onGrant = { openUsageSettings() },
                         onGrantOverlay = { openOverlaySettings() },
                         onUnpair = {
@@ -202,6 +222,8 @@ private fun StatusScreen(
     config: Config,
     hasUsageAccess: Boolean,
     canDrawOver: Boolean,
+    trackerQuiet: Boolean,
+    onRestart: () -> Unit,
     onGrant: () -> Unit,
     onGrantOverlay: () -> Unit,
     onUnpair: () -> Unit,
@@ -247,6 +269,29 @@ private fun StatusScreen(
                     "Nothing is recorded at any other time.",
                 color = Insight.textMuted, fontSize = 16.sp,
             )
+        }
+
+        if (trackerQuiet) {
+            Column(
+                Modifier.fillMaxWidth()
+                    .background(Insight.surface, RoundedCornerShape(12.dp))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text("It hasn't checked in for a while", color = Insight.bad, fontSize = 17.sp)
+                Text(
+                    "The tracker should reach Insight every fifteen seconds. If it " +
+                        "has been quiet for minutes, it isn't running — anything you " +
+                        "studied meanwhile wasn't counted.",
+                    color = Insight.textMuted, fontSize = 15.sp,
+                )
+                Button(
+                    onClick = onRestart,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Insight.surface, contentColor = Insight.accent),
+                    shape = RoundedCornerShape(10.dp),
+                ) { Text("Start it again", fontSize = 16.sp) }
+            }
         }
 
         if (hasUsageAccess && !canDrawOver) {

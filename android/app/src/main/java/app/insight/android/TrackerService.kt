@@ -271,6 +271,10 @@ class TrackerService : android.app.Service() {
     private fun poll() {
         if (!config.paired) return
 
+        // Every poll rather than every tick: a preferences write once a second
+        // is a lot of disk for a heartbeat.
+        config.lastTickAt = System.currentTimeMillis()
+
         val result = api.poll(config.apiBase, config.token)
         when (result.status) {
             PollStatus.UNAUTHORISED -> {

@@ -94,6 +94,21 @@ leaving the student to go and find it again would be worse than the block. Back
 is disabled on that screen: it would drop you into the app that was just
 blocked, which makes the block look broken. "Back to work" sends you home.
 
+## Two failures that look like health
+
+Both found on a real phone, and both are the same shape: the app appears fine
+while recording nothing.
+
+**The service only started at the moment of pairing.** Reinstall the app, or
+reboot the phone, and it opened to a status screen saying all was well with no
+tracker running. It now starts whenever the app opens paired, and a boot
+receiver starts it after a restart.
+
+**And now it says so.** The tracker stamps a heartbeat every poll, and the
+status screen calls it out if that stamp is minutes old, with a button to start
+it again. An hour nobody measured is indistinguishable from an hour of perfect
+focus by the time it reaches the insight engine, so silence has to be visible.
+
 ## What isn't done
 
 Nobody has run this on a phone or an emulator. It builds, and 16 unit tests

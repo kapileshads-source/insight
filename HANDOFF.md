@@ -476,6 +476,22 @@ tracker also runs as a foreground service with a permanent notification, which
 Android requires and which is right: an app counting what you use should not be
 able to do it invisibly.
 
+**Android blocks sites as well as apps, through DNS.** `FocusVpnService` is a
+local VPN carrying nothing but DNS: it refuses lookups for anything on the
+blocklist and forwards the rest to the phone's own resolver. It runs only while
+a session is running with Focus Mode on, the tunnel routes exactly one address
+so nothing but DNS enters the process, and nothing is recorded but the blocks.
+
+This is why the same trick isn't on Windows or the Mac: there the extension
+already does it better, with URL-level precision and a real block page, and
+doing it at the network layer would need admin rights on Windows or Apple's
+Network Extension entitlement on macOS — the same wall as iOS. `VpnService` is
+an ordinary app API with a consent dialog, which makes Android the one place
+this is available at all.
+
+Limitation worth knowing: a browser on DNS-over-HTTPS never asks us and never
+sees the block.
+
 **Browsers are counted on Android and skipped on the desktops.** Not an
 inconsistency: the desktop rule exists because the extension counts browsers
 there, and Chrome for Android can't run extensions. Skipping them made a

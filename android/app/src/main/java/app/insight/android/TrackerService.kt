@@ -298,6 +298,15 @@ class TrackerService : android.app.Service() {
                     lastBlockedAt.clear()
                 }
 
+                // Site blocking rides with the session: on while Focus Mode is,
+                // off the moment it isn't. There is no state where it lingers,
+                // which is a good part of what makes it defensible.
+                if (result.session?.focusMode == true && blocklist.isNotEmpty()) {
+                    FocusVpnService.start(this, blocklist)
+                } else {
+                    FocusVpnService.stop(this)
+                }
+
                 update(
                     when {
                         result.session == null -> "Not studying"
@@ -396,6 +405,18 @@ class TrackerService : android.app.Service() {
         private const val BLOCK_COOLDOWN_MS = 30_000L
 
         const val ACTION_OVERRIDE = "app.insight.android.OVERRIDE"
+        const val ACTION_BLOCKED_SITE = "app.insight.android.BLOCKED_SITE"
+        const val EXTRA_HOST = "host"
+
+        /// Called from the DNS tunnel when it refuses a lookup, so a blocked
+        /// site is recorded exactly like a blocked app.
+        fun reportBlockedSite(context: Context, host: String) {
+            context.startService(
+                Intent(context, TrackerService::class.java)
+                    .setAction(ACTION_BLOCKED_SITE)
+                    .putExtra(EXTRA_HOST, host)
+            )
+        }
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, TrackerService::class.java))

@@ -73,6 +73,20 @@
             android:taskAffinity=""
             android:theme="@style/Theme.Insight" />
 
+        <!--
+          Blocks sites rather than apps, by refusing their DNS lookups. Carries
+          nothing but DNS: the tunnel routes one address. Runs only while a
+          session is running with Focus Mode on.
+        -->
+        <service
+            android:name=".FocusVpnService"
+            android:exported="false"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".BootReceiver"
             android:enabled="true"

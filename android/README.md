@@ -100,6 +100,39 @@ leaving the student to go and find it again would be worse than the block. Back
 is disabled on that screen: it would drop you into the app that was just
 blocked, which makes the block look broken. "Back to work" sends you home.
 
+## Blocking sites, not just apps
+
+The extension blocks sites on a laptop and Chrome for Android can't run it, so
+the only place left to say no to `youtube.com` on a phone is the lookup itself.
+`FocusVpnService` is a local VPN that carries **nothing but DNS**, answers "no
+such name" for anything on the student's blocklist, and forwards everything
+else to the resolver the phone was already using.
+
+Three things make that defensible, and all three are enforced rather than
+promised:
+
+- **It runs only while a session is running with Focus Mode on.** The tracker
+  starts and stops it; there is no state where it lingers.
+- **Only DNS enters the process.** The tunnel routes exactly one address — the
+  resolver we advertise. Pages, messages, video and everything else never touch
+  it. That is one line in `connect()`, and it is the most important line here.
+- **Nothing is recorded.** Blocked names become block events like any other;
+  allowed names are forwarded and forgotten.
+
+Upstream is whatever resolver the phone would have used anyway, read from the
+active network. Sending every lookup to a public resolver instead would quietly
+move a student's browsing history to a company they didn't choose, which is a
+bigger change to their privacy than the blocking is worth.
+
+**The honest limitation:** a browser using DNS-over-HTTPS never asks us, and
+never sees the block. Chrome turns Secure DNS off while a VPN is active in most
+configurations, but not all. Friction rather than a wall — like everything else
+here.
+
+`Dns.kt` is pure and has 8 tests, because packet parsing that is nearly right
+fails like flaky wifi, and a student would blame the school's network before
+they blamed the byte offsets.
+
 ## Two failures that look like health
 
 Both found on a real phone, and both are the same shape: the app appears fine

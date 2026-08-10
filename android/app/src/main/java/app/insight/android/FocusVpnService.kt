@@ -52,15 +52,34 @@ class FocusVpnService : VpnService() {
         // always, for a tracker. That refusal used to crash the app; then it
         // was swallowed, and site blocking simply never happened. Neither is
         // acceptable, so the service is one Android will allow.
-        startForeground(NOTIFICATION_ID, notification())
+        val config = Config(this)
+        config.siteBlockingProblem = "4. service running"
+
+        try {
+            startForeground(NOTIFICATION_ID, notification())
+        } catch (e: Throwable) {
+            // Notifications may be refused outright on Android 13+, and a
+            // foreground service that can't show one is a service Android may
+            // refuse to keep.
+            config.siteBlockingProblem = "5. couldn't go foreground: ${e.javaClass.simpleName}"
+        }
 
         blocklist = intent?.getStringArrayListExtra(EXTRA_BLOCKLIST) ?: emptyList()
+        config.siteBlockingProblem = "6. blocklist of ${blocklist.size}"
 
         if (intent?.action == ACTION_STOP || blocklist.isEmpty()) {
+            if (intent?.action != ACTION_STOP) {
+                // Android restarts a sticky service with a null intent, which
+                // is how the blocklist can arrive empty without anyone doing
+                // anything wrong.
+                config.siteBlockingProblem = "7. started with no blocklist"
+            }
             teardown()
             stopSelf()
             return START_NOT_STICKY
         }
+
+        config.siteBlockingProblem = "8. establishing the tunnel"
 
         if (!running) connect()
         return START_STICKY
@@ -259,8 +278,11 @@ class FocusVpnService : VpnService() {
         fun consentIntent(context: Context): Intent? = prepare(context)
 
         fun start(context: Context, blocklist: List<String>) {
+            val config = Config(context)
+            config.siteBlockingProblem = "1. asked to start"
+
             if (prepare(context) != null) {
-                Config(context).siteBlockingProblem =
+                config.siteBlockingProblem =
                     "Insight needs the VPN permission again — allow it above."
                 return
             }
@@ -270,10 +292,12 @@ class FocusVpnService : VpnService() {
             // foreground service so this is normally allowed — normally is not
             // a good enough reason to risk the process.
             try {
+                config.siteBlockingProblem = "2. starting the service"
                 context.startForegroundService(
                     Intent(context, FocusVpnService::class.java)
                         .putStringArrayListExtra(EXTRA_BLOCKLIST, ArrayList(blocklist))
                 )
+                config.siteBlockingProblem = "3. Android accepted the start"
             } catch (e: Throwable) {
                 // Site blocking is off for this session. Apps still block, and
                 // the status screen now says which is which and why.

@@ -58,6 +58,14 @@ class MainActivity : ComponentActivity() {
         // focused time later.
         if (config.paired) TrackerService.start(this)
 
+        // Android 13 and later refuse to show a notification without this, and
+        // a foreground service whose notification is refused is one the system
+        // may decline to keep alive. It also makes "is it running?" answerable
+        // by glancing at the shade.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
+        }
+
         setContent {
             var paired by remember { mutableStateOf(config.paired) }
             var hasUsageAccess by remember { mutableStateOf(usageAccessGranted()) }
@@ -494,7 +502,7 @@ private fun StatusScreen(
                 siteBlockingActive,
                 if (!canBlockSites) "Allow it above first"
                 else if (!sessionRunning || !focusMode) "Starts with a focused session"
-                else siteBlockingProblem ?: "Starting…",
+                else siteBlockingProblem ?: "Nothing has tried yet",
             )
 
             if (vpnBlockedBySomethingElse) {

@@ -68,6 +68,7 @@ class MainActivity : ComponentActivity() {
             var trackerQuiet by remember { mutableStateOf(false) }
             var lastCrash by remember { mutableStateOf(config.lastCrash) }
             var siteBlockingActive by remember { mutableStateOf(config.siteBlockingActive) }
+            var siteBlockingProblem by remember { mutableStateOf(config.siteBlockingProblem) }
             var sessionRunning by remember { mutableStateOf(config.sessionRunning) }
             var focusMode by remember { mutableStateOf(config.focusMode) }
             var blocklistSize by remember { mutableIntStateOf(config.blocklistSize) }
@@ -92,6 +93,7 @@ class MainActivity : ComponentActivity() {
                 trackerQuiet = config.paired && since > 120_000
                 lastCrash = config.lastCrash
                 siteBlockingActive = config.siteBlockingActive
+                siteBlockingProblem = config.siteBlockingProblem
                 sessionRunning = config.sessionRunning
                 focusMode = config.focusMode
                 blocklistSize = config.blocklistSize
@@ -109,6 +111,7 @@ class MainActivity : ComponentActivity() {
                         trackerQuiet = trackerQuiet,
                         canBlockSites = canBlockSites,
                         siteBlockingActive = siteBlockingActive,
+                        siteBlockingProblem = siteBlockingProblem,
                         lastCrash = lastCrash,
                         onDismissCrash = { config.clearCrash(); lastCrash = null },
                         sessionRunning = sessionRunning,
@@ -259,6 +262,7 @@ private fun StatusScreen(
     trackerQuiet: Boolean,
     canBlockSites: Boolean,
     siteBlockingActive: Boolean,
+    siteBlockingProblem: String?,
     lastCrash: String?,
     onDismissCrash: () -> Unit,
     sessionRunning: Boolean,
@@ -471,14 +475,14 @@ private fun StatusScreen(
                 siteBlockingActive,
                 if (!canBlockSites) "Allow it above first"
                 else if (!sessionRunning || !focusMode) "Starts with a focused session"
-                else "Another VPN may be in the way — Opera has its own",
+                else siteBlockingProblem ?: "Starting…",
             )
 
             if (vpnBlockedBySomethingElse) {
                 Text(
-                    "Website blocking should be running and isn't. Android allows one " +
-                        "VPN at a time — if Opera's built-in VPN is on, turn it off. " +
-                        "A browser's own secure DNS hides lookups from us too.",
+                    siteBlockingProblem
+                        ?: "Website blocking should be running and isn't, and the app " +
+                            "didn't record why — which is its own bug.",
                     color = Insight.bad, fontSize = 13.sp,
                 )
             }

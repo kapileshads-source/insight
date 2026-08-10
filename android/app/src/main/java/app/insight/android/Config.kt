@@ -75,6 +75,18 @@ class Config(context: Context) {
         set(value) = prefs.edit().putBoolean("siteBlockingActive", value).apply()
 
     /**
+     * Why the DNS tunnel isn't running, when it should be.
+     *
+     * There are four places it can fail — consent, starting the service,
+     * establishing the tunnel, and the loop that reads it — and from outside
+     * they look identical. Guessing which one cost two rounds of "try this",
+     * so each now records what actually happened.
+     */
+    var siteBlockingProblem: String?
+        get() = prefs.getString("siteBlockingProblem", null)
+        set(value) = prefs.edit().putString("siteBlockingProblem", value).apply()
+
+    /**
      * The last crash, so a screenshot of the status screen is enough to fix
      * it. Android tells a student "Insight keeps stopping" and nothing else,
      * and a stack trace otherwise needs a cable and a laptop.

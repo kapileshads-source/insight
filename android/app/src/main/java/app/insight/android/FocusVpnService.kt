@@ -96,14 +96,31 @@ class FocusVpnService : VpnService() {
                 )
             )
 
+        val config = Config(this)
+
         tunnel = try {
             builder.establish()
-        } catch (_: Exception) {
+        } catch (e: Throwable) {
+            config.siteBlockingProblem = "Android refused the tunnel: ${e.javaClass.simpleName}"
             null
-        } ?: return
+        }
+
+        if (tunnel == null) {
+            // establish() returns null rather than throwing when consent has
+            // been revoked, or when another VPN holds the one slot Android
+            // allows. Silence here is what made this so hard to chase.
+            if (config.siteBlockingProblem == null) {
+                config.siteBlockingProblem =
+                    "Android wouldn't create the tunnel. Another VPN may hold the slot, " +
+                        "or permission was withdrawn in Settings."
+            }
+            return
+        }
+
+        config.siteBlockingProblem = null
 
         running = true
-        Config(this).siteBlockingActive = true
+        config.siteBlockingActive = true
         worker = thread(name = "insight-dns") {
             // An uncaught exception on this thread kills the whole app, and a
             // student sees "Insight keeps stopping" with no clue that a DNS
@@ -242,7 +259,11 @@ class FocusVpnService : VpnService() {
         fun consentIntent(context: Context): Intent? = prepare(context)
 
         fun start(context: Context, blocklist: List<String>) {
-            if (prepare(context) != null) return  // not agreed to yet
+            if (prepare(context) != null) {
+                Config(context).siteBlockingProblem =
+                    "Insight needs the VPN permission again — allow it above."
+                return
+            }
 
             // Starting a service is refused when the app is in the background,
             // which is most of the time for a tracker. The caller is a
@@ -253,9 +274,11 @@ class FocusVpnService : VpnService() {
                     Intent(context, FocusVpnService::class.java)
                         .putStringArrayListExtra(EXTRA_BLOCKLIST, ArrayList(blocklist))
                 )
-            } catch (_: Throwable) {
+            } catch (e: Throwable) {
                 // Site blocking is off for this session. Apps still block, and
-                // the status screen says which is which.
+                // the status screen now says which is which and why.
+                Config(context).siteBlockingProblem =
+                    "Couldn't start the blocker: ${e.javaClass.simpleName}"
             }
         }
 

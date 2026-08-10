@@ -262,6 +262,48 @@ export function DevicesPanel({
       </section>
 
       <section className="rounded-lg border border-line bg-surface p-6">
+        <h2 className="h3 text-[17px]">Install the Android app</h2>
+        <p className="mt-2 text-[15px] leading-relaxed text-text-muted">
+          The only phone that can measure its own use, and the only one where
+          Focus Mode really blocks something rather than nudging you. It records
+          app names while a session is running, and nothing at any other time.
+        </p>
+
+        <ol className="mt-5 space-y-3 text-[15px] leading-relaxed text-text-muted">
+          <li>
+            <span className="text-text">1.</span>{" "}
+            <a href="/download" className="text-sky underline underline-offset-2">
+              Download Insight.apk
+            </a>{" "}
+            and tap it. Android blocks installing from unknown sources until you
+            allow it in the prompt — once only.
+          </li>
+          <li>
+            <span className="text-text">2.</span> Open Insight and paste the
+            code below.
+          </li>
+          <li>
+            <span className="text-text">3.</span> Turn on{" "}
+            <strong>usage access</strong> when it asks. That&rsquo;s the
+            permission that lets it see which app is in front — app names only,
+            never what&rsquo;s on screen.
+          </li>
+          <li>
+            <span className="text-text">4.</span> Optionally allow{" "}
+            <strong>drawing over other apps</strong>, which is what lets Focus
+            Mode block. Skip it and you still get the counting.
+          </li>
+        </ol>
+
+        <p className="mt-5 text-[14px] leading-relaxed text-text-faint">
+          Both permissions live in your own Settings and can be taken back
+          there. Nothing counts while the screen is off.
+        </p>
+
+        {pairingBlock("ANDROID_APP", "Android app", "Generate an Android code")}
+      </section>
+
+      <section className="rounded-lg border border-line bg-surface p-6">
         <h2 className="h3 text-[17px]">Install the iPhone app</h2>
         <p className="mt-2 text-[15px] leading-relaxed text-text-muted">
           Start and stop sessions, and log last night&rsquo;s sleep before

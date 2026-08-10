@@ -42,11 +42,13 @@ ok("Edge on Windows", detectOs(UA.windowsEdge) === "windows");
 ok("Safari on a Mac", detectOs(UA.macSafari) === "mac");
 ok("Chrome on a Mac", detectOs(UA.macChrome) === "mac");
 
-console.log("\nphones and tablets are neither, however they describe themselves");
+console.log("\nAndroid is a download target of its own now");
+ok("an Android phone", detectOs(UA.android) === "android");
+
+console.log("\nand the rest can run none of them");
 // Both of these contain "Mac OS X", which is the trap.
 ok("an iPhone is not a Mac", detectOs(UA.iphone) === "other");
 ok("an iPad is not a Mac", detectOs(UA.ipad) === "other");
-ok("Android is not a Mac or Windows", detectOs(UA.android) === "other");
 ok("a Chromebook is neither", detectOs(UA.chromebook) === "other");
 
 console.log("\nnothing to go on");

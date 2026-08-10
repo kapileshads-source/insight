@@ -23,7 +23,8 @@ export default async function DownloadPage() {
       <p className="mt-5 text-[17px] leading-relaxed text-text-muted">
         Optional. Insight works without them — they add the half of your time
         that isn&rsquo;t in a browser, and let Focus Mode reach apps rather than
-        only websites.
+        only websites. On a phone, that means Android: iOS doesn&rsquo;t allow
+        it, and never will without Apple&rsquo;s permission.
       </p>
       <p className="mt-4 text-[15px] text-text-faint">
         The browser extension is separate, and you&rsquo;ll find it on your{" "}
@@ -38,6 +39,7 @@ export default async function DownloadPage() {
           os={os}
           windowsUrl={process.env.NEXT_PUBLIC_DOWNLOAD_WINDOWS_URL}
           macUrl={process.env.NEXT_PUBLIC_DOWNLOAD_MAC_URL}
+          androidUrl={process.env.NEXT_PUBLIC_DOWNLOAD_ANDROID_URL}
         />
       </div>
     </main>

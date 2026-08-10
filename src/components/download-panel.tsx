@@ -14,10 +14,12 @@ export function DownloadPanel({
   os,
   windowsUrl,
   macUrl,
+  androidUrl,
 }: {
   os: DesktopOs;
   windowsUrl?: string;
   macUrl?: string;
+  androidUrl?: string;
 }) {
   const cards = [
     {
@@ -46,9 +48,26 @@ export function DownloadPanel({
         "Click the Insight circle in the menu bar and turn on Open at Login.",
       ],
     },
+    {
+      id: "android" as const,
+      title: "Android",
+      size: "8 MB",
+      url: androidUrl,
+      file: "Insight.apk",
+      steps: [
+        "Tap the file. Android will say installing from unknown sources is blocked — tap Settings in that prompt and allow it. Once only.",
+        "Open Insight and paste the code from your Devices page.",
+        "It asks for usage access, in Settings. That's the permission that lets it see which app is in front — app names only, and only while a session runs.",
+        "Then it asks to draw over other apps. That one is what lets Focus Mode actually block something, and you can skip it if you only want the counting.",
+      ],
+    },
   ];
 
-  const ordered = os === "mac" ? [cards[1], cards[0]] : cards;
+  // Whichever one you're on goes first; the rest keep their order.
+  const ordered = [
+    ...cards.filter((c) => c.id === os),
+    ...cards.filter((c) => c.id !== os),
+  ];
 
   return (
     <div className="space-y-6">
@@ -75,8 +94,9 @@ export function DownloadPanel({
             </div>
 
             <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
-              Records which apps you use while a session is running, and closes
-              blocked ones when Focus Mode is on. No installer, no admin rights.
+              {card.id === "android"
+                ? "Records which apps you use while a session is running, and puts a screen in front of blocked ones when Focus Mode is on. The only phone that can do either."
+                : "Records which apps you use while a session is running, and closes blocked ones when Focus Mode is on. No installer, no admin rights."}
             </p>
 
             {card.url ? (
@@ -126,10 +146,15 @@ export function DownloadPanel({
           <li>
             Browsers are left to the extension, so nothing is counted twice.
           </li>
+          <li>
+            On Android, nothing counts while the screen is off — a phone in a
+            pocket names a foreground app, and that isn&rsquo;t studying.
+          </li>
         </ul>
         <p className="mt-4 text-[13px] leading-relaxed text-text-faint">
-          Neither app is code-signed, which is why your computer warns about
-          them. Signing costs a few hundred dollars a year and Insight is free.
+          None of these are signed by a paid developer account, which is why
+          each system warns about them. Signing costs a few hundred dollars a
+          year and Insight is free.
         </p>
       </section>
     </div>

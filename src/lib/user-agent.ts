@@ -11,7 +11,7 @@
  * never blocks anything.
  */
 
-export type DesktopOs = "windows" | "mac" | "other";
+export type DesktopOs = "windows" | "mac" | "android" | "other";
 
 /// Whether to offer the Focus shortcut, which only exists on Apple's phones.
 ///
@@ -26,9 +26,12 @@ export function isIOS(userAgent: string | null | undefined): boolean {
 export function detectOs(userAgent: string | null | undefined): DesktopOs {
   if (!userAgent) return "other";
 
-  // Before the Windows check: a Windows phone is nobody's laptop, and
-  // Android's UA contains "Linux" rather than either of these.
-  if (/iPhone|iPad|iPod|Android/i.test(userAgent)) return "other";
+  // Android before everything else: its UA contains "Linux", and Chrome on a
+  // Chromebook looks similar enough to be worth deciding deliberately.
+  if (/Android/i.test(userAgent)) return "android";
+
+  // An iPhone can run none of these.
+  if (/iPhone|iPad|iPod/i.test(userAgent)) return "other";
 
   if (/Windows/i.test(userAgent)) return "windows";
 

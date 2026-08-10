@@ -8,7 +8,9 @@ import android.os.Bundle
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -64,6 +66,16 @@ class MainActivity : ComponentActivity() {
             // Re-checked on every resume, because both are granted in Settings
             // and the student walks back in — there is no callback for either.
             var trackerQuiet by remember { mutableStateOf(false) }
+            var canBlockSites by remember {
+                mutableStateOf(FocusVpnService.consentIntent(this) == null)
+            }
+
+            // Android will only hand out the VPN consent dialog to an
+            // activity, which is why blocking sites has to be asked for here
+            // rather than by the service that needs it.
+            val askForVpn = rememberLauncherForActivityResult(
+                ActivityResultContracts.StartActivityForResult()
+            ) { canBlockSites = FocusVpnService.consentIntent(this) == null }
 
             LifecycleResumeEffect(Unit) {
                 hasUsageAccess = usageAccessGranted()
@@ -73,6 +85,7 @@ class MainActivity : ComponentActivity() {
                 // means it isn't running — not that the network is slow.
                 val since = System.currentTimeMillis() - config.lastTickAt
                 trackerQuiet = config.paired && since > 120_000
+                canBlockSites = FocusVpnService.consentIntent(this@MainActivity) == null
 
                 onPauseOrDispose {}
             }
@@ -84,6 +97,11 @@ class MainActivity : ComponentActivity() {
                         hasUsageAccess = hasUsageAccess,
                         canDrawOver = canDrawOver,
                         trackerQuiet = trackerQuiet,
+                        canBlockSites = canBlockSites,
+                        onAllowSiteBlocking = {
+                            FocusVpnService.consentIntent(this@MainActivity)
+                                ?.let { askForVpn.launch(it) }
+                        },
                         onRestart = { TrackerService.start(this@MainActivity) },
                         onGrant = { openUsageSettings() },
                         onGrantOverlay = { openOverlaySettings() },
@@ -223,6 +241,8 @@ private fun StatusScreen(
     hasUsageAccess: Boolean,
     canDrawOver: Boolean,
     trackerQuiet: Boolean,
+    canBlockSites: Boolean,
+    onAllowSiteBlocking: () -> Unit,
     onRestart: () -> Unit,
     onGrant: () -> Unit,
     onGrantOverlay: () -> Unit,
@@ -325,6 +345,45 @@ private fun StatusScreen(
                     shape = RoundedCornerShape(10.dp),
                 ) { Text("Allow blocking", fontSize = 16.sp) }
             }
+        }
+
+        if (hasUsageAccess && !canBlockSites) {
+            Column(
+                Modifier.fillMaxWidth()
+                    .background(Insight.surface, RoundedCornerShape(12.dp))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text("Block websites too", color = Insight.text, fontSize = 17.sp)
+                Text(
+                    "Blocking an app is easy; blocking a site inside a browser means " +
+                        "refusing to look it up. Android calls that a VPN and will ask " +
+                        "you to allow one.",
+                    color = Insight.textMuted, fontSize = 15.sp,
+                )
+                Text(
+                    "It carries nothing but those lookups — not your pages, messages " +
+                        "or video — and it only runs while a session with Focus Mode is " +
+                        "going. Blocked names are recorded; the rest are forwarded to " +
+                        "your usual provider and forgotten.",
+                    color = Insight.textFaint, fontSize = 13.sp,
+                )
+                Button(
+                    onClick = onAllowSiteBlocking,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Insight.surface, contentColor = Insight.accent),
+                    shape = RoundedCornerShape(10.dp),
+                ) { Text("Allow website blocking", fontSize = 16.sp) }
+            }
+        }
+
+        if (canBlockSites) {
+            Text(
+                "Website blocking is on. If your browser has its own VPN or its own " +
+                    "secure DNS — Opera and Chrome both offer one — turn that off, or " +
+                    "the lookups never reach us and blocked sites load anyway.",
+                color = Insight.textFaint, fontSize = 13.sp,
+            )
         }
 
         Text(

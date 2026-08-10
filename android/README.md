@@ -124,8 +124,17 @@ active network. Sending every lookup to a public resolver instead would quietly
 move a student's browsing history to a company they didn't choose, which is a
 bigger change to their privacy than the blocking is worth.
 
+**Consent is asked for in `MainActivity`, not by the service.** Android hands
+the VPN dialog to activities only, and `FocusVpnService.start` returns quietly
+when consent is missing — so a service asking for itself would fail silently
+forever. It shipped that way once: the whole thing was built, wired to the
+session, and never once ran.
+
 **The honest limitation:** a browser using DNS-over-HTTPS never asks us, and
-never sees the block. Chrome turns Secure DNS off while a VPN is active in most
+never sees the block. So do browsers with a VPN of their own — Opera's built-in
+VPN and Chrome's Secure DNS both route around this, and Android permits one VPN
+at a time. The status screen says so once blocking is on, because a student
+whose blocked site loads anyway deserves to know where to look. Chrome turns Secure DNS off while a VPN is active in most
 configurations, but not all. Friction rather than a wall — like everything else
 here.
 

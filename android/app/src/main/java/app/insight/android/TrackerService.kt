@@ -1,5 +1,6 @@
 package app.insight.android
 
+import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -59,6 +60,10 @@ class TrackerService : android.app.Service() {
     /// throw the screen up in a loop.
     private val lastBlockedAt = mutableMapOf<String, Long>()
 
+    /// Kept so a repeat of the same app can be answered without asking the
+    /// system again.
+    private var previousPackage: String = ""
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
@@ -104,10 +109,21 @@ class TrackerService : android.app.Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_OVERRIDE) {
             val app = intent.getStringExtra(BlockedActivity.EXTRA_APP)
+            val packageName = intent.getStringExtra(BlockedActivity.EXTRA_PACKAGE)
+
             if (app != null) {
                 allowed += app
                 blockedEvents += BlockEvent(app, overrideUsed = true)
                 CoroutineScope(Dispatchers.IO).launch { flush() }
+
+                // Start it again, since we closed it. An override that left
+                // the student to go and find the app themselves would be worse
+                // than the block.
+                if (packageName != null) {
+                    packageManager.getLaunchIntentForPackage(packageName)?.let {
+                        startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }
+                }
             }
         }
         return START_STICKY
@@ -130,13 +146,14 @@ class TrackerService : android.app.Service() {
             return
         }
 
-        val app = foregroundApp()
+        val front = foregroundApp()
+        val app = front?.second
         if (app == null || app == currentApp) return
 
         closeSlice()
 
         if (running.focusMode && app !in allowed && Apps.isBlocked(app, blocklist)) {
-            enforce(app)
+            enforce(app, front.first)
             return
         }
 
@@ -157,22 +174,43 @@ class TrackerService : android.app.Service() {
      * feels punitive, and a punitive tool gets uninstalled — at which point it
      * blocks nothing. Same reasoning as the extension redirecting a tab.
      */
-    private fun enforce(app: String) {
+    private fun enforce(app: String, packageName: String) {
         val now = System.currentTimeMillis()
         val last = lastBlockedAt[app] ?: 0L
-        if (now - last < BLOCK_COOLDOWN_MS) {
-            // Handled a moment ago. Still don't count the time.
-            return
-        }
-        lastBlockedAt[app] = now
 
-        blockedEvents += BlockEvent(app, overrideUsed = false)
+        // The cooldown throttles what gets *recorded*, so re-opening an app
+        // ten times doesn't fill a batch with ten identical rows. It no longer
+        // throttles the blocking itself: it used to, and that left a
+        // thirty-second window where a blocked app opened perfectly.
+        if (now - last >= BLOCK_COOLDOWN_MS) {
+            lastBlockedAt[app] = now
+            blockedEvents += BlockEvent(app, overrideUsed = false)
+        }
 
         startActivity(
             Intent(this, BlockedActivity::class.java)
                 .putExtra(BlockedActivity.EXTRA_APP, app)
+                .putExtra(BlockedActivity.EXTRA_PACKAGE, packageName)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         )
+
+        // Then close it. Covering an app leaves it running behind the screen,
+        // holding its place — so going back to it resumed exactly where it
+        // was, and the block read as a curtain rather than a door.
+        //
+        // Done after our screen is in front, because this only reaches
+        // background processes, which is what the blocked app now is. Not a
+        // force-stop: that needs privileges no sideloaded app has, and this is
+        // enough that reopening starts the app fresh and meets the block
+        // again.
+        val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
+        try {
+            activityManager.killBackgroundProcesses(packageName)
+        } catch (_: Exception) {
+            // Some apps can't be closed this way — a foreground service of
+            // their own, say. The screen is still in front of it, which is the
+            // behaviour we had before and is better than nothing.
+        }
     }
 
     private fun closeSlice() {
@@ -197,7 +235,7 @@ class TrackerService : android.app.Service() {
      * minutes — long enough that a student switching apps would see the
      * previous one credited with the next one's time.
      */
-    private fun foregroundApp(): String? {
+    private fun foregroundApp(): Pair<String, String>? {
         val usage = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val now = System.currentTimeMillis()
         val events = usage.queryEvents(now - 10_000, now)
@@ -212,8 +250,13 @@ class TrackerService : android.app.Service() {
             }
         }
 
-        val packageName = latest ?: return currentApp
-        return Apps.report(packageName, label(packageName))
+        val packageName = latest ?: return currentApp?.let { previousPackage to it }
+        val reported = Apps.report(packageName, label(packageName)) ?: return null
+
+        // The package comes back too, because closing an app needs its
+        // package name and the reported name may be a website's instead.
+        previousPackage = packageName
+        return packageName to reported
     }
 
     private fun label(packageName: String): String? = try {

@@ -19,6 +19,16 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!--
+      Close a blocked app rather than merely covering it.
+
+      Showing a screen on top leaves the app running behind it, holding its
+      state and waiting — so blocking felt like a curtain rather than a door.
+      This is granted at install and only reaches apps in the background,
+      which by then is exactly what a blocked app is.
+    -->
+    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+
+    <!--
       Draw over other apps. Two jobs: it is how a blocked app gets replaced
       with our own screen, and since Android 10 it is also what allows a
       background service to start an activity at all.

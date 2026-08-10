@@ -52,6 +52,7 @@ class BlockedActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val app = intent.getStringExtra(EXTRA_APP) ?: "That app"
+        val packageName = intent.getStringExtra(EXTRA_PACKAGE)
 
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
             override fun handleOnBackPressed() = goHome()
@@ -74,6 +75,7 @@ class BlockedActivity : ComponentActivity() {
                         Intent(this@BlockedActivity, TrackerService::class.java)
                             .setAction(TrackerService.ACTION_OVERRIDE)
                             .putExtra(EXTRA_APP, app)
+                            .putExtra(EXTRA_PACKAGE, packageName)
                     )
                     finish()
                 }
@@ -94,8 +96,8 @@ class BlockedActivity : ComponentActivity() {
                     Spacer(Modifier.height(14.dp))
 
                     Text(
-                        "$app is on your blocklist, and a study session is running. " +
-                            "Nothing was closed — it's still there when you finish.",
+                        "$app is on your blocklist, and a study session is running, " +
+                            "so it's been closed. It'll be there when you finish.",
                         color = Insight.textMuted,
                         fontSize = 17.sp,
                     )
@@ -151,5 +153,6 @@ class BlockedActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_APP = "app"
+        const val EXTRA_PACKAGE = "package"
     }
 }

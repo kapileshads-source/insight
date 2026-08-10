@@ -485,8 +485,12 @@ iPhone.** A blocked app is replaced by `BlockedActivity` — no entitlement, no
 approval. It needs `SYSTEM_ALERT_WINDOW`, asked for separately from usage
 access and only after it, because counting works without it and blocking
 doesn't; since Android 10 that permission is also what lets a background
-service start an activity at all. The app is left running rather than killed,
-and the override is the same three seconds as everywhere else.
+service start an activity at all. The blocked app is closed rather than
+covered — `killBackgroundProcesses` after our screen is in front, since that
+call only reaches background processes and by then it is one. Covering it left
+the app running behind the screen holding its place, so going back resumed
+where you were: a curtain rather than a door. The override relaunches it, and
+is the same three seconds as everywhere else.
 
 **Foreground app comes from `queryEvents`, not `queryUsageStats`.** The
 aggregated stats round to an interval and lag by minutes — long enough that

@@ -76,13 +76,23 @@ that it does nothing until this is granted.
 Since Android 10 that permission is also what allows a background service to
 start an activity at all, so it is load-bearing twice over.
 
-The blocked app is left running rather than killed — losing whatever was in it
-feels punitive, and a punitive tool gets uninstalled, at which point it blocks
-nothing. The override is the same three-second countdown as the extension and
-both desktop apps, and it's recorded, so the session's figures reflect what
-happened rather than what was intended. Back is disabled on that screen: it
-would drop you into the app that was just blocked, which makes the block look
-broken. "Back to work" sends you home.
+**The blocked app is closed, not just covered.** The first version put a screen
+in front and left the app running behind it, so going back resumed exactly where
+you were and the block read as a curtain rather than a door.
+`killBackgroundProcesses` is called once our screen is in front — by then the
+blocked app is a background process, which is all that call can reach. It is not
+a force-stop, which needs privileges no sideloaded app has, but it is enough
+that reopening starts the app cold and meets the block again.
+
+The cooldown now throttles only what gets *recorded*, so ten reopenings don't
+fill a batch with ten identical rows. It used to throttle the blocking itself,
+which left a thirty-second window where a blocked app opened perfectly.
+
+The override is the same three-second countdown as the extension and both
+desktop apps. It's recorded, and it relaunches the app — having closed it,
+leaving the student to go and find it again would be worse than the block. Back
+is disabled on that screen: it would drop you into the app that was just
+blocked, which makes the block look broken. "Back to work" sends you home.
 
 ## What isn't done
 

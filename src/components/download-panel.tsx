@@ -144,7 +144,12 @@ export function DownloadPanel({
             to your last keypress. Sleep and screen lock do the same.
           </li>
           <li>
-            Browsers are left to the extension, so nothing is counted twice.
+            On Windows and Mac, browsers are left to the extension so nothing
+            is counted twice. On Android they&rsquo;re counted here, because
+            Chrome for Android can&rsquo;t run the extension — and you can
+            block a browser by name, though only the whole thing. Telling
+            YouTube from Wikipedia inside it would mean reading your screen,
+            which nothing here does.
           </li>
           <li>
             On Android, nothing counts while the screen is off — a phone in a

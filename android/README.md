@@ -13,6 +13,12 @@ It adds nothing to the server: pairs with a token minted at `/devices`, polls
 
 - **Nothing without a running session.** The timer does not accumulate.
   `TrackerService.tick` checks that first.
+- **Browsers are counted, unlike on the desktops.** There the extension counts
+  them and this app skipping them prevents double counting; Chrome for Android
+  can't run extensions, so skipping them made phone browsing invisible and
+  unblockable. A browser can be blocked, but only whole and only if the student
+  names it — telling YouTube from Wikipedia inside one means reading the screen,
+  which nothing in this project does.
 - **App names only** — "Spotify", "Notion". The usage-access permission gives
   a package name and a label. It does not give what is on screen, what was
   typed, or anything inside an app.

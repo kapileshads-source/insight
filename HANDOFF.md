@@ -476,6 +476,14 @@ tracker also runs as a foreground service with a permanent notification, which
 Android requires and which is right: an app counting what you use should not be
 able to do it invisibly.
 
+**Browsers are counted on Android and skipped on the desktops.** Not an
+inconsistency: the desktop rule exists because the extension counts browsers
+there, and Chrome for Android can't run extensions. Skipping them made a
+student's entire phone browsing invisible and unblockable. A browser can be
+blocked whole, if the student names it — anything finer means reading a URL out
+of another app, which needs an accessibility service, which reads the screen.
+That is the line no client here crosses.
+
 **Nothing counts while the screen is off.** A phone in a pocket still names a
 foreground app, so without that a student is billed for the walk home. It is
 the Android equivalent of the desktop apps' ten-minute idle rule.

@@ -12,15 +12,22 @@ package app.insight.android
 object Apps {
 
     /**
-     * Browsers are skipped, because the extension already counts them.
+     * Browsers are counted here, unlike on Windows and the Mac.
      *
-     * On a phone this matters less than on a laptop — few students install the
-     * extension on mobile Chrome, and it can't run there anyway — but the rule
-     * is kept identical across the three apps rather than special-cased here.
-     * A figure that means something different on your phone than on your
-     * laptop is worse than one that's missing.
+     * There, the extension counts them and this app skipping them is what
+     * stops every web minute being counted twice. **Chrome for Android can't
+     * run extensions**, so on a phone there is nothing to double up with — and
+     * excluding them made a student's entire phone browsing invisible to
+     * Insight and impossible to block. That was an inherited rule rather than
+     * a decision.
+     *
+     * What this app still can't do is tell YouTube from Wikipedia inside a
+     * browser. Reading a URL out of another app means an accessibility
+     * service, which reads the contents of the screen — the one thing every
+     * client here has promised never to do. So a browser is blocked whole or
+     * not at all, and only if the student names it themselves.
      */
-    private val browsers = setOf(
+    private val browserPackages = setOf(
         "com.android.chrome",
         "com.chrome.beta",
         "com.chrome.dev",
@@ -35,6 +42,9 @@ object Apps {
         "com.sec.android.app.sbrowser",
         "com.android.browser",
     )
+
+    /** Whether a package is a browser — used only to explain itself in the UI. */
+    fun isBrowser(packageName: String?): Boolean = packageName in browserPackages
 
     /**
      * Apps reported under their website's name.
@@ -81,7 +91,6 @@ object Apps {
      */
     fun report(packageName: String?, label: String?): String? {
         if (packageName.isNullOrBlank()) return null
-        if (packageName in browsers) return null
 
         // Our own screens must not count as an app they chose to use.
         if (packageName == "app.insight.android") return null

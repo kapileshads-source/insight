@@ -14,10 +14,22 @@ import org.junit.Test
 class AppsTest {
 
     @Test
-    fun `browsers are not reported at all`() {
-        assertNull(Apps.report("com.android.chrome", "Chrome"))
-        assertNull(Apps.report("org.mozilla.firefox", "Firefox"))
-        assertNull(Apps.report("com.sec.android.app.sbrowser", "Samsung Internet"))
+    fun `browsers are counted here, unlike on the desktops`() {
+        // The desktop apps skip browsers because the extension counts them.
+        // Chrome for Android can't run extensions, so skipping them made phone
+        // browsing invisible and unblockable — an inherited rule rather than a
+        // decision.
+        assertEquals("Chrome", Apps.report("com.android.chrome", "Chrome"))
+        assertEquals("Firefox", Apps.report("org.mozilla.firefox", "Firefox"))
+    }
+
+    @Test
+    fun `a browser is blocked only when the student names it`() {
+        // Whole or not at all: reading a URL out of another app needs an
+        // accessibility service, which reads the screen — the one thing every
+        // client here has promised never to do.
+        assertTrue(Apps.isBlocked("Chrome", listOf("chrome")))
+        assertFalse(Apps.isBlocked("Chrome", listOf("youtube.com", "instagram.com")))
     }
 
     @Test

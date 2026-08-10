@@ -13,6 +13,16 @@
 
 export type DesktopOs = "windows" | "mac" | "other";
 
+/// Whether to offer the Focus shortcut, which only exists on Apple's phones.
+///
+/// An iPad running iPadOS claims to be a Macintosh and is missed by this. That
+/// costs an iPad user a button they'd have liked, which is a great deal better
+/// than showing every Mac user a button that does nothing.
+export function isIOS(userAgent: string | null | undefined): boolean {
+  if (!userAgent) return false;
+  return /iPhone|iPad|iPod/i.test(userAgent);
+}
+
 export function detectOs(userAgent: string | null | undefined): DesktopOs {
   if (!userAgent) return "other";
 

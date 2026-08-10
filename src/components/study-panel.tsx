@@ -53,7 +53,9 @@ type DeviceReadout = {
 /// after they arrive.
 export function StudyPanel({
   running,
+  isIOS = false,
 }: {
+  isIOS?: boolean;
   running: {
     id: string;
     startedAt: string;
@@ -293,7 +295,11 @@ export function StudyPanel({
   return (
     <>
       <section className="mt-6">
-        <SessionTimer running={running} recentSubjects={subjects} />
+        <SessionTimer
+          running={running}
+          recentSubjects={subjects}
+          isIOS={isIOS}
+        />
       </section>
 
       <section className="mt-6">

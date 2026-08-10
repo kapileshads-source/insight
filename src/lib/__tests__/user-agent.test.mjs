@@ -1,4 +1,4 @@
-import { detectOs } from "../user-agent.ts";
+import { detectOs, isIOS } from "../user-agent.ts";
 
 /// Only decides which download goes first, so a wrong answer is a bad
 /// ordering rather than a broken page. These are real strings, because the
@@ -54,6 +54,14 @@ ok("missing header", detectOs(null) === "other");
 ok("undefined", detectOs(undefined) === "other");
 ok("empty string", detectOs("") === "other");
 ok("junk", detectOs("curl/8.4.0") === "other");
+
+console.log("\nand whether to offer the Focus shortcut");
+ok("an iPhone gets it", isIOS(UA.iphone));
+ok("an iPad gets it", isIOS(UA.ipad));
+ok("a Mac does not", !isIOS(UA.macSafari));
+ok("Windows does not", !isIOS(UA.windowsChrome));
+ok("Android does not", !isIOS(UA.android));
+ok("nothing to go on", !isIOS(null));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

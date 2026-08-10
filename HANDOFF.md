@@ -24,7 +24,7 @@ current state.
 Everything is on a free tier. The only thing that would cost money is a
 domain, and the plan is to get one free via GitHub Student Pack or eu.org.
 
-`npm test` runs 228 tests. `npm run build` regenerates the Prisma client,
+`npm test` runs 240 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds.
 
 ---
@@ -382,6 +382,14 @@ browser code: Swift reads what the browser sealed, the browser reads what Swift
 sealed, and a wrong password fails as a wrong password rather than as corrupt
 data. If that ever drifts, the symptom is a correct password being rejected
 forever, so test interop rather than assuming it.
+
+**The Focus buttons on the session screen** appear only on an iPhone, worked
+out from the request's User-Agent. They open `shortcuts://run-shortcut`, which
+needs a tap and a confirmation every time — nothing we control runs on the phone
+at the moment a session starts, so a session begun on a laptop can never quiet a
+phone by itself. The shortcut names are shared with `ios/Sources/Focus.swift`
+and a test reads the Swift to check they still match: if they drift, the buttons
+open Shortcuts and find nothing, and a student decides the feature is broken.
 
 **Blocking, in practice: the bounce.** Shortcuts has a personal automation
 trigger — *when this app is opened* — and with Run Immediately on, opening

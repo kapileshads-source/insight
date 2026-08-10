@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useCrypto } from "@/components/crypto-provider";
+import { FocusShortcut } from "@/components/focus-shortcut";
 import {
   LOCATIONS,
   LOCATION_LABELS,
@@ -39,9 +40,14 @@ const CHIP_ON = "border-sky bg-sky text-on-light";
 export function SessionTimer({
   running,
   recentSubjects,
+  isIOS = false,
 }: {
   running: { id: string; startedAt: string; focusModeActive: boolean } | null;
   recentSubjects: string[];
+  /// Worked out from the request's User-Agent on the server. The Focus
+  /// shortcut exists nowhere else, and a button that opens nothing reads as a
+  /// broken app.
+  isIOS?: boolean;
 }) {
   const router = useRouter();
   const { conceal } = useCrypto();
@@ -204,6 +210,8 @@ export function SessionTimer({
           </span>
         </label>
       </div>
+
+      {isIOS && <FocusShortcut />}
 
       <div className="mt-7 space-y-6">
         <div>

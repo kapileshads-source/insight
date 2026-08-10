@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { isIOS } from "@/lib/user-agent";
 import { getOrCreateUser, nextOnboardingStep } from "@/lib/user";
 import { getSchoolDayState } from "@/lib/current-period";
 import { getRunningSession } from "@/app/actions/sessions";
@@ -187,6 +189,9 @@ export default async function Dashboard() {
   const canvas = await getCanvasStatus();
   const devices = await listDevices();
   const hasBaseline = await hasProfile();
+  // The Focus shortcut only exists on Apple's phones, and a button that opens
+  // nothing is worse than no button.
+  const onIPhone = isIOS((await headers()).get("user-agent"));
 
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-6 pb-32">
@@ -222,6 +227,7 @@ export default async function Dashboard() {
       />
 
       <StudyPanel
+        isIOS={onIPhone}
         running={
           running
             ? {

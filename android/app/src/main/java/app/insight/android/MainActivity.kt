@@ -67,6 +67,7 @@ class MainActivity : ComponentActivity() {
             // and the student walks back in — there is no callback for either.
             var trackerQuiet by remember { mutableStateOf(false) }
             var lastCrash by remember { mutableStateOf(config.lastCrash) }
+            var siteBlockingActive by remember { mutableStateOf(config.siteBlockingActive) }
             var sessionRunning by remember { mutableStateOf(config.sessionRunning) }
             var focusMode by remember { mutableStateOf(config.focusMode) }
             var blocklistSize by remember { mutableIntStateOf(config.blocklistSize) }
@@ -90,6 +91,7 @@ class MainActivity : ComponentActivity() {
                 val since = System.currentTimeMillis() - config.lastTickAt
                 trackerQuiet = config.paired && since > 120_000
                 lastCrash = config.lastCrash
+                siteBlockingActive = config.siteBlockingActive
                 sessionRunning = config.sessionRunning
                 focusMode = config.focusMode
                 blocklistSize = config.blocklistSize
@@ -106,6 +108,7 @@ class MainActivity : ComponentActivity() {
                         canDrawOver = canDrawOver,
                         trackerQuiet = trackerQuiet,
                         canBlockSites = canBlockSites,
+                        siteBlockingActive = siteBlockingActive,
                         lastCrash = lastCrash,
                         onDismissCrash = { config.clearCrash(); lastCrash = null },
                         sessionRunning = sessionRunning,
@@ -255,6 +258,7 @@ private fun StatusScreen(
     canDrawOver: Boolean,
     trackerQuiet: Boolean,
     canBlockSites: Boolean,
+    siteBlockingActive: Boolean,
     lastCrash: String?,
     onDismissCrash: () -> Unit,
     sessionRunning: Boolean,
@@ -438,6 +442,12 @@ private fun StatusScreen(
         val blockingReady =
             hasUsageAccess && canDrawOver && sessionRunning && focusMode && blocklistSize > 0
 
+        // Android permits one VPN at a time, so a browser with its own — Opera
+        // ships one — takes the slot and ours never establishes. That looks
+        // identical to a bug from the outside, so it gets named here.
+        val vpnBlockedBySomethingElse = canBlockSites && sessionRunning &&
+            focusMode && blocklistSize > 0 && !siteBlockingActive
+
         Column(
             Modifier.fillMaxWidth()
                 .background(Insight.surface, RoundedCornerShape(12.dp))
@@ -455,7 +465,23 @@ private fun StatusScreen(
             Check("Your blocklist reached us", blocklistSize > 0, "Nothing to block yet")
             Check("Can see which app is in front", hasUsageAccess, "Usage access, above")
             Check("Can put a screen in front of one", canDrawOver, "Drawing over apps, above")
-            Check("Can block websites", canBlockSites, "Optional — needs the VPN")
+            Check("Allowed to block websites", canBlockSites, "Optional — needs the VPN")
+            Check(
+                "Website blocking is running",
+                siteBlockingActive,
+                if (!canBlockSites) "Allow it above first"
+                else if (!sessionRunning || !focusMode) "Starts with a focused session"
+                else "Another VPN may be in the way — Opera has its own",
+            )
+
+            if (vpnBlockedBySomethingElse) {
+                Text(
+                    "Website blocking should be running and isn't. Android allows one " +
+                        "VPN at a time — if Opera's built-in VPN is on, turn it off. " +
+                        "A browser's own secure DNS hides lookups from us too.",
+                    color = Insight.bad, fontSize = 13.sp,
+                )
+            }
 
             if (blocklistSize > 0) {
                 Text(

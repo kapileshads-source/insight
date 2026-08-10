@@ -82,7 +82,11 @@
         <service
             android:name=".FocusVpnService"
             android:exported="false"
+            android:foregroundServiceType="specialUse"
             android:permission="android.permission.BIND_VPN_SERVICE">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Refuses DNS lookups the user chose to block, during their own study session" />
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>

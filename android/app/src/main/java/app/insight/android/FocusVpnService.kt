@@ -1,5 +1,8 @@
 package app.insight.android
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -44,6 +47,13 @@ class FocusVpnService : VpnService() {
     @Volatile private var running = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // A foreground service, because Android refuses to *start* a
+        // background one while the app is in the background — which is
+        // always, for a tracker. That refusal used to crash the app; then it
+        // was swallowed, and site blocking simply never happened. Neither is
+        // acceptable, so the service is one Android will allow.
+        startForeground(NOTIFICATION_ID, notification())
+
         blocklist = intent?.getStringArrayListExtra(EXTRA_BLOCKLIST) ?: emptyList()
 
         if (intent?.action == ACTION_STOP || blocklist.isEmpty()) {
@@ -93,6 +103,7 @@ class FocusVpnService : VpnService() {
         } ?: return
 
         running = true
+        Config(this).siteBlockingActive = true
         worker = thread(name = "insight-dns") {
             // An uncaught exception on this thread kills the whole app, and a
             // student sees "Insight keeps stopping" with no clue that a DNS
@@ -107,6 +118,10 @@ class FocusVpnService : VpnService() {
 
     private fun teardown() {
         running = false
+        try {
+            Config(this).siteBlockingActive = false
+        } catch (_: Throwable) {
+        }
         worker?.interrupt()
         worker = null
         try {
@@ -181,6 +196,20 @@ class FocusVpnService : VpnService() {
         upstream.close()
     }
 
+    private fun notification(): Notification {
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(
+            NotificationChannel(CHANNEL, "Website blocking", NotificationManager.IMPORTANCE_LOW)
+        )
+
+        return Notification.Builder(this, CHANNEL)
+            .setContentTitle("Insight")
+            .setContentText("Blocking websites during this session")
+            .setSmallIcon(android.R.drawable.presence_invisible)
+            .setOngoing(true)
+            .build()
+    }
+
     /**
      * The resolver the phone would have used anyway.
      *
@@ -198,6 +227,9 @@ class FocusVpnService : VpnService() {
     }
 
     companion object {
+        private const val CHANNEL = "insight-sites"
+        private const val NOTIFICATION_ID = 2
+
         private const val TUNNEL_ADDRESS = "10.111.222.1"
         private const val TUNNEL_DNS = "10.111.222.2"
         private const val FALLBACK_DNS = "1.1.1.1"
@@ -217,18 +249,19 @@ class FocusVpnService : VpnService() {
             // foreground service so this is normally allowed — normally is not
             // a good enough reason to risk the process.
             try {
-                context.startService(
+                context.startForegroundService(
                     Intent(context, FocusVpnService::class.java)
                         .putStringArrayListExtra(EXTRA_BLOCKLIST, ArrayList(blocklist))
                 )
             } catch (_: Throwable) {
-                // Site blocking is off for this session. Apps still block.
+                // Site blocking is off for this session. Apps still block, and
+                // the status screen says which is which.
             }
         }
 
         fun stop(context: Context) {
             try {
-                context.startService(
+                context.startForegroundService(
                     Intent(context, FocusVpnService::class.java).setAction(ACTION_STOP)
                 )
             } catch (_: Throwable) {

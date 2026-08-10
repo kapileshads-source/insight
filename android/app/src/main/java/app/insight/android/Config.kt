@@ -64,6 +64,17 @@ class Config(context: Context) {
         set(value) = prefs.edit().putInt("blocklistSize", value).apply()
 
     /**
+     * Whether the DNS tunnel is actually established.
+     *
+     * Distinct from having permission for one. "You allowed a VPN" and "a VPN
+     * is running" are different sentences, and the status screen was showing
+     * the first while a student read it as the second.
+     */
+    var siteBlockingActive: Boolean
+        get() = prefs.getBoolean("siteBlockingActive", false)
+        set(value) = prefs.edit().putBoolean("siteBlockingActive", value).apply()
+
+    /**
      * The last crash, so a screenshot of the status screen is enough to fix
      * it. Android tells a student "Insight keeps stopping" and nothing else,
      * and a stack trace otherwise needs a cable and a laptop.

@@ -130,6 +130,17 @@ when consent is missing — so a service asking for itself would fail silently
 forever. It shipped that way once: the whole thing was built, wired to the
 session, and never once ran.
 
+**The tunnel runs as a foreground service.** Android refuses to *start* a
+background service while the app is in the background, which is always for a
+tracker. That refusal first crashed the app, then — once it was caught — made
+site blocking silently never happen. A foreground service with its own
+notification is what Android actually permits, and the notification is honest
+anyway: something is filtering your lookups and you should be able to see that.
+
+**"Allowed" and "running" are separate checks on the status screen.** They are
+different sentences, and showing only the first meant a green tick beside a
+feature that wasn't working.
+
 **The honest limitation:** a browser using DNS-over-HTTPS never asks us, and
 never sees the block. So do browsers with a VPN of their own — Opera's built-in
 VPN and Chrome's Secure DNS both route around this, and Android permits one VPN

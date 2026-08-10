@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Insight for Android.
+
+      The only platform where a phone can honestly measure its own use. iOS
+      gates that behind an entitlement Apple grants to parental-control
+      companies; Android asks the student for a permission, in their own
+      Settings, that they can take back at any time.
+
+      PACKAGE_USAGE_STATS is that permission. It is not granted by tapping
+      Allow — the student has to go to Settings and turn it on for this app
+      specifically, which is friction we keep rather than route around,
+      because it is also what makes the promise legible.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions"
+        xmlns:tools="http://schemas.android.com/tools" />
+
+    <application
+        android:allowBackup="false"
+        android:label="Insight"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Insight">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          The tracker runs as a foreground service with a permanent
+          notification. That is Android's rule, and it is the right rule: an
+          app counting what you use should not be able to do it invisibly.
+        -->
+        <service
+            android:name=".TrackerService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Counts time per app during a study session the user started" />
+        </service>
+    </application>
+</manifest>

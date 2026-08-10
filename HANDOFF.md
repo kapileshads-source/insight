@@ -94,6 +94,8 @@ Website, all deployed and working:
 - macOS app (`mac/`), Swift menu bar app, sideloaded as an ad-hoc signed bundle
 - iPhone app (`ios/`), SwiftUI — pairs, unlocks, starts and stops sessions, logs
   sleep, and bounces you out of apps via a Shortcuts automation
+- Android app (`android/`), Kotlin and Compose — pairs and counts time per app.
+  The only phone that can measure its own use; blocking isn't built yet
 - `/download` for the desktop apps, `/bounce` for the iPhone automation
 
 Data: 30 FISD campuses seeded, real A/B calendar extracted from the district
@@ -102,7 +104,13 @@ that it's right.
 
 ## What's not built
 
-- **Android app** — the two desktop apps are the pattern to copy
+- **Android blocking.** The tracker is built; the blocked-app screen isn't.
+  Android allows it outright — `SYSTEM_ALERT_WINDOW` plus a full-screen
+  activity, no entitlement, no approval — which makes it the only phone where
+  Focus Mode can be real
+- **Nobody has run the Android app on a phone or an emulator.** It builds, and
+  16 unit tests cover what gets reported and blocked; the service, the
+  permission flow and the usage-events sampling are unexercised
 - **The iPhone app has only ever run in the simulator.** Pairing, unlocking and
   the crypto are verified against the real browser code; what nobody has done is
   pair it to a real account and run a session end to end
@@ -454,6 +462,31 @@ NEXT_PUBLIC_DOWNLOAD_MAC_URL
 Until those exist the page says so in a sentence rather than offering a dead
 button. GitHub Releases would work for anyone off the school network, but
 github.com is blocked on district wifi, so it's the wrong host for this.
+
+---
+
+## The Android app
+
+`android/`, Kotlin and Compose, Gradle wrapper pinned to 8.11.1 because the
+Android plugin lags newer Gradle and Homebrew's is well ahead. Needs JDK 17–21;
+JDK 25 and 26 are both too new for AGP, so builds run with
+`JAVA_HOME=/opt/homebrew/opt/openjdk@21`.
+
+**The permission is the feature.** `PACKAGE_USAGE_STATS` is not granted by
+tapping Allow — the student goes to Settings and turns on usage access for
+Insight by name, and can take it back in the same screen. That friction is kept
+rather than routed around, because it is the same act as the promise. The
+tracker also runs as a foreground service with a permanent notification, which
+Android requires and which is right: an app counting what you use should not be
+able to do it invisibly.
+
+**Nothing counts while the screen is off.** A phone in a pocket still names a
+foreground app, so without that a student is billed for the walk home. It is
+the Android equivalent of the desktop apps' ten-minute idle rule.
+
+**Foreground app comes from `queryEvents`, not `queryUsageStats`.** The
+aggregated stats round to an interval and lag by minutes — long enough that
+switching apps credits the previous one with the next one's time.
 
 ---
 

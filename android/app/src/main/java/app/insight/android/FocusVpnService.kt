@@ -170,12 +170,20 @@ class FocusVpnService : VpnService() {
             // instruction, and the only trace was a boolean going false.
             try {
                 pump()
-                Log.i(TAG, "pump returned; tunnel closing")
-                config.siteBlockingProblem = "The tunnel closed on its own."
+                if (running) config.siteBlockingProblem = "The tunnel closed on its own."
             } catch (e: Throwable) {
-                Log.e(TAG, "pump threw", e)
-                config.siteBlockingProblem =
-                    "The tunnel opened but stopped: ${e.javaClass.simpleName}: ${e.message}"
+                // `running` goes false in teardown() before the interrupt that
+                // lands here, so this is how a deliberate stop is told apart
+                // from a failure. Without it, every session that ended tidily
+                // reported InterruptedException as a problem.
+                if (running) {
+                    Log.e(TAG, "pump threw", e)
+                    config.siteBlockingProblem =
+                        "The tunnel opened but stopped: ${e.javaClass.simpleName}: ${e.message}"
+                } else {
+                    Log.i(TAG, "tunnel closed on request")
+                    config.siteBlockingProblem = null
+                }
             }
             teardown()
         }

@@ -55,31 +55,37 @@ class FocusVpnService : VpnService() {
         val config = Config(this)
         config.siteBlockingProblem = "4. service running"
 
+        // A recorded failure has to outlive the progress crumbs that follow
+        // it. The first version overwrote step 5 with step 6 on the very next
+        // line, so the one message that named a cause was the one message
+        // nobody could ever see.
+        var failure: String? = null
+
         try {
             startForeground(NOTIFICATION_ID, notification())
         } catch (e: Throwable) {
             // Notifications may be refused outright on Android 13+, and a
             // foreground service that can't show one is a service Android may
             // refuse to keep.
-            config.siteBlockingProblem = "5. couldn't go foreground: ${e.javaClass.simpleName}"
+            failure = "5. couldn't go foreground: ${e.javaClass.simpleName}: ${e.message}"
         }
 
         blocklist = intent?.getStringArrayListExtra(EXTRA_BLOCKLIST) ?: emptyList()
-        config.siteBlockingProblem = "6. blocklist of ${blocklist.size}"
+        config.siteBlockingProblem = failure ?: "6. blocklist of ${blocklist.size}"
 
         if (intent?.action == ACTION_STOP || blocklist.isEmpty()) {
             if (intent?.action != ACTION_STOP) {
                 // Android restarts a sticky service with a null intent, which
                 // is how the blocklist can arrive empty without anyone doing
                 // anything wrong.
-                config.siteBlockingProblem = "7. started with no blocklist"
+                config.siteBlockingProblem = failure ?: "7. started with no blocklist"
             }
             teardown()
             stopSelf()
             return START_NOT_STICKY
         }
 
-        config.siteBlockingProblem = "8. establishing the tunnel"
+        config.siteBlockingProblem = failure ?: "8. establishing the tunnel"
 
         if (!running) connect()
         return START_STICKY
@@ -301,8 +307,8 @@ class FocusVpnService : VpnService() {
             } catch (e: Throwable) {
                 // Site blocking is off for this session. Apps still block, and
                 // the status screen now says which is which and why.
-                Config(context).siteBlockingProblem =
-                    "Couldn't start the blocker: ${e.javaClass.simpleName}"
+                config.siteBlockingProblem =
+                    "Couldn't start the blocker: ${e.javaClass.simpleName}: ${e.message}"
             }
         }
 

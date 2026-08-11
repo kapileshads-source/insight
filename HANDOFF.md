@@ -289,6 +289,14 @@ after consent was granted, after the service reached the foreground, after
 The thread's `catch (_: Throwable)` discarded the exception, and the only trace
 left in the world was one boolean going false.
 
+Then, with it finally running, it took the whole phone's DNS down. One shared
+socket, queries handled strictly in turn, replies assumed to arrive in order —
+and Android's resolver asks for a dozen names at once. Every answer went to the
+wrong asker. Since the tunnel is the phone's only resolver, nothing resolved at
+all. It now uses a socket per lookup, and **fails open**: twelve failures in a
+row and DNS goes back to the phone, because the worst case of failing open is
+an unblocked session and the worst case of holding on is an unusable phone.
+
 Three lessons, in increasing order of usefulness:
 
 1. **A catch-all that discards is worse than a crash.** The crash loop it was

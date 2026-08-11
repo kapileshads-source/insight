@@ -162,6 +162,24 @@ the only option is a public resolver, which would move a student's browsing
 history to a company they didn't choose. This is what lets us forward lookups
 where they were already going.
 
+**One socket per lookup, and never one shared socket.** The first version
+handled queries strictly in turn: send, block until *a* reply arrives, assume
+it belongs to the query just sent. Android's resolver asks for A and AAAA at
+once, several hostnames per page, so replies interleave — and each was handed
+to the port of whichever query we were waiting on. After the first mismatch
+every answer went to the wrong asker.
+
+This tunnel advertises itself as the phone's **only** resolver, so that wasn't
+slow browsing. Nothing on the phone could resolve anything at all. A single
+`ping` passed the whole time, because one query with nothing else in flight is
+the one case the design got right — which is exactly why it survived review.
+
+**It fails open.** Twelve failed lookups in a row and the tunnel hands DNS back
+to the phone, records why, and stops. A student whose phone can't load anything
+does not care which of our components is at fault, and may be in the middle of
+something that matters. The worst case of failing open is an unblocked session;
+the worst case of holding on is a phone that doesn't work.
+
 `Dns.kt` is pure and has 8 tests, because packet parsing that is nearly right
 fails like flaky wifi, and a student would blame the school's network before
 they blamed the byte offsets.

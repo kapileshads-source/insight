@@ -15,6 +15,10 @@ import java.io.FileOutputStream
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
 /**
@@ -188,8 +192,16 @@ class FocusVpnService : VpnService() {
     /**
      * Read queries, refuse the blocked ones, forward the rest.
      *
-     * Deliberately sequential. A study phone makes a handful of lookups a
-     * second, and a thread pool here would buy nothing but ways to be wrong.
+     * Every forwarded query gets its own socket and its own thread. The first
+     * version shared one socket and handled queries strictly in turn — send,
+     * block until *a* reply arrives, assume it belongs to the query we just
+     * sent. Android's resolver asks for A and AAAA at once, several hostnames
+     * per page, so replies interleave. Each one was then delivered to the port
+     * of whichever query we happened to be waiting on, and after the first
+     * mismatch every answer went to the wrong asker.
+     *
+     * Because this tunnel advertises itself as the phone's only resolver, that
+     * wasn't slow browsing. It was a phone that could not resolve anything.
      */
     private fun pump() {
         val descriptor = tunnel?.fileDescriptor ?: return
@@ -197,15 +209,13 @@ class FocusVpnService : VpnService() {
         val output = FileOutputStream(descriptor)
         val buffer = ByteArray(32_767)
 
-        val upstream = DatagramSocket().apply {
-            soTimeout = 5_000
-            // Without this the forwarded query would be routed back into our
-            // own tunnel, which is a loop that ends in every lookup timing out.
-            protect(this)
-        }
-
         val resolver = upstreamResolver()
         Log.i(TAG, "pump ready, upstream=$resolver")
+
+        // Bounded on purpose. A page can ask for dozens of names at once, and
+        // a thread each would be worse than the bug this replaces.
+        val forwarders = Executors.newFixedThreadPool(8) as ThreadPoolExecutor
+        val consecutiveFailures = AtomicInteger(0)
 
         while (running && !Thread.currentThread().isInterrupted) {
             val read = try {
@@ -221,11 +231,7 @@ class FocusVpnService : VpnService() {
             val host = Dns.questionName(query.payload)
 
             if (host != null && Apps.isBlocked(host, blocklist)) {
-                try {
-                    output.write(Dns.refusal(query))
-                } catch (_: Exception) {
-                    break
-                }
+                if (!reply(output, Dns.refusal(query))) break
                 TrackerService.reportBlockedSite(this, host)
                 continue
             }
@@ -233,23 +239,89 @@ class FocusVpnService : VpnService() {
             // Not blocked: ask the real resolver and hand back whatever it
             // says, unread and unrecorded.
             try {
-                upstream.send(
-                    DatagramPacket(query.payload, query.payload.size, resolver, Dns.PORT)
-                )
-
-                val reply = ByteArray(4_096)
-                val packet = DatagramPacket(reply, reply.size)
-                upstream.receive(packet)
-
-                output.write(Dns.wrap(query, reply.copyOf(packet.length)))
-            } catch (_: Exception) {
-                // A lookup that times out is a lookup the app will retry.
-                // Better that than tearing the tunnel down over one packet.
+                forwarders.execute { forward(query, resolver, output, consecutiveFailures) }
+            } catch (_: Throwable) {
+                // The queue is full, which means the resolver is not answering.
+                // Dropping is the honest response; the client will retry.
             }
         }
 
-        upstream.close()
+        forwarders.shutdownNow()
+        forwarders.awaitTermination(2, TimeUnit.SECONDS)
     }
+
+    /**
+     * One forwarded lookup, start to finish, on its own socket.
+     *
+     * Its own socket rather than a shared one: a socket per query is what
+     * makes "the reply I receive is the reply to the query I sent" true rather
+     * than hoped for.
+     */
+    private fun forward(
+        query: Dns.Packet,
+        resolver: InetAddress,
+        output: FileOutputStream,
+        consecutiveFailures: AtomicInteger,
+    ) {
+        val socket = try {
+            DatagramSocket().apply {
+                soTimeout = 5_000
+                // Without this the forwarded query would be routed back into
+                // our own tunnel, a loop that ends in every lookup timing out.
+                protect(this)
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "couldn't open a socket to forward with", e)
+            failOpenIfHopeless(consecutiveFailures.incrementAndGet())
+            return
+        }
+
+        try {
+            socket.send(DatagramPacket(query.payload, query.payload.size, resolver, Dns.PORT))
+
+            val reply = ByteArray(4_096)
+            val packet = DatagramPacket(reply, reply.size)
+            socket.receive(packet)
+
+            consecutiveFailures.set(0)
+            reply(output, Dns.wrap(query, reply.copyOf(packet.length)))
+        } catch (_: Exception) {
+            // A lookup that times out is a lookup the client will retry.
+            failOpenIfHopeless(consecutiveFailures.incrementAndGet())
+        } finally {
+            socket.close()
+        }
+    }
+
+    /**
+     * Get out of the way when we are plainly the problem.
+     *
+     * A student whose phone cannot resolve anything does not care which of our
+     * components is at fault, and they may be in the middle of something that
+     * matters. Handing DNS back is always safer than holding on to it: the
+     * worst case is an unblocked session, and the alternative is a phone that
+     * doesn't work.
+     */
+    private fun failOpenIfHopeless(failures: Int) {
+        if (failures < FAIL_OPEN_AFTER || !running) return
+
+        Log.e(TAG, "$failures lookups failed in a row; handing DNS back")
+        Config(this).siteBlockingProblem =
+            "Site blocking stopped: lookups weren't getting through, so the " +
+                "phone's normal DNS was handed back."
+        teardown()
+    }
+
+    /** Writes to the tunnel are shared state; every reply goes through here. */
+    private fun reply(output: FileOutputStream, packet: ByteArray): Boolean =
+        synchronized(output) {
+            try {
+                output.write(packet)
+                true
+            } catch (_: Exception) {
+                false
+            }
+        }
 
     private fun notification(): Notification {
         val manager = getSystemService(NotificationManager::class.java)
@@ -304,6 +376,10 @@ class FocusVpnService : VpnService() {
         private const val TUNNEL_ADDRESS = "10.111.222.1"
         private const val TUNNEL_DNS = "10.111.222.2"
         private const val FALLBACK_DNS = "1.1.1.1"
+
+        /// Enough retries to ride out a change of network, few enough that a
+        /// broken tunnel doesn't cost a student their afternoon.
+        private const val FAIL_OPEN_AFTER = 12
 
         const val EXTRA_BLOCKLIST = "blocklist"
         const val ACTION_STOP = "app.insight.android.STOP_VPN"

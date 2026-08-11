@@ -92,7 +92,14 @@ class FocusVpnService : VpnService() {
 
         config.siteBlockingProblem = failure ?: "8. establishing the tunnel"
 
-        if (!running) connect()
+        if (running) {
+            // The tracker re-sends this every poll. Leaving the last crumb
+            // behind meant a working tunnel reported "8. establishing" for the
+            // rest of the session — a breadcrumb trail that outlived the walk.
+            config.siteBlockingProblem = failure
+        } else {
+            connect()
+        }
         return START_STICKY
     }
 

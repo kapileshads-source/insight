@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { appsToBlock } from "@/lib/ios-apps";
+
 export const metadata = { title: "Insight on iPhone — Insight" };
 
 /**
@@ -139,6 +141,39 @@ export default function IPhonePage() {
             straight back out to a page that tells you how far into your session
             you are.
           </p>
+          <div className="rounded-lg border border-line bg-bg p-4">
+            <h4 className="text-[15px] text-text">Which apps to tick</h4>
+            <p className="mt-2 text-[14px] leading-relaxed text-text-muted">
+              The picker shows everything on your phone, so here is the list
+              the rest of Insight already blocks — your laptop and an Android
+              phone enforce exactly these. Tick the ones you actually have; you
+              only do this once, and you can come back and edit the automation
+              whenever.
+            </p>
+            <dl className="mt-4 space-y-3">
+              {appsToBlock().map((group) => (
+                <div key={group.category}>
+                  <dt className="text-[13px] text-text-faint">{group.label}</dt>
+                  <dd className="mt-1 text-[14px] leading-relaxed text-text">
+                    {group.apps.join(", ")}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <p className="mt-4 text-[13px] leading-relaxed text-text-faint">
+              One automation holds all of them — select as many apps as you
+              like in the same picker, rather than making one per app. Anything
+              you add to your own blocklist in{" "}
+              <Link
+                href="/settings"
+                className="text-sky underline underline-offset-2"
+              >
+                Settings
+              </Link>{" "}
+              shows up here too.
+            </p>
+          </div>
+
           <p className="text-text-faint">
             It fires every single time, which is more than a hidden icon does —
             but you can also delete the automation in ten seconds, and

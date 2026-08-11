@@ -398,3 +398,11 @@ password as URL query parameters.
   gone — but Clerk's dev instance caps at 100 users.
 - **Log real sessions.** The insight engine has passed 240 tests and never seen a
   human. Everything downstream is calibrated against data that doesn't exist yet.
+- **Test the iPhone app end to end**, on a real phone rather than the simulator.
+  It has never seen a real pairing code. Needs Xcode Beta (the Mac runs macOS 27,
+  which the release build refuses), a free Apple ID for a seven-day signing
+  profile, and a session started from the web app. What to check, in order:
+  the pairing blob decodes and unlocks; the status screen shows a live session;
+  the `/bounce` deep link opens the app rather than Safari; and the two Focus
+  shortcuts fire. Blocking and app counting are not part of this and never will
+  be — see the iOS note above.

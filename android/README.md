@@ -255,6 +255,9 @@ $ adb shell ping -c 1 wikipedia.org   → 64 bytes from ... time=82.1 ms
 Still unexercised: the override countdown, the ten-minute idle rule, and a
 session-end flush.
 
+Stopping is verified too: Focus Mode off tears the tunnel down, the service
+record disappears, and blocked names resolve again within one poll.
+
 ## Debug it with a cable, not with screenshots
 
 Four rounds of "install this and tell me what it says" bought less than five

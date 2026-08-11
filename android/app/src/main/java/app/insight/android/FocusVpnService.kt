@@ -9,6 +9,7 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
+import android.util.Log
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.net.DatagramPacket
@@ -98,7 +99,11 @@ class FocusVpnService : VpnService() {
 
     override fun onRevoke() {
         // The student turned the VPN off from Settings, which is their right
-        // and needs no argument from us.
+        // and needs no argument from us — but "another VPN took the slot"
+        // lands here too, and looks identical from the outside.
+        Log.i(TAG, "onRevoke")
+        Config(this).siteBlockingProblem =
+            "Android withdrew the tunnel — another VPN may have taken over."
         teardown()
         super.onRevoke()
     }
@@ -149,12 +154,19 @@ class FocusVpnService : VpnService() {
         worker = thread(name = "insight-dns") {
             // An uncaught exception on this thread kills the whole app, and a
             // student sees "Insight keeps stopping" with no clue that a DNS
-            // packet was involved.
+            // packet was involved. Catching it was right; discarding it was
+            // not. The tunnel established, this thread died on its first
+            // instruction, and the only trace was a boolean going false.
             try {
                 pump()
-            } catch (_: Throwable) {
-                teardown()
+                Log.i(TAG, "pump returned; tunnel closing")
+                config.siteBlockingProblem = "The tunnel closed on its own."
+            } catch (e: Throwable) {
+                Log.e(TAG, "pump threw", e)
+                config.siteBlockingProblem =
+                    "The tunnel opened but stopped: ${e.javaClass.simpleName}: ${e.message}"
             }
+            teardown()
         }
     }
 
@@ -193,6 +205,7 @@ class FocusVpnService : VpnService() {
         }
 
         val resolver = upstreamResolver()
+        Log.i(TAG, "pump ready, upstream=$resolver")
 
         while (running && !Thread.currentThread().isInterrupted) {
             val read = try {
@@ -260,15 +273,31 @@ class FocusVpnService : VpnService() {
      * to their privacy than the blocking is worth.
      */
     private fun upstreamResolver(): InetAddress {
-        val manager = getSystemService(ConnectivityManager::class.java)
-        val network = manager?.activeNetwork
-        val properties = network?.let { manager.getLinkProperties(it) }
+        // Defensive because this ran inside a thread whose only error handling
+        // was to disappear: asking the system for its resolver needs a
+        // permission, and a missing one throws rather than returns null.
+        val system = try {
+            val manager = getSystemService(ConnectivityManager::class.java)
+            val network = manager?.activeNetwork
+            val properties = network?.let { manager.getLinkProperties(it) }
+            properties?.dnsServers?.firstOrNull { it.address.size == 4 }
+        } catch (e: Throwable) {
+            Log.e(TAG, "couldn't read the system resolver", e)
+            null
+        }
 
-        val system = properties?.dnsServers?.firstOrNull { it.address.size == 4 }
+        if (system == null) {
+            // Worth saying out loud rather than falling back quietly: every
+            // lookup this session goes somewhere the student didn't pick.
+            Config(this).siteBlockingProblem =
+                "Using a public resolver — the phone's own couldn't be read."
+        }
+
         return system ?: InetAddress.getByName(FALLBACK_DNS)
     }
 
     companion object {
+        private const val TAG = "InsightVpn"
         private const val CHANNEL = "insight-sites"
         private const val NOTIFICATION_ID = 2
 

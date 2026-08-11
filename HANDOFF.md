@@ -118,9 +118,9 @@ it's right.
 
 ## What's not built, and what's untested
 
-- **Android has been tested on a real phone** — a Nothing Phone 2a — and app
-  blocking works: a blocked app closes and Insight's screen replaces it. **Site
-  blocking does not start on that device**, and is the one open bug. See below.
+- **Android is verified on a real phone** — Nothing Phone 2a, Android 16. App
+  blocking closes a blocked app; site blocking refuses `youtube.com` and lets
+  `wikipedia.org` through. Both confirmed over adb, not by eye.
 - **The iPhone app has only ever run in the simulator** against a synthetic
   pairing code. Pairing, unlocking and the crypto are verified against the real
   browser code; a real session end to end is not.
@@ -276,33 +276,36 @@ the phone wants USB debugging turned on in Developer options.
 
 ---
 
-## The open bug: site blocking on Nothing OS
+## The bug that hid behind four screenshots
 
-App blocking works on the test phone. The DNS tunnel does not start, and no
-second notification appears.
+Site blocking never worked on any build, and the cause was one missing line in
+the manifest: `ACCESS_NETWORK_STATE`.
 
-Ruled out so far: no other VPN installed, Chrome rather than Opera, battery set
-to Unrestricted, all six preconditions green on the status screen, and no crash
-recorded.
+`upstreamResolver()` asks the system which resolver the phone is already using.
+That call is permission-guarded, and asking without the permission **throws**
+rather than returning null. It threw on the DNS thread's first instruction —
+after consent was granted, after the service reached the foreground, after
+`establish()` handed back a real tunnel. Everything observable said healthy.
+The thread's `catch (_: Throwable)` discarded the exception, and the only trace
+left in the world was one boolean going false.
 
-Still to establish — the current build answers this without a cable — is how far
-`FocusVpnService.start` gets. It writes a numbered breadcrumb at each step, and
-the number it stops at names the cause:
+Three lessons, in increasing order of usefulness:
 
-1–3 mean the tracker asked and Android accepted, so the service should be
-running. 4 means it ran. 5 means it couldn't go foreground, with the exception.
-6–7 are about the blocklist arriving. 8 means it reached `establish()`, and
-stopping there means Android refused the tunnel itself.
+1. **A catch-all that discards is worse than a crash.** The crash loop it was
+   written to fix at least told us something. Catch broadly, record always.
+2. **Diagnostics have to survive their own success path.** Breadcrumb 5 was
+   overwritten by breadcrumb 6 one line later, so the crumb naming the cause
+   was the one crumb nobody could see. And a `null` written on success removes
+   the key entirely, which reads exactly like never having run.
+3. **Reach for the cable much earlier.** Four rounds of "install this and tell
+   me what it says" bought less than five minutes of `adb logcat`, and the
+   cause was never where the screenshots pointed.
 
-Worth knowing while chasing it: Android 13+ needs `POST_NOTIFICATIONS` granted
-at runtime before any foreground service can show a notification, so "no
-notification appeared" was never proof that the service didn't start. The app now
-asks for it on launch.
+```bash
+~/Library/Android/sdk/platform-tools/adb shell run-as app.insight.android cat shared_prefs/insight.xml
+```
 
-If it turns out Nothing OS simply won't permit this, that is a finding rather
-than a defeat: app blocking is the half that matters, phones from other makers
-may allow it, and the limitation belongs on `/download` next to the DNS-over-HTTPS
-one.
+prints the whole status screen without the phone being in anyone's hand.
 
 ---
 

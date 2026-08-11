@@ -149,6 +149,19 @@ whose blocked site loads anyway deserves to know where to look. Chrome turns Sec
 configurations, but not all. Friction rather than a wall — like everything else
 here.
 
+**It needs `ACCESS_NETWORK_STATE`, and that is not obvious.** Reading which
+resolver the phone already uses is a permission-guarded call, and asking without
+the permission *throws* rather than returning null. It threw on the DNS thread's
+first instruction, every single time: consent granted, service in the
+foreground, tunnel established, notification showing — and the thread died
+before it read one packet. Site blocking never worked once, on any build, for
+this one missing line.
+
+The permission is also the privacy story rather than a technicality. Without it
+the only option is a public resolver, which would move a student's browsing
+history to a company they didn't choose. This is what lets us forward lookups
+where they were already going.
+
 `Dns.kt` is pure and has 8 tests, because packet parsing that is nearly right
 fails like flaky wifi, and a student would blame the school's network before
 they blamed the byte offsets.
@@ -210,9 +223,31 @@ app didn't record why".
 That cost a full round trip with a real tester. Any panel describing something
 asynchronous has to re-read while it's on screen, not when it opens.
 
-## What isn't done
+## Verified on a real phone
 
-Nobody has run this on a phone or an emulator. It builds, and 16 unit tests
-cover what gets reported and what gets blocked — but the service, both
-permission flows, the usage-events sampling and the blocked screen itself are
-all unexercised.
+Nothing Phone 2a, Android 16, over adb on 2026-08-11. App blocking closes a
+blocked app and replaces it with our screen. Site blocking refuses a blocked
+lookup and forwards the rest:
+
+```
+$ adb shell ping -c 1 youtube.com     → ping: unknown host youtube.com
+$ adb shell ping -c 1 wikipedia.org   → 64 bytes from ... time=82.1 ms
+```
+
+Still unexercised: the override countdown, the ten-minute idle rule, and a
+session-end flush.
+
+## Debug it with a cable, not with screenshots
+
+Four rounds of "install this and tell me what it says" bought less than five
+minutes of `adb logcat`, and the cause was never once where the screenshots
+pointed. Reach for the cable earlier than feels necessary.
+
+```bash
+~/Library/Android/sdk/platform-tools/adb shell run-as app.insight.android cat shared_prefs/insight.xml
+```
+
+That one line prints everything the status screen shows, without the phone
+being in anyone's hand. `dumpsys activity services app.insight.android` says
+whether the services are actually alive, which the app itself cannot tell you
+when the failure is that it isn't running.

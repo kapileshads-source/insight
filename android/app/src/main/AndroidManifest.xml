@@ -15,6 +15,17 @@
       because it is also what makes the promise legible.
     -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!--
+      Read which resolver the phone is already using, so the DNS tunnel can
+      forward the lookups it doesn't block to the same place they were going
+      anyway. Without it the tunnel established and the pump thread died on
+      its first instruction, and site blocking never worked once.
+
+      Sending everything to a public resolver instead would need no permission
+      at all — and would quietly move a student's browsing history to a company
+      they didn't choose. This permission is what lets us not do that.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />

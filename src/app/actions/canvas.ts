@@ -317,3 +317,50 @@ export async function storeCanvasData(input: unknown): Promise<CanvasResult> {
   revalidatePath("/dashboard");
   return { ok: true };
 }
+
+/**
+ * The stored assignments, still encrypted.
+ *
+ * These rows have been syncing since the first Canvas connection and nothing
+ * has ever read them back except export and delete. The server can't decrypt
+ * them — names and points live in the blob — so it hands them over as they
+ * are and the browser does the rest, the same shape as every other record.
+ *
+ * `dueAt` is plaintext by design (see the schema), which is what lets this
+ * order and window the query rather than pulling a student's whole history
+ * to find out what's due on Thursday.
+ */
+export async function fetchStoredAssignments() {
+  const user = await getOrCreateUser();
+  if (!user) return null;
+
+  // A fortnight back is enough to still show what was missed without
+  // dragging in a semester of finished work. Undated rows have to come
+  // through separately: a null date can't satisfy a date filter.
+  const since = new Date();
+  since.setDate(since.getDate() - 14);
+
+  const [assignments, courses] = await Promise.all([
+    db.assignment.findMany({
+      where: {
+        userId: user.id,
+        OR: [{ dueAt: { gte: since } }, { dueAt: null }],
+      },
+      select: {
+        id: true,
+        courseId: true,
+        dueAt: true,
+        payloadCipher: true,
+        payloadIv: true,
+      },
+      orderBy: { dueAt: "asc" },
+      take: 300,
+    }),
+    db.course.findMany({
+      where: { userId: user.id, active: true },
+      select: { id: true, payloadCipher: true, payloadIv: true },
+    }),
+  ]);
+
+  return { assignments, courses };
+}

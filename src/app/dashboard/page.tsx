@@ -8,6 +8,7 @@ import { getRunningSession } from "@/app/actions/sessions";
 import { getCanvasStatus } from "@/app/actions/canvas";
 import { listDevices } from "@/app/actions/devices";
 import { hasProfile } from "@/app/actions/profile";
+import { AssignmentsPanel } from "@/components/assignments-panel";
 import { GapPrompt } from "@/components/gap-prompt";
 import { StudyPanel } from "@/components/study-panel";
 
@@ -238,6 +239,8 @@ export default async function Dashboard() {
             : null
         }
       />
+
+      <AssignmentsPanel />
 
       <p className="mt-12 text-[13px] text-text-faint">
         {formatToday(today, user.school?.timezone ?? "America/Chicago")}

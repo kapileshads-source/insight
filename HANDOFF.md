@@ -20,7 +20,7 @@ pilot. Everything runs on free tiers.
 | Email | Resend — only delivers to the developer until a domain exists |
 | LLM | Groq free tier |
 
-`npm test` runs 319 tests. `npm run build` regenerates the Prisma client,
+`npm test` runs 383 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds. Each native app has its own suite:
 53 on Windows, 52 on Mac, 25 on Android, 16 in the extension.
 
@@ -127,9 +127,16 @@ it's right.
 - **The iPhone app has only ever run in the simulator** against a synthetic
   pairing code. Pairing, unlocking and the crypto are verified against the real
   browser code; a real session end to end is not.
-- **Untested on the desktops:** blocking works and has been used, but nobody has
-  watched an override get recorded, the ten-minute idle cutoff fire, or a
-  session-end flush land.
+- **The Mac app is verified end to end** against a stub server: it polls every
+  15s, notices a session within one poll, attributes the frontmost app,
+  *closed* a blocked TextEdit, recorded the block event, flushed on the minute,
+  and — after the fix below — flushes the tail when a session ends.
+- **The ten-minute idle cutoff is still unverified.** It needs ten minutes with
+  the keyboard and mouse genuinely untouched, and the one attempt ran while the
+  machine was in continuous use (`ioreg -c IOHIDSystem | grep HIDIdleTime`
+  reported 0.3 seconds). The counting was correct; the test wasn't.
+- **The Windows change below is unverified by a compiler** — no dotnet on the
+  Mac. It is a three-line reordering identical to the Mac and Android ones.
 - **HAC** — reconnaissance done, matcher built and tested, parser not written,
   and **nothing imports the matcher**. It has been dead code since it was
   written. See the section at the end for the two facts that unblock it.
@@ -285,6 +292,37 @@ the phone wants USB debugging turned on in Developer options.
   with `JAVA_HOME=/opt/homebrew/opt/openjdk@21`.
 - **XcodeGen** generates `ios/Insight.xcodeproj` from `project.yml`. The project
   file isn't committed; a pbxproj is unreadable in a diff.
+
+---
+
+## Every session lost its last minute, on all three trackers
+
+Found by pointing the real Mac app at a stub server and ending a session while
+watching what it sent. It sent nothing.
+
+```
+01:14:49  ACTIVITY  {"sessionId":"sess-verify-1","domains":[{"domain":"Claude","seconds":59}]}
+01:15:05  (session ended on the server)
+01:15:19  POLL -> session=none          ← and no final flush, ever
+```
+
+`poll()` assigns `session = result.session` *before* calling `closeSlice()`, and
+`closeSlice()` guards on a session existing. So when a session ended, the guard
+bailed, the open slice was discarded, the tally stayed empty, and `flush()`
+returned early on its own empty-check. Everything between the last 60-second
+flush and the session ending — up to 74 seconds — was dropped.
+
+The comment immediately above it reads *"posting it after that id stops being
+current loses the last minute of every session"*. The intent was right; the
+ordering defeated it. The same code, ported to three platforms, carries the same
+comment and had the same bug: **Mac, Windows and Android all lost it.**
+
+Fixed by closing the slice before the reassignment. Verified the same way it was
+found: the final post now carries 44 seconds under the old session id.
+
+Worth noting what this cost invisibly. It only bites when a session *ends*,
+which is every session — and the missing time is always the tail, which is
+disproportionately the part where a student was flagging.
 
 ---
 

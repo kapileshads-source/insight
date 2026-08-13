@@ -55,6 +55,37 @@ internal static class Native
         return TimeSpan.FromMilliseconds(elapsed);
     }
 
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr OpenInputDesktop(uint flags, bool inherit, uint access);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool CloseDesktop(IntPtr desktop);
+
+    /// <summary>
+    /// True when the workstation is locked, or the screen saver has it.
+    ///
+    /// Keyboard idle alone is not a safe signal. Measured on a real MacBook,
+    /// the trackpad emits events by itself every few minutes with nobody near
+    /// it — well inside any threshold worth setting — so the idle rule there
+    /// never fired once and an evening with the lid open counted as study
+    /// time in full. Windows has no shortage of equivalents: a wireless mouse
+    /// on an uneven desk, a presence sensor, a jiggler.
+    ///
+    /// A locked desktop cannot be produced by a stray touch and has no
+    /// innocent reading. `OpenInputDesktop` fails for the calling process when
+    /// the secure desktop is in front, which is exactly that condition.
+    /// </summary>
+    internal static bool ScreenLocked()
+    {
+        const uint DESKTOP_SWITCHDESKTOP = 0x0100;
+
+        IntPtr desktop = OpenInputDesktop(0, false, DESKTOP_SWITCHDESKTOP);
+        if (desktop == IntPtr.Zero) return true;
+
+        CloseDesktop(desktop);
+        return false;
+    }
+
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool AttachConsole(int processId);
 

@@ -45,6 +45,36 @@ enum SelfTest {
         addressTests()
         parseTests()
 
+        // --- walking away ------------------------------------------------------
+
+        // Measured on a real MacBook: the trackpad emits digitizer events by
+        // itself roughly every six minutes, so keyboard idle never reaches ten
+        // and the rule never fired once. An evening with the lid open counted
+        // as studying in full.
+        ok("still here after a minute",
+           !Tracker.isAway(idleSeconds: 60, displayAsleep: false, screenLocked: false))
+        ok("still here at nine minutes",
+           !Tracker.isAway(idleSeconds: 540, displayAsleep: false, screenLocked: false))
+        ok("away after ten",
+           Tracker.isAway(idleSeconds: 600, displayAsleep: false, screenLocked: false))
+
+        // Neither of these can be produced by a stray touch, and neither has
+        // an innocent reading.
+        ok("a sleeping screen is away immediately",
+           Tracker.isAway(idleSeconds: 5, displayAsleep: true, screenLocked: false))
+        ok("a locked screen is away immediately",
+           Tracker.isAway(idleSeconds: 5, displayAsleep: false, screenLocked: true))
+        ok("a phantom touch does not rescue a dark screen",
+           Tracker.isAway(idleSeconds: 0, displayAsleep: true, screenLocked: false))
+
+        // The slice ends at the last real activity, not when we noticed.
+        ok("closes back to the last keypress",
+           Tracker.awaySince(idleSeconds: 600, displayAsleep: false, screenLocked: false) == 600)
+        ok("never credits time to a dark screen",
+           Tracker.awaySince(idleSeconds: 700, displayAsleep: true, screenLocked: false) == 700)
+        ok("never goes negative",
+           Tracker.awaySince(idleSeconds: -5, displayAsleep: true, screenLocked: false) == 0)
+
         print("\n\(passed) passed, \(failed) failed")
         return failed == 0 ? 0 : 1
     }

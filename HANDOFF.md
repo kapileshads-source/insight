@@ -22,7 +22,7 @@ pilot. Everything runs on free tiers.
 
 `npm test` runs 383 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds. Each native app has its own suite:
-53 on Windows, 52 on Mac, 25 on Android, 16 in the extension.
+53 on Windows, 61 on Mac, 25 on Android, 16 in the extension.
 
 ---
 
@@ -131,10 +131,7 @@ it's right.
   15s, notices a session within one poll, attributes the frontmost app,
   *closed* a blocked TextEdit, recorded the block event, flushed on the minute,
   and — after the fix below — flushes the tail when a session ends.
-- **The ten-minute idle cutoff is still unverified.** It needs ten minutes with
-  the keyboard and mouse genuinely untouched, and the one attempt ran while the
-  machine was in continuous use (`ioreg -c IOHIDSystem | grep HIDIdleTime`
-  reported 0.3 seconds). The counting was correct; the test wasn't.
+- **The idle rule is verified, and it had to be rebuilt first** — see below.
 - **The Windows change below is unverified by a compiler** — no dotnet on the
   Mac. It is a three-line reordering identical to the Mac and Android ones.
 - **HAC** — reconnaissance done, matcher built and tested, parser not written,
@@ -292,6 +289,52 @@ the phone wants USB debugging turned on in Developer options.
   with `JAVA_HOME=/opt/homebrew/opt/openjdk@21`.
 - **XcodeGen** generates `ios/Insight.xcodeproj` from `project.yml`. The project
   file isn't committed; a pbxproj is unreadable in a diff.
+
+---
+
+## The idle rule existed and never once fired
+
+Three attempts to watch the ten-minute cutoff all showed the tracker happily
+counting. It looked like a bug in the tracker. It wasn't.
+
+Sampling `CGEventSource.secondsSinceLastEventType` every fifteen seconds, with
+nobody near the machine, gave a clean climb to **346 seconds and then a snap
+back to 3**. The power assertions name the culprit outright:
+
+```
+UserIsActive "com.apple.iohideventsystem.queue.tickle
+  service:AppleMultitouchDevice product:Apple Internal Keyboard / Trackpad eventType:11"
+```
+
+The trackpad emits digitizer events by itself, roughly every six minutes, with
+the lid open and nobody touching it. Six is less than ten, so **keyboard idle
+never reached the threshold on that machine and never would**. An evening with
+the laptop open counted, in full, as studying — and it would have inflated
+exactly the factor the insight engine cares most about.
+
+**Keyboard idle alone is not a safe signal on a laptop.** A sleeping display or
+a locked screen is now treated as away immediately: neither can be produced by
+a stray touch, and neither has an innocent reading. Nobody revises at a screen
+that is off.
+
+Verified by putting the display to sleep mid-session and watching:
+
+```
+02:06:25  ACTIVITY  59 seconds
+02:06:35  (display slept)
+02:16:45  ...nothing. Ten minutes, zero seconds recorded, 11 polls still flowing.
+```
+
+Polls continuing is the important half — it proves the app was alive and
+choosing to record nothing, rather than having died.
+
+Windows got the equivalent (`OpenInputDesktop` fails when the secure desktop is
+in front, which is exactly "locked"), unverified by a compiler. Android already
+handled it: it stops counting when the screen goes off.
+
+**The general lesson.** The decision — "is the student away?" — is now a pure
+function with tests. The *reading* of the sensors is the part that can't be
+tested and shouldn't hold the logic hostage.
 
 ---
 

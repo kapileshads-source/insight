@@ -213,7 +213,9 @@ internal sealed class Tracker : IDisposable
         else
         {
             var idle = Native.IdleFor();
-            if (idle >= IdleThreshold)
+            // A locked screen is away immediately: unlike keyboard idle, it
+            // cannot be produced by a stray touch. See Native.ScreenLocked.
+            if (Native.ScreenLocked() || idle >= IdleThreshold)
             {
                 CloseSlice(DateTime.UtcNow - idle);
             }

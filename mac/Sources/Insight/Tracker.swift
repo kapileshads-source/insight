@@ -26,7 +26,52 @@ final class Tracker {
     /// How long without keyboard or mouse before we assume they walked away.
     /// Long enough to read a page without being marked absent; short enough
     /// that lunch doesn't count as revision.
-    private static let idleThreshold: TimeInterval = 10 * 60
+    nonisolated static let idleThreshold: TimeInterval = 10 * 60
+
+    /// Whether to stop counting, given everything we can observe.
+    ///
+    /// Pure, and separate from the reading of it, because the reading is the
+    /// part that can't be tested and the decision is the part that must be
+    /// right.
+    ///
+    /// **Keyboard idle alone is not enough, and this was measured rather than
+    /// guessed.** On a real MacBook the trackpad emits digitizer events on its
+    /// own roughly every six minutes — `AppleMultitouchDevice` tickling the
+    /// HID event system with nobody near it. Six is less than ten, so the
+    /// threshold below was never once reached and an evening with the lid open
+    /// counted, in full, as studying. The idle rule existed and did nothing.
+    ///
+    /// A sleeping display or a locked screen is therefore treated as away
+    /// immediately. Neither can be produced by a phantom touch, and neither
+    /// has an innocent reading: nobody revises at a screen that is off.
+    nonisolated static func isAway(
+        idleSeconds: TimeInterval,
+        displayAsleep: Bool,
+        screenLocked: Bool,
+        threshold: TimeInterval = Tracker.idleThreshold
+    ) -> Bool {
+        displayAsleep || screenLocked || idleSeconds >= threshold
+    }
+
+    /// How far back the slice should be closed to.
+    ///
+    /// Time spent away ended the slice at the last keypress, not at the moment
+    /// we noticed. With a sleeping screen the keypress may be recent — the
+    /// trackpad may have tickled it a minute ago — so the display going dark
+    /// is the better marker, and `idleSeconds` is used only when it is larger.
+    nonisolated static func awaySince(
+        idleSeconds: TimeInterval,
+        displayAsleep: Bool,
+        screenLocked: Bool
+    ) -> TimeInterval {
+        if displayAsleep || screenLocked {
+            // The display sleeps after its own timeout, which is at least as
+            // long as the idle we can see. Trusting the larger of the two
+            // never credits time that wasn't studied.
+            return max(idleSeconds, 0)
+        }
+        return idleSeconds
+    }
 
     /// A slice longer than this is a bug or a suspended machine, and either
     /// way it is not study time.
@@ -155,9 +200,28 @@ final class Tracker {
     }
 
     /// Seconds since the keyboard or mouse was last touched.
+    ///
+    /// Not trustworthy on its own — see `isAway`. A trackpad that tickles the
+    /// event system every few minutes holds this permanently below any
+    /// threshold worth setting.
     private func idleSeconds() -> TimeInterval {
         guard let any = CGEventType(rawValue: ~0) else { return 0 }
         return CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: any)
+    }
+
+    /// True when the screen has gone dark. Cannot be faked by a stray touch.
+    private func displayAsleep() -> Bool {
+        CGDisplayIsAsleep(CGMainDisplayID()) != 0
+    }
+
+    /// True when the screen is locked. Same reasoning: there is no reading of
+    /// a locked screen where the student is still revising.
+    private func screenLocked() -> Bool {
+        guard
+            let session = CGSessionCopyCurrentDictionary() as? [String: Any],
+            let locked = session["CGSSessionScreenIsLocked"] as? Int
+        else { return false }
+        return locked == 1
     }
 
     private func tick() {
@@ -167,8 +231,13 @@ final class Tracker {
             currentApp = nil
         } else {
             let idle = idleSeconds()
-            if idle >= Tracker.idleThreshold {
-                closeSlice(endAt: Date().addingTimeInterval(-idle))
+            let asleep = displayAsleep()
+            let locked = screenLocked()
+
+            if Tracker.isAway(idleSeconds: idle, displayAsleep: asleep, screenLocked: locked) {
+                let since = Tracker.awaySince(
+                    idleSeconds: idle, displayAsleep: asleep, screenLocked: locked)
+                closeSlice(endAt: Date().addingTimeInterval(-since))
             } else {
                 observe()
             }

@@ -126,7 +126,21 @@ async function seedPeriods(schoolId: string, dayType: DayType, slots: Slot[]) {
           sequence: s.sequence,
         },
       },
-      update: {},
+      // Bell times are corrected here rather than only created. `update: {}`
+      // meant a fixed schedule stayed wrong forever in any database that had
+      // already been seeded — which is every deployed one, so the correction
+      // that matters most was the one that could never land.
+      //
+      // Safe to re-run: a period is identified by campus, day type and
+      // sequence, none of which this touches. Nothing else references a
+      // period by its times.
+      update: {
+        number: s.number,
+        label: s.label,
+        startMinutes: s.start,
+        endMinutes: s.end,
+        isInstructional: s.instructional,
+      },
       create: {
         schoolId,
         dayType,

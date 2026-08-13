@@ -515,10 +515,11 @@ password as URL query parameters.
 - **Host the three binaries** and set the three env vars, or `/download` offers
   nothing.
 - **The Chrome Web Store**, $5 and twenty minutes, using `extension/STORE.md`.
-- **Re-seed or hand-edit the bell times.** They were corrected in `prisma/seed.ts`
-  on 2026-08-12 from a real student's schedule, but a seed only writes rows that
-  don't exist — the live database still holds the old, wrong ones. Fix them at
-  `/admin/schedules` or reseed.
+- **Run `npm run seed` against production once.** The bell times were corrected
+  on 2026-08-12 from a real student's schedule, and the seed now *updates*
+  existing periods rather than skipping them — but until it is run, the live
+  database still holds the old, wrong ones and every "you studied during 3rd
+  period" is wrong. Safe to re-run.
 - **Lunch waves.** A, B and C lunch sit inside the 3rd block and differ per
   campus *and* per course — one student's HAC showed A Lunch on one class and C
   Lunch on another. Period lookup treats the whole block as one period, which is

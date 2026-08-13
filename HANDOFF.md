@@ -20,7 +20,7 @@ pilot. Everything runs on free tiers.
 | Email | Resend — only delivers to the developer until a domain exists |
 | LLM | Groq free tier |
 
-`npm test` runs 240 tests. `npm run build` regenerates the Prisma client,
+`npm test` runs 319 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds. Each native app has its own suite:
 53 on Windows, 52 on Mac, 25 on Android, 16 in the extension.
 
@@ -93,6 +93,9 @@ code that isn't like the others", below.
   blocklist editor
 - Baseline at `/baseline` — usual sleep and wake times, usual place and noise
 - Per-session device readout: what your devices saw, app by app
+- **What's due** — the Canvas assignments, grouped by urgency, missing work
+  pinned above every date, graded and handed-in work dropped
+- A fortnight of study time as bars, in the weekly card
 - Admin schedule/calendar editor at `/admin/schedules` (env allowlist)
 - Privacy pages, student and parent
 - **Installable as a PWA** — manifest, icons, Apple meta tags
@@ -131,6 +134,14 @@ it's right.
   and **nothing imports the matcher**. It has been dead code since it was
   written. See the section at the end for the two facts that unblock it.
 - Canvas ↔ manual grade reconciliation (schema supports it, no UI).
+- **HAC is blocked on the school year, not on us.** Checked on 2026-08-12: the
+  Classwork page renders eight courses and not one assignment, because Report
+  Card Run 1 has barely started. Writing a parser against an empty page means
+  guessing column positions, and that guess fails *silently*. Ask again once
+  there are real rows; the two facts needed are at the end of the HAC section.
+  Worth noting from that page: courses read `SST22300A - 1 AP World History S1`,
+  which carries code, period and semester — more than Canvas gives, and enough
+  to make course matching easy rather than the guesswork the matcher needed.
 - **iOS can never track or block apps** without `FamilyControls`, which Apple
   grants rather than sells. $99 buys the *development* capability, so real
   shielding on your own phone is achievable; shipping it to students needs

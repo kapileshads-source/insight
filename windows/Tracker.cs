@@ -411,6 +411,15 @@ internal sealed class Tracker : IDisposable
         }
 
         SessionState? previous = Session;
+        bool changed = previous is not null && previous.Id != result.Session?.Id;
+
+        // Close the open slice *before* Session is reassigned. CloseSlice
+        // returns early when Session is null, so doing this afterwards threw
+        // away everything counted since the last flush every time a session
+        // ended — which is every session. The comment below has always
+        // described the intent; the ordering defeated it.
+        if (changed) CloseSlice();
+
         Session = result.Session;
         Blocklist = result.Blocklist;
         LastError = null;
@@ -418,9 +427,8 @@ internal sealed class Tracker : IDisposable
         // The session ended, or a different one started. Either way the tally
         // belongs to the old id, and posting it after that id stops being
         // current loses the last minute of every session.
-        if (previous is not null && previous.Id != result.Session?.Id)
+        if (previous is not null && changed)
         {
-            CloseSlice();
             await FlushAsync(previous.Id).ConfigureAwait(true);
             _allowed.Clear();
             _lastBlockAt.Clear();

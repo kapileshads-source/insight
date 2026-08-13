@@ -321,6 +321,15 @@ final class Tracker {
         }
 
         let previous = session
+        let changed = previous != nil && previous?.id != result.session?.id
+
+        // Close the open slice *before* `session` is reassigned. `closeSlice`
+        // guards on a session existing, so doing this afterwards threw away
+        // everything since the last flush every time a session ended — which
+        // is every session. The comment below has always described the intent;
+        // the ordering defeated it, on all three trackers, for months.
+        if changed { closeSlice() }
+
         session = result.session
         blocklist = result.blocklist
         lastError = nil
@@ -328,8 +337,7 @@ final class Tracker {
         // The session ended, or a different one started. Either way the tally
         // belongs to the old id, and posting it after that id stops being
         // current loses the last minute of every session.
-        if let previous, previous.id != result.session?.id {
-            closeSlice()
+        if let previous, changed {
             await flush(sessionIdOverride: previous.id)
             allowed = []
             lastBlockAt = [:]

@@ -10,6 +10,7 @@ import { listDevices } from "@/app/actions/devices";
 import { hasProfile } from "@/app/actions/profile";
 import { AssignmentsPanel } from "@/components/assignments-panel";
 import { GapPrompt } from "@/components/gap-prompt";
+import { RoutinePrompt } from "@/components/routine-prompt";
 import { StudyPanel } from "@/components/study-panel";
 
 export const metadata = { title: "Insight" };
@@ -215,6 +216,8 @@ export default async function Dashboard() {
       </header>
 
       {user.schoolId && <RightNow schoolId={user.schoolId} />}
+
+      <RoutinePrompt />
 
       <GapPrompt />
 

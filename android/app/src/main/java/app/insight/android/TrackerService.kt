@@ -306,6 +306,14 @@ class TrackerService : android.app.Service() {
             PollStatus.UNREACHABLE -> Unit
             PollStatus.OK -> {
                 val previous = session
+                val changed = previous != null && previous.id != result.session?.id
+
+                // Close the open slice *before* `session` is reassigned.
+                // closeSlice() returns early when session is null, so doing it
+                // afterwards threw away everything counted since the last
+                // flush every time a session ended — which is every session.
+                if (changed) closeSlice()
+
                 session = result.session
                 blocklist = result.blocklist
 
@@ -316,8 +324,7 @@ class TrackerService : android.app.Service() {
                 // A session ended, or a different one began. Either way the
                 // tally belongs to the old id, and posting it afterwards loses
                 // the last minute of every session.
-                if (previous != null && previous.id != result.session?.id) {
-                    closeSlice()
+                if (previous != null && changed) {
                     flush(previous.id)
                     allowed.clear()
                     lastBlockedAt.clear()

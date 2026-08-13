@@ -202,3 +202,52 @@ export async function fetchEncryptedRecords() {
 
   return { sessions, sleep, screenTime, outcomes, activity };
 }
+
+/**
+ * Which mornings and evenings already have an answer.
+ *
+ * Only the dates come back — the numbers themselves are encrypted and the
+ * server has no business reading them to decide whether to ask a question.
+ * Row existence is plaintext by design, and this is exactly the kind of thing
+ * that rule was written for.
+ */
+export async function routineStatus(): Promise<{
+  timezone: string;
+  sleepLogged: string[];
+  screenTimeLogged: string[];
+} | null> {
+  const user = await getOrCreateUser();
+  if (!user) return null;
+
+  const since = new Date();
+  since.setDate(since.getDate() - 20);
+
+  const [school, sleep, screen] = await Promise.all([
+    user.schoolId
+      ? db.school.findUnique({
+          where: { id: user.schoolId },
+          select: { timezone: true },
+        })
+      : null,
+    db.sleepEntry.findMany({
+      where: { userId: user.id, forDate: { gte: since } },
+      select: { forDate: true },
+    }),
+    db.screenTimeEntry.findMany({
+      where: { userId: user.id, forDate: { gte: since } },
+      select: { forDate: true },
+    }),
+  ]);
+
+  // `@db.Date` values arrive as midnight UTC, so slicing the ISO string gives
+  // the calendar date without a timezone shifting it a day either way.
+  const key = (d: Date) => d.toISOString().slice(0, 10);
+
+  return {
+    // Frisco ISD, when a student hasn't picked a campus yet. Every user is in
+    // one district; this is a default, not an assumption about the world.
+    timezone: school?.timezone ?? "America/Chicago",
+    sleepLogged: sleep.map((s) => key(s.forDate)),
+    screenTimeLogged: screen.map((s) => key(s.forDate)),
+  };
+}

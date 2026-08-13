@@ -1,4 +1,4 @@
-import { computeInsights, basicStats, GATES } from "../insights.ts";
+import { computeInsights, basicStats, dailyStudyMinutes, GATES } from "../insights.ts";
 
 let pass = 0;
 let fail = 0;
@@ -243,6 +243,29 @@ console.log("\na week that mixes late and early sessions");
   ok("the timing factor still has two sides to compare", timing !== undefined);
   ok("it finds the direction", timing !== undefined && timing.magnitude < 0);
   ok("and it is strong enough to surface", timing !== undefined && timing.isSurfaced);
+}
+
+console.log("\ndaily minutes, for the chart");
+{
+  const now = day(20);
+  const sessions = [
+    { id: "d1", startedAt: at(18, 16), durationMinutes: 45, distractedMinutes: 5 },
+    { id: "d2", startedAt: at(18, 20), durationMinutes: 30, distractedMinutes: 0 },
+    { id: "d3", startedAt: at(20, 9), durationMinutes: 60 },
+  ];
+  const bars = dailyStudyMinutes({ sessions, outcomes: [], sleep: [], screenTime: [] }, now);
+
+  ok("returns fourteen days", bars.length === 14);
+  ok("ends today", bars[13].date.getDate() === now.getDate());
+  ok("adds up a day's sessions", bars[11].minutes === 75);
+  ok("counts the sessions too", bars[11].sessions === 2);
+  ok("sums measured distraction", bars[11].distractedMinutes === 5);
+  // A day nothing measured is not a focused day, and must not be drawn as one.
+  ok("leaves unmeasured distraction undefined", bars[13].distractedMinutes === undefined);
+  // A gap would read as a day that doesn't exist. A zero reads as a day you
+  // didn't study, which is both true and more useful.
+  ok("empty days are zeroes, not gaps", bars[0].minutes === 0 && bars[0].sessions === 0);
+  ok("no day is ever negative", bars.every((b) => b.minutes >= 0));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

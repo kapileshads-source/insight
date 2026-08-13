@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useCrypto } from "@/components/crypto-provider";
+import { WeekChart } from "@/components/week-chart";
 import { InsightRow } from "@/components/insight-row";
 import { QuickLog } from "@/components/quick-log";
 import { SessionTimer } from "@/components/session-timer";
@@ -15,6 +16,7 @@ import {
 } from "@/app/actions/devices";
 import {
   basicStats,
+  dailyStudyMinutes,
   computeInsights,
   weeklyRecap,
   wellbeingAlerts,
@@ -65,6 +67,9 @@ export function StudyPanel({
   const { reveal, conceal, status } = useCrypto();
   const [insights, setInsights] = useState<ComputedInsight[] | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [daily, setDaily] = useState<ReturnType<typeof dailyStudyMinutes> | null>(
+    null,
+  );
   const [recap, setRecap] = useState<WeeklyRecap | null>(null);
   const [alerts, setAlerts] = useState<WellbeingAlert[]>([]);
   const [advice, setAdvice] = useState<string | null>(null);
@@ -248,6 +253,7 @@ export function StudyPanel({
       setInsights(computeInsights(inputs));
       setStats(basicStats(inputs));
       setRecap(weeklyRecap(inputs));
+      setDaily(dailyStudyMinutes(inputs));
       setAlerts(wellbeingAlerts(inputs));
 
       // Only ask for phrasing once something real exists to phrase. The plan's
@@ -347,6 +353,7 @@ export function StudyPanel({
             {recap.scores > 0 &&
               ` ${recap.scores} score${recap.scores === 1 ? "" : "s"} logged.`}
           </p>
+          {daily && <WeekChart days={daily} />}
           {recap.distractedMinutes !== null && (
             <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
               {recap.distractedMinutes === 0

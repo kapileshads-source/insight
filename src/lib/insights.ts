@@ -471,6 +471,61 @@ export function basicStats(inputs: InsightInputs, now: Date = new Date()) {
 
 // --- weekly recap -----------------------------------------------------------
 
+export type DayBar = {
+  date: Date;
+  minutes: number;
+  /// Minutes the extension attributed to blocked sites. Undefined when nothing
+  /// measured that day, which is not the same as a focused day and must never
+  /// be drawn as one.
+  distractedMinutes?: number;
+  sessions: number;
+};
+
+/**
+ * Study minutes per day, for the chart.
+ *
+ * Fourteen days rather than seven: one week alone has no shape to it, and the
+ * comparison a student actually makes — "am I doing more than I was?" — needs
+ * the week before to sit next to.
+ *
+ * Days with nothing are returned as zeroes rather than omitted. A gap in a bar
+ * chart reads as a day that doesn't exist; a zero reads as a day you didn't
+ * study, which is the true and more useful statement.
+ */
+export function dailyStudyMinutes(
+  inputs: InsightInputs,
+  now: Date = new Date(),
+  days = 14,
+): DayBar[] {
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - (days - 1));
+
+  const bars: DayBar[] = [];
+  for (let i = 0; i < days; i++) {
+    const date = new Date(start);
+    date.setDate(date.getDate() + i);
+    const next = new Date(date);
+    next.setDate(next.getDate() + 1);
+
+    const onDay = inputs.sessions.filter(
+      (s) => s.startedAt >= date && s.startedAt < next,
+    );
+    const measured = onDay.filter((s) => s.distractedMinutes !== undefined);
+
+    bars.push({
+      date,
+      minutes: onDay.reduce((n, s) => n + s.durationMinutes, 0),
+      distractedMinutes: measured.length
+        ? measured.reduce((n, s) => n + (s.distractedMinutes ?? 0), 0)
+        : undefined,
+      sessions: onDay.length,
+    });
+  }
+
+  return bars;
+}
+
 export type WeeklyRecap = {
   weekStart: Date;
   sessions: number;

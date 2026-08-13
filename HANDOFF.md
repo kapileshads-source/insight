@@ -472,9 +472,14 @@ password as URL query parameters.
 - **Host the three binaries** and set the three env vars, or `/download` offers
   nothing.
 - **The Chrome Web Store**, $5 and twenty minutes, using `extension/STORE.md`.
-- **Real bell times** into `/admin/schedules`. The seeded ones match the district
-  calendar's start and end times but the internal period splits were
-  reconstructed, not published — so "you studied during 3rd period" is a guess.
+- **Re-seed or hand-edit the bell times.** They were corrected in `prisma/seed.ts`
+  on 2026-08-12 from a real student's schedule, but a seed only writes rows that
+  don't exist — the live database still holds the old, wrong ones. Fix them at
+  `/admin/schedules` or reseed.
+- **Lunch waves.** A, B and C lunch sit inside the 3rd block and differ per
+  campus *and* per course — one student's HAC showed A Lunch on one class and C
+  Lunch on another. Period lookup treats the whole block as one period, which is
+  right until someone wants "were you in class or at lunch?".
 - **Five calendar dates** the extractor couldn't resolve, listed on that page.
 - **Legal review.** Turning under-13s away removes COPPA, not every obligation —
   Texas HB 18 covers minors under 18. `DATA.md` is written for exactly this:

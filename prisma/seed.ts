@@ -60,22 +60,37 @@ type Slot = {
   instructional: boolean;
 };
 
-// High school: A/B block. Four 90-minute blocks plus Advisory, which sits
-// between the 2nd and 3rd block. Periods 1-4 meet on A days, 5-8 on B days.
-// The district calendar lists high school hours as 9:00-4:30, which these match.
+// High school: A/B block. Four blocks a day plus Advisory, which sits between
+// the 2nd and 3rd. Confirmed against a real student's bell schedule on
+// 2026-08-12; the earlier times here were reconstructed and four of the five
+// rows were wrong by five to fifteen minutes.
+//
+// **The numbering is interleaved, and this is the part worth reading twice.**
+// The school calls the blocks 1A 2A 3A 4A on an A day and 1B 2B 3B 4B on a B
+// day — but HAC lists them 1A 1B 2A 2B 3A 3B 4A 4B and shows the student a
+// plain number 1-8 in that order. So an odd number is an A day and an even one
+// is a B day, and the block is the number rounded up over two.
+//
+// The first version numbered A days 1-4 and B days 5-8, which looks reasonable
+// and is wrong in the worst way: "5" meant B-day first block at 9:00 here and
+// A-day third block at 12:50 to the student. Nearly every course would have
+// been filed against a time it never met at, and nothing would have looked
+// broken — the periods all exist, they're just the wrong ones.
 const HS_A: Slot[] = [
   { sequence: 1, number: 1, label: null, start: hm(9, 0), end: hm(10, 30), instructional: true },
-  { sequence: 2, number: 2, label: null, start: hm(10, 35), end: hm(12, 5), instructional: true },
-  { sequence: 3, number: null, label: "Advisory", start: hm(12, 10), end: hm(12, 35), instructional: false },
-  // Lunch waves A-D happen inside this block rather than beside it, so the
-  // whole span is one period as far as period lookup is concerned.
-  { sequence: 4, number: 3, label: null, start: hm(12, 40), end: hm(14, 55), instructional: true },
-  { sequence: 5, number: 4, label: null, start: hm(15, 0), end: hm(16, 30), instructional: true },
+  { sequence: 2, number: 3, label: null, start: hm(10, 35), end: hm(12, 10), instructional: true },
+  { sequence: 3, number: null, label: "Advisory", start: hm(12, 15), end: hm(12, 45), instructional: false },
+  // Lunch waves A-C happen inside this block rather than beside it, and which
+  // wave a student gets differs per campus and per course — so the whole span
+  // is one period as far as period lookup is concerned.
+  { sequence: 4, number: 5, label: null, start: hm(12, 50), end: hm(14, 52), instructional: true },
+  { sequence: 5, number: 7, label: null, start: hm(14, 57), end: hm(16, 30), instructional: true },
 ];
 
+/// The same times, one number up: HAC's 2 is the B-day partner of its 1.
 const HS_B: Slot[] = HS_A.map((s) => ({
   ...s,
-  number: s.number === null ? null : s.number + 4,
+  number: s.number === null ? null : s.number + 1,
 }));
 
 // Middle school: every class meets every day. District calendar lists middle

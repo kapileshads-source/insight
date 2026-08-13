@@ -203,5 +203,47 @@ console.log("\nempty input is safe");
   ok("stats still render", stats.sessionsThisWeek === 0 && stats.daysLoggedOfLast7.length === 7);
 }
 
+console.log("\na week that mixes late and early sessions");
+{
+  // The bug this guards: the timing factor used the *latest* session in the
+  // seven-day window, so one 11 PM session marked the whole week late. Every
+  // outcome then landed in the same group, the control group was empty, and
+  // compare() returned null — the factor silently never fired for anybody who
+  // studied late even once. The older test above missed it because its student
+  // is all-or-nothing: every session for a test is late, or none is. Real
+  // weeks mix, and mixing is what emptied the other side.
+  const sessions = [];
+  const outcomes = [];
+  let sid = 0;
+
+  for (let i = 0; i < 10; i++) {
+    const testDay = i * 7 + 6;
+    const mostlyLate = i % 2 === 1;
+    // Three sessions: a mostly-late week is 2 of 3 late, an early week 1 of 3.
+    const hours = mostlyLate ? [23, 23, 17] : [17, 18, 23];
+    for (const hour of hours) {
+      sessions.push({
+        id: `m${sid++}`,
+        startedAt: at(testDay - 2, hour),
+        durationMinutes: 45,
+        subject: "Chemistry",
+      });
+    }
+    outcomes.push({
+      id: `mo${i}`,
+      occurredOn: day(testDay),
+      percentage: mostlyLate ? 68 : 88,
+      subject: "Chemistry",
+    });
+  }
+
+  const insights = computeInsights({ sessions, outcomes, sleep: [], screenTime: [] });
+  const timing = insights.find((i) => i.category === "STUDY_TIMING");
+
+  ok("the timing factor still has two sides to compare", timing !== undefined);
+  ok("it finds the direction", timing !== undefined && timing.magnitude < 0);
+  ok("and it is strong enough to surface", timing !== undefined && timing.isSurfaced);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

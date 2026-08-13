@@ -133,6 +133,8 @@ type Context = {
   outcome: OutcomeRecord;
   sessions: SessionRecord[];
   latestStartHour?: number;
+  /// The share of this outcome's preparation that began after 11 PM.
+  lateShare?: number;
   meanDuration?: number;
   location?: Location;
   noise?: NoiseLevel;
@@ -179,6 +181,14 @@ export function buildContexts(inputs: InsightInputs): Context[] {
       // would make it look like the earliest study of the week.
       latestStartHour: startHours.length
         ? Math.max(...startHours.map((h) => (h < 5 ? h + 24 : h)))
+        : undefined,
+      // How much of the week's preparation was late, not whether any of it
+      // was. The comparison used to run on the latest session in the window,
+      // so one 11 PM session marked the whole week late — and since most
+      // students have one of those, every outcome landed in the same group,
+      // the control group was empty, and the factor silently never fired.
+      lateShare: startHours.length
+        ? startHours.filter((h) => h >= 23 || h < 5).length / startHours.length
         : undefined,
       meanDuration: related.length
         ? mean(related.map((s) => s.durationMinutes))
@@ -304,11 +314,12 @@ function splits(contexts: Context[]): Split[] {
     {
       factor: "study_start_time",
       category: "STUDY_TIMING",
-      classify: (c) =>
-        c.latestStartHour === undefined ? undefined : c.latestStartHour >= 23,
+      // Half, so the group means "this was a late week" rather than "one late
+      // night happened". Both sides stay populated for a real student.
+      classify: (c) => (c.lateShare === undefined ? undefined : c.lateShare >= 0.5),
       phrase: () => ({
         statement:
-          "Sessions you started after 11 PM came before lower scores than your own average.",
+          "Weeks where most of your studying started after 11 PM came before lower scores than your earlier ones.",
         suggestion:
           "Your stronger results followed earlier starts. If a late night is unavoidable, a shorter one the evening before tends to fit your pattern better.",
       }),

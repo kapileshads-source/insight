@@ -85,6 +85,38 @@ const ABBREVIATIONS: Record<string, string> = {
   prac: "practice",
   proble: "problem",
   probs: "problems",
+
+  // Course names, which is where this was failing hardest. A whole semester
+  // of "World History" against "World Hist" scored 0.33 on tokens and fell
+  // under the floor, so four of nine real assignments never matched — while
+  // the traps this file exists to catch were all caught. Precision was fine;
+  // recall was the problem, and it was the course line every time.
+  hist: "history",
+  alg: "algebra",
+  geo: "geometry",
+  trig: "trigonometry",
+  calc: "calculus",
+  precal: "precalculus",
+  precalc: "precalculus",
+  stats: "statistics",
+  stat: "statistics",
+  chem: "chemistry",
+  bio: "biology",
+  phys: "physics",
+  env: "environmental",
+  gov: "government",
+  econ: "economics",
+  psych: "psychology",
+  soc: "sociology",
+  lit: "literature",
+  eng: "english",
+  span: "spanish",
+  comp: "composition",
+  // The level words, which have to reduce to one spelling before the check
+  // below compares them — see coursesMatch.
+  h: "honors",
+  honours: "honors",
+  hon: "honors",
 };
 
 /// Words that carry no signal and would inflate similarity between unrelated
@@ -160,7 +192,12 @@ export function coursesMatch(a: string, b: string): boolean {
   if (left.size === 0 || right.size === 0) return false;
 
   // An honours or AP course is not the on-level one, whatever else agrees.
-  for (const level of ["ap", "honors", "honours", "h", "gt", "ib", "dc"]) {
+  //
+  // These are compared *after* expansion, which is the whole point: "Alg II H"
+  // and "Algebra II Honors" are the same class, and treating "h" and "honors"
+  // as different levels vetoed every pairing between them — the exact case
+  // this function's own comment claims to handle.
+  for (const level of ["ap", "honors", "gt", "ib", "dc"]) {
     if (left.has(level) !== right.has(level)) return false;
   }
 

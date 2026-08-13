@@ -333,5 +333,44 @@ console.log("\ncoincidences do not become insights");
     .every((i) => typeof i.chance === "number"));
 }
 
+console.log("\nthe sentence agrees with its own sign");
+{
+  // A factor that came before *higher* scores was shown as "+8%" beside the
+  // words "came before lower scores", because every phrase() ignored the
+  // magnitude it was handed.
+  const sessions = [];
+  const outcomes = [];
+  for (let i = 0; i < 10; i++) {
+    const testDay = i * 7 + 6;
+    const atHome = i % 2 === 0;
+    for (let s = 0; s < 3; s++) {
+      sessions.push({
+        id: `h${i}_${s}`,
+        startedAt: at(testDay - 2, 17),
+        durationMinutes: 45,
+        subject: "Chemistry",
+        location: atHome ? "HOME" : "LIBRARY",
+      });
+    }
+    // Home is the *better* place for this student — the opposite of the
+    // sentence the code used to produce unconditionally.
+    outcomes.push({
+      id: `ho${i}`,
+      occurredOn: day(testDay),
+      percentage: atHome ? 92 : 70,
+      subject: "Chemistry",
+    });
+  }
+
+  const home = computeInsights({ sessions, outcomes, sleep: [], screenTime: [] })
+    .find((i) => i.category === "LOCATION");
+
+  ok("it found the direction", home !== undefined && home.magnitude > 0);
+  ok("and says higher, not lower", home !== undefined && home.statement.includes("higher scores"));
+  ok("never both", home !== undefined && !home.statement.includes("lower scores"));
+  // A positive finding needs no fixing, so it carries no suggestion.
+  ok("a good habit gets no advice", home !== undefined && home.suggestion === undefined);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -298,6 +298,13 @@ type Split = {
   /// means this outcome can't be classified and sits out of the comparison.
   classify: (c: Context) => boolean | undefined;
   /// How the group is described, e.g. "started after 11 PM".
+  ///
+  /// Takes the magnitude because the sentence has to agree with its own sign.
+  /// Every implementation ignored it and described the negative case
+  /// unconditionally, so a factor that came before *higher* scores was shown
+  /// as "+8%" beside the words "came before lower scores" — visible on the
+  /// dashboard in the "still gathering" list, and it would have stated the
+  /// opposite of the truth the moment one of them surfaced.
   phrase: (magnitude: number) => { statement: string; suggestion?: string };
 };
 
@@ -395,9 +402,11 @@ function splits(contexts: Context[]): Split[] {
       // Half, so the group means "this was a late week" rather than "one late
       // night happened". Both sides stay populated for a real student.
       classify: (c) => (c.lateShare === undefined ? undefined : c.lateShare >= 0.5),
-      phrase: () => ({
+      phrase: (magnitude) => ({
         statement:
-          "Weeks where most of your studying started after 11 PM came before lower scores than your earlier ones.",
+          magnitude < 0
+            ? "Weeks where most of your studying started after 11 PM came before lower scores than your earlier ones."
+            : "Weeks where most of your studying started after 11 PM came before higher scores than your earlier ones.",
         suggestion:
           "Your stronger results followed earlier starts. If a late night is unavoidable, a shorter one the evening before tends to fit your pattern better.",
       }),
@@ -407,9 +416,11 @@ function splits(contexts: Context[]): Split[] {
       category: "SESSION_LENGTH",
       classify: (c) =>
         c.meanDuration === undefined ? undefined : c.meanDuration >= 90,
-      phrase: () => ({
+      phrase: (magnitude) => ({
         statement:
-          "Long sessions, over an hour and a half, came before lower scores than your shorter ones.",
+          magnitude < 0
+            ? "Long sessions, over an hour and a half, came before lower scores than your shorter ones."
+            : "Long sessions, over an hour and a half, came before higher scores than your shorter ones.",
         suggestion:
           "Two shorter sittings have lined up with your better results more often than one long one.",
       }),
@@ -418,9 +429,11 @@ function splits(contexts: Context[]): Split[] {
       factor: "location_home",
       category: "LOCATION",
       classify: (c) => (c.location === undefined ? undefined : c.location === "HOME"),
-      phrase: () => ({
+      phrase: (magnitude) => ({
         statement:
-          "Studying at home came before lower scores than studying somewhere else.",
+          magnitude < 0
+            ? "Studying at home came before lower scores than studying somewhere else."
+            : "Studying at home came before higher scores than studying somewhere else.",
         suggestion:
           "Sessions away from home have lined up with your better results. Worth trying the library for the next one.",
       }),
@@ -430,9 +443,11 @@ function splits(contexts: Context[]): Split[] {
       category: "NOISE",
       classify: (c) =>
         c.noise === undefined ? undefined : c.noise === "SOME" || c.noise === "LOUD",
-      phrase: () => ({
+      phrase: (magnitude) => ({
         statement:
-          "Noisier sessions came before lower scores than quiet ones.",
+          magnitude < 0
+            ? "Noisier sessions came before lower scores than quiet ones."
+            : "Noisier sessions came before higher scores than quiet ones.",
         suggestion:
           "Your quieter sessions have lined up with better results. Somewhere silent, or headphones, may be worth a try.",
       }),
@@ -442,10 +457,12 @@ function splits(contexts: Context[]): Split[] {
       category: "SLEEP",
       classify: (c) =>
         c.meanSleep === undefined ? undefined : c.meanSleep < sleepBaseline,
-      phrase: () => ({
+      phrase: (magnitude) => ({
         // Compared to their own average, never to a general recommendation.
         statement:
-          "Weeks where you slept less than your own average came before lower scores.",
+          magnitude < 0
+            ? "Weeks where you slept less than your own average came before lower scores."
+            : "Weeks where you slept less than your own average came before higher scores.",
         suggestion:
           "Your better results followed weeks nearer your usual amount of sleep. Nothing dramatic — just closer to your own normal.",
       }),
@@ -457,9 +474,11 @@ function splits(contexts: Context[]): Split[] {
       // message, above it is a second activity running alongside the studying.
       classify: (c) =>
         c.distractedShare === undefined ? undefined : c.distractedShare >= 0.2,
-      phrase: () => ({
+      phrase: (magnitude) => ({
         statement:
-          "Sessions where more than a fifth of your time went to blocked sites came before lower scores than your focused ones.",
+          magnitude < 0
+            ? "Sessions where more than a fifth of your time went to blocked sites came before lower scores than your focused ones."
+            : "Sessions where more than a fifth of your time went to blocked sites came before higher scores than your focused ones.",
         suggestion:
           "This one is measured rather than typed in, so it's the most reliable number here. Focus Mode already blocks these — leaving it on is the whole fix.",
       }),
@@ -471,9 +490,11 @@ function splits(contexts: Context[]): Split[] {
         c.meanScreenTime === undefined
           ? undefined
           : c.meanScreenTime > screenBaseline,
-      phrase: () => ({
+      phrase: (magnitude) => ({
         statement:
-          "Weeks with more phone time than your own average came before lower scores.",
+          magnitude < 0
+            ? "Weeks with more phone time than your own average came before lower scores."
+            : "Weeks with more phone time than your own average came before higher scores.",
         suggestion:
           "The difference showed up around your own typical amount rather than any particular number of hours.",
       }),

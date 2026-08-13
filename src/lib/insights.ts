@@ -65,6 +65,14 @@ export const GATES = {
   minMagnitude: 5,
   /// A pattern that only holds half the time is not a pattern.
   minHoldRate: 0.6,
+  /// How often a gap this large may appear by chance before we stop calling
+  /// it a finding. Seven factors tested against twenty-odd scores will throw
+  /// up a big-looking difference regularly; this is what separates the
+  /// pattern from the coincidence.
+  maxChance: 0.05,
+  /// Shuffles behind that number. Enough to resolve 0.05 cleanly, cheap
+  /// enough to run in a browser between renders.
+  shuffles: 1000,
   /// Must survive across more than one subject or more than one week, so a
   /// single bad unit in one class can't become a permanent "insight".
   minSubjectsOrWeeks: 2,
@@ -95,6 +103,9 @@ export type ComputedInsight = {
   heldIn: { held: number; of: number };
   subjectsHeld: number;
   weeksHeld: number;
+  /// How often chance alone produced a gap this big, over 1000 shuffles.
+  /// Nothing surfaces above `GATES.maxChance`.
+  chance: number;
   /// False until every gate passes. Ungated insights are still returned so the
   /// UI can say "log more and this will firm up" rather than showing nothing.
   isSurfaced: boolean;
@@ -219,6 +230,65 @@ export function buildContexts(inputs: InsightInputs): Context[] {
   });
 }
 
+/**
+ * How often chance alone produces a gap this big.
+ *
+ * The gates above control sample size, not luck. Driving the engine with
+ * generated students showed the cost: with seven factors compared against
+ * twenty-odd scores, about half of what surfaced was noise — factors with no
+ * effect built into the data at all, and on one run a finding with the wrong
+ * sign entirely. All of it passed every gate, and all of it would have been
+ * shown to a student in the same confident sentence as a real pattern.
+ *
+ * So: keep the two group sizes, shuffle which scores land in which group, and
+ * count how often the shuffle beats what actually happened. If a third of
+ * random shuffles produce this gap, it is not a finding.
+ *
+ * The shuffle is seeded deliberately. An insight that appears on one page load
+ * and vanishes on the next is worse than one that never appears — a student
+ * has no way to tell that apart from their own data changing.
+ */
+export function chanceOf(
+  values: number[],
+  focusCount: number,
+  observed: number,
+  shuffles: number = GATES.shuffles,
+): number {
+  if (focusCount <= 0 || focusCount >= values.length) return 1;
+
+  const pool = [...values];
+  const target = Math.abs(observed);
+  let seed = 0x5eed;
+  const next = () => {
+    // Mulberry32: small, fast, and stable across engines — which matters more
+    // here than the quality of the randomness.
+    seed = (seed + 0x6d2b79f5) | 0;
+    let x = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+
+  let atLeastAsBig = 0;
+
+  for (let run = 0; run < shuffles; run++) {
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(next() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+
+    let focusSum = 0;
+    for (let i = 0; i < focusCount; i++) focusSum += pool[i];
+    let restSum = 0;
+    for (let i = focusCount; i < pool.length; i++) restSum += pool[i];
+
+    const gap =
+      focusSum / focusCount - restSum / (pool.length - focusCount);
+    if (Math.abs(gap) >= target) atLeastAsBig++;
+  }
+
+  return atLeastAsBig / shuffles;
+}
+
 // --- the comparison ---------------------------------------------------------
 
 type Split = {
@@ -269,7 +339,14 @@ function compare(contexts: Context[], split: Split): ComputedInsight | null {
         ? "NEGATIVE"
         : "POSITIVE";
 
+  const chance = chanceOf(
+    [...focus, ...rest].map((c) => c.outcome.percentage),
+    focus.length,
+    magnitude,
+  );
+
   const isSurfaced =
+    chance <= GATES.maxChance &&
     sampleSize >= GATES.minSessions &&
     focus.length >= GATES.minPerGroup &&
     rest.length >= GATES.minPerGroup &&
@@ -290,6 +367,7 @@ function compare(contexts: Context[], split: Split): ComputedInsight | null {
     // there is not information, it's just discouraging.
     suggestion: direction === "NEGATIVE" ? suggestion : undefined,
     sampleSize,
+    chance,
     heldIn: { held, of: focus.length },
     subjectsHeld: subjects,
     weeksHeld: weeks,

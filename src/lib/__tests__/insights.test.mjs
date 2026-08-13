@@ -1,4 +1,10 @@
-import { computeInsights, basicStats, dailyStudyMinutes, GATES } from "../insights.ts";
+import {
+  computeInsights,
+  basicStats,
+  chanceOf,
+  dailyStudyMinutes,
+  GATES,
+} from "../insights.ts";
 
 let pass = 0;
 let fail = 0;
@@ -266,6 +272,65 @@ console.log("\ndaily minutes, for the chart");
   // didn't study, which is both true and more useful.
   ok("empty days are zeroes, not gaps", bars[0].minutes === 0 && bars[0].sessions === 0);
   ok("no day is ever negative", bars.every((b) => b.minutes >= 0));
+}
+
+console.log("\nhow often chance alone does this");
+{
+  // A gap that is obviously real: one group is entirely above the other.
+  const separated = [40, 42, 44, 46, 90, 92, 94, 96];
+  ok("a clean split is rare by chance", chanceOf(separated, 4, -50) < 0.05);
+
+  // The same numbers, with no real gap between the groups as drawn.
+  ok("no gap is unremarkable", chanceOf(separated, 4, 0) > 0.5);
+
+  // A group of one is one number. Its gap from the rest is whatever that
+  // number happens to be, and a ten-point gap turns up here one time in eight
+  // — which is exactly the kind of thing the old gates called a finding.
+  ok("a group of one proves nothing", chanceOf([70, 72, 74, 76, 78, 80, 82, 95], 1, 10) > 0.05);
+
+  ok("a degenerate split is never a finding", chanceOf([1, 2, 3], 0, 10) === 1);
+  ok("neither is an all-in-one-group split", chanceOf([1, 2, 3], 3, 10) === 1);
+
+  // An insight that appears on one page load and vanishes on the next is
+  // worse than one that never appears, so the shuffle is seeded.
+  const once = chanceOf(separated, 4, -50);
+  ok("the same input gives the same answer", chanceOf(separated, 4, -50) === once);
+}
+
+console.log("\ncoincidences do not become insights");
+{
+  // Ten scores that rise steadily, split by something with nothing to do with
+  // them. The old gates passed differences like this regularly; over generated
+  // students they were about half of everything surfaced, and one arrived with
+  // the wrong sign entirely.
+  const sessions = [];
+  const outcomes = [];
+  for (let i = 0; i < 10; i++) {
+    const testDay = i * 7 + 6;
+    for (let s = 0; s < 3; s++) {
+      sessions.push({
+        id: `c${i}_${s}`,
+        startedAt: at(testDay - 2, 17),
+        durationMinutes: 45,
+        subject: "Chemistry",
+        // Alternating, which is exactly the kind of split that invents a
+        // finding out of an unrelated trend.
+        location: i % 2 === 0 ? "HOME" : "LIBRARY",
+      });
+    }
+    outcomes.push({
+      id: `co${i}`,
+      occurredOn: day(testDay),
+      percentage: 70 + i,
+      subject: "Chemistry",
+    });
+  }
+
+  const surfaced = computeInsights({ sessions, outcomes, sleep: [], screenTime: [] })
+    .filter((i) => i.isSurfaced);
+  ok("a coincidence is not surfaced", surfaced.length === 0);
+  ok("chance is still reported for it", computeInsights({ sessions, outcomes, sleep: [], screenTime: [] })
+    .every((i) => typeof i.chance === "number"));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

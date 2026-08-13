@@ -127,8 +127,9 @@ it's right.
 - **Untested on the desktops:** blocking works and has been used, but nobody has
   watched an override get recorded, the ten-minute idle cutoff fire, or a
   session-end flush land.
-- **HAC** — reconnaissance done, matcher built and tested, parser not written.
-  See the section at the end.
+- **HAC** — reconnaissance done, matcher built and tested, parser not written,
+  and **nothing imports the matcher**. It has been dead code since it was
+  written. See the section at the end for the two facts that unblock it.
 - Canvas ↔ manual grade reconciliation (schema supports it, no UI).
 - **iOS can never track or block apps** without `FamilyControls`, which Apple
   grants rather than sells. $99 buys the *development* capability, so real
@@ -273,6 +274,43 @@ the phone wants USB debugging turned on in Developer options.
   with `JAVA_HOME=/opt/homebrew/opt/openjdk@21`.
 - **XcodeGen** generates `ios/Insight.xcodeproj` from `project.yml`. The project
   file isn't committed; a pbxproj is unreadable in a diff.
+
+---
+
+## Two features that passed their tests and did not work
+
+Found by driving the real functions with a semester of generated data rather
+than by reading them. Both had green tests the whole time.
+
+**The timing factor could never fire.** `latestStartHour` took the *maximum*
+start hour across the seven-day window, so one 11 PM session marked the whole
+week late. Every outcome landed in the same group, the control group was empty,
+`compare()` returned null, and `STUDY_TIMING` vanished from the results — for
+any student who studied late even once. The test missed it because its student
+is all-or-nothing: every session for a test is late, or none is. Real weeks mix.
+
+**The HAC matcher missed four of nine real assignments**, and the course name
+was the cause every time. `Alg II H` was vetoed against `Algebra II Honors`
+because `h` and `honors` read as different course levels — the exact pair the
+function's own comment claims to handle. Precision was never the problem; the
+retake and Unit 3/Unit 4 traps were caught throughout.
+
+**And about half of what surfaced was invented.** Seven factors compared against
+twenty-odd scores throw up big-looking differences constantly, and the gates
+controlled sample size, not luck. Over 25 generated students, 28 of 65 surfaced
+findings had no effect built into the data at all — one with the wrong sign.
+There is now a permutation test: shuffle which scores land in which group a
+thousand times, and keep only gaps that chance rarely produces. Invented
+findings fell to 5. Real ones fell too, 37 to 16, which is the right way round
+for a tool that tells a fifteen-year-old their scores drop.
+
+The shuffle is seeded on purpose. An insight that appears on one page load and
+vanishes on the next is worse than one that never appears.
+
+**The lesson is the method.** Unit tests check the behaviour you thought of.
+Generating a student who really does have the problem, and one who has nothing,
+checks whether the thing works — and it is how all three of these were found in
+an afternoon.
 
 ---
 

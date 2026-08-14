@@ -502,8 +502,66 @@ Still unknown, and answerable in DevTools once the gradebook has anything in it:
 whether the assignments table has a header row to bind to, and whether ungraded
 work appears there at all.
 
-**Don't copy `SumitNalavade/FriscoISDHACAPI`'s auth** — it passes username and
-password as URL query parameters.
+### The login and the selectors, from a working parser
+
+Read out of `SumitNalavade/FriscoISDHACAPI` (public, Python, `api/_lib/` and
+`api/currentclasses.py`) on 2026-08-13. This is reconnaissance, not a
+dependency — see the warning below.
+
+**Logging in** is a two-step form POST, not an API:
+
+1. `GET https://hac.friscoisd.org/HomeAccess/Account/LogOn?ReturnUrl=%2fHomeAccess%2f`
+   and scrape `input[name=__RequestVerificationToken]`.
+2. `POST` the same URL with a cookie session and the token in *both* a header
+   and the body, plus `Database: "10"`, `VerificationOption: "UsernamePassword"`,
+   `LogOnDetails.UserName`, `LogOnDetails.Password`, and two empty decoys
+   (`tempUN`, `tempPW`). A browser User-Agent is set; assume it matters.
+
+**The assignments page** is `/HomeAccess/Content/Student/Assignments.aspx`:
+
+| What | Selector |
+|---|---|
+| One course | `div.AssignmentClass` |
+| Course name | `a.sg-header-heading` |
+| Overall grade | `span.sg-header-heading.sg-right` (strip `Student Grades ` and `%`) |
+| Last updated | `span.sg-header-sub-heading` — sometimes uses `+` for spaces |
+| Assignment rows | `div.sg-content-grid tr.sg-asp-table-data-row` |
+| Assignment name | the row's `<a>`; a row without one is a totals row |
+
+**That parser reads cells by position** — `tds[0]` due, `[1]` assigned, `[3]`
+category, `[4]` score, `[5]` total — which is the exact failure mode called out
+above. Ours must bind to header labels. Note `[2]` is skipped, so the columns
+are already not what a naive reading expects.
+
+Confirms two things we had guessed: assignments carry **no stable id** (nothing
+in the row to key on), and the score cell is free text, so `Z`, `M`, blank and
+`4.5` all have to be handled rather than parsed as a number.
+
+### Don't route credentials through the hosted version
+
+`GET friscoisdhacapi.vercel.app/api/currentclasses?username=…&password=…` puts a
+student's district password in a URL, to a third party. Query strings land in
+access logs, browser history and referrer headers, and that password is usually
+the same one behind their school email and Google account — this is not a
+gradebook secret, it is the whole account.
+
+It also inverts the one promise this project is built on. A student is told the
+server cannot read their data; sending their credentials to someone else's
+deployment is the opposite of that, and no amount of "no data is stored" fixes
+it, because that is a claim they cannot check.
+
+**Where HAC parsing has to live:** on the student's own machine. The extension
+already runs there and can hold host permissions for `hac.friscoisd.org`; a web
+page cannot, because CORS will not let it read the response. The parsed rows
+then reach the browser tab that holds the encryption key, and are encrypted
+before they are stored — the same path everything else takes. The extension must
+not post assignment names and grades to `PendingDeviceData`: that table is
+plaintext for six hours, which is acceptable for "youtube.com" and is not
+acceptable for a grade.
+
+Simplest thing that could work for a pilot, and worth considering first: no
+credentials at all. A student opens their own Assignments page and the parsing
+happens on what is already on screen.
 
 ---
 

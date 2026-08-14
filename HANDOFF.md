@@ -559,9 +559,38 @@ not post assignment names and grades to `PendingDeviceData`: that table is
 plaintext for six hours, which is acceptable for "youtube.com" and is not
 acceptable for a grade.
 
-Simplest thing that could work for a pilot, and worth considering first: no
-credentials at all. A student opens their own Assignments page and the parsing
-happens on what is already on screen.
+### What's built, and what's left
+
+**No credentials, and none are needed.** The student is already logged into HAC
+in their browser, so `extension/hac-bridge.js` asks the background worker to
+fetch `Assignments.aspx` with the session cookie that is already there. A web
+page cannot do this itself — HAC sends no CORS headers, so the browser fetches
+it and then refuses to let the page read it. The host permission is the whole
+reason the extension is involved.
+
+The extension does not parse the HTML, store it, or send it anywhere. It hands
+it back to the tab, which holds the key and encrypts before storing. The bridge
+refuses any URL that isn't HAC: one that fetched whatever it was handed would
+be an open proxy carrying the student's cookies.
+
+Signed-out is detected by *content*, not status — HAC answers an unauthenticated
+request with the login page and a 200.
+
+`src/lib/hac.ts` reads the table and is pure, with 42 tests. It binds to header
+labels, and when there is no header row it falls back to positions **and says
+so** (`usedFallback`), because a silent guess is the failure every other parser
+of this page has. `src/lib/hac-dom.ts` walks the document and is deliberately
+dull. Score cells keep their meaning: `M` is missing, `Z` is excused, blank is
+ungraded, and none of them is a zero — parsing them as one would put failures
+into an average the insight engine reads.
+
+**Still to do:** the permission prompt (`chrome.permissions.request` needs a
+user gesture, so it belongs on the popup or a button on the Canvas page); the UI
+that triggers a pull; and where HAC assignments are stored. That last one is a
+schema decision rather than a small job — `Assignment` is keyed on `canvasId`
+and HAC has no stable id at all, so matching is by `assignment-match.ts` on
+every sync, and the schema needs a way to hold a HAC-only row that has never
+been matched to anything.
 
 ---
 

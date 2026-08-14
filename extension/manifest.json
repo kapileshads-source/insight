@@ -8,9 +8,19 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "permissions": ["storage", "tabs", "alarms"],
-  "host_permissions": ["https://insight-study-sleep.vercel.app/*"],
-  "optional_host_permissions": ["https://*/*", "http://*/*"],
+  "permissions": [
+    "storage",
+    "tabs",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://insight-study-sleep.vercel.app/*"
+  ],
+  "optional_host_permissions": [
+    "https://hac.friscoisd.org/*",
+    "https://*/*",
+    "http://*/*"
+  ],
   "background": {
     "service_worker": "background.js",
     "type": "module"
@@ -26,8 +36,24 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["blocked.html"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "blocked.html"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://insight-study-sleep.vercel.app/*",
+        "http://localhost:3000/*"
+      ],
+      "js": [
+        "hac-bridge.js"
+      ],
+      "run_at": "document_idle"
     }
   ]
 }

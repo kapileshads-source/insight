@@ -70,7 +70,7 @@ model School {
 
   /// How many periods must elapse between gap-filling prompts.
   /// 1 for high schools, 2 for middle schools.
-  promptInterval Int @default(1)
+  promptInterval Int    @default(1)
   timezone       String @default("America/Chicago")
 
   periods   Period[]
@@ -186,7 +186,7 @@ enum PhoneOs {
 }
 
 model User {
-  id String @id @default(cuid())
+  id      String @id @default(cuid())
   /// Clerk user id. Source of truth for identity; we never store credentials.
   clerkId String @unique
   email   String @unique
@@ -227,6 +227,7 @@ model User {
   encryptionKey     EncryptionKey?
   parentConsent     ParentConsent?
   canvasConnection  CanvasConnection?
+  assignmentLinks   AssignmentLink[]
   deviceTokens      DeviceToken[]
   studySessions     StudySession[]
   sleepEntries      SleepEntry[]
@@ -288,7 +289,7 @@ model ParentConsent {
 
   parentEmail String
   /// SHA-256 of the emailed confirmation token.
-  tokenHash   String  @unique
+  tokenHash   String @unique
 
   requestedAt DateTime  @default(now())
   confirmedAt DateTime?
@@ -317,9 +318,9 @@ model CanvasConnection {
   /// FISD forces a 90-day maximum on personal access tokens, so this is a
   /// recurring event rather than an edge case. A token issued on the first day
   /// of school expires around five weeks before December finals.
-  expiresAt     DateTime?
-  lastSyncedAt  DateTime?
-  lastSyncError String?
+  expiresAt      DateTime?
+  lastSyncedAt   DateTime?
+  lastSyncError  String?
   /// Set when Canvas returns 401. Distinguishes "connection dead" from
   /// "no assignments", which must never be conflated.
   disconnectedAt DateTime?
@@ -350,6 +351,11 @@ model Course {
   @@index([userId])
 }
 
+enum AssignmentSource {
+  CANVAS
+  HAC
+}
+
 model Assignment {
   id       String @id @default(cuid())
   userId   String
@@ -357,6 +363,20 @@ model Assignment {
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
+  /// Which gradebook this row came from. The two stay separate rows even when
+  /// they describe the same assignment — see `AssignmentLink`.
+  source AssignmentSource @default(CANVAS)
+
+  /// Canvas's id, and null for a HAC row. HAC has no stable assignment id at
+  /// all: two independent parsers of the page capture none, because there is
+  /// nothing in the markup to key on.
+  ///
+  /// Deliberately *no* server-side fingerprint of a HAC row's contents. A hash
+  /// of "Ch 5 Quiz" is guessable by anyone holding the database — the space of
+  /// real assignment names is small enough to enumerate — so storing one would
+  /// quietly undo the encryption for the very field it protects.
+  /// De-duplication happens in the browser instead, where the plaintext
+  /// already is, on the way in.
   canvasId String?
   /// Plaintext so the dashboard can order by what's next without decrypting
   /// every row first.
@@ -368,11 +388,66 @@ model Assignment {
 
   outcome Outcome?
 
+  /// One row can be either side of a pairing, never both.
+  linkAsCanvas AssignmentLink? @relation("CanvasSide")
+  linkAsHac    AssignmentLink? @relation("HacSide")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  /// Postgres treats nulls as distinct, so every HAC row passes this freely
+  /// while Canvas ids stay unique.
   @@unique([userId, canvasId])
   @@index([userId, dueAt])
+  @@index([userId, source])
+}
+
+/// A Canvas assignment and a HAC assignment believed to be the same thing.
+///
+/// A link rather than a merge, and that is the whole design. `assignment-match`
+/// exists because a wrong merge is far worse than a missed one: it silently
+/// averages two different tests into one grade and nobody ever notices.
+/// Merging rows would make that mistake unrecoverable — the other row would be
+/// gone. A link is reversible, so a bad guess costs one click.
+///
+/// It is also what lets the middle confidence band exist. Above the threshold
+/// the pairing is made automatically; in the band below, the student is shown
+/// both and asked, and `confirmedAt` / `rejectedAt` record the answer so they
+/// are never asked twice.
+///
+/// Nothing here is encrypted because nothing here is content: two row ids, a
+/// number and some timestamps. The matcher's reasons quote assignment names,
+/// so they are recomputed for display rather than stored.
+model AssignmentLink {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  canvasAssignmentId String     @unique
+  canvasAssignment   Assignment @relation("CanvasSide", fields: [canvasAssignmentId], references: [id], onDelete: Cascade)
+
+  hacAssignmentId String     @unique
+  hacAssignment   Assignment @relation("HacSide", fields: [hacAssignmentId], references: [id], onDelete: Cascade)
+
+  /// What the matcher scored it, 0-1. Kept so a later change to the thresholds
+  /// can be applied to old pairings without re-deriving them from content the
+  /// server cannot read.
+  confidence Float
+
+  /// True when it was linked without asking. False means the student was shown
+  /// it and agreed.
+  autoLinked Boolean @default(true)
+
+  /// Set when the student confirms a suggestion, or rejects it. A rejected
+  /// link is kept rather than deleted, so the same pairing isn't offered again
+  /// on every sync.
+  confirmedAt DateTime?
+  rejectedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 enum OutcomeSource {
@@ -383,9 +458,9 @@ enum OutcomeSource {
 /// A graded result. Canvas-sourced and hand-entered outcomes share this table
 /// so reconciliation is a single-table concern.
 model Outcome {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   userId   String
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   /// Optional, because a score can be entered by hand long before Canvas is
   /// connected — and for a student who never connects it, there is no Course
   /// row to point at. The subject then lives in the encrypted payload
@@ -552,10 +627,10 @@ model DeviceToken {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  kind DeviceKind
+  kind      DeviceKind
   /// SHA-256 of the token. The plaintext is shown once at pairing and never
   /// stored.
-  tokenHash String  @unique
+  tokenHash String     @unique
   label     String?
 
   lastSeenAt DateTime?

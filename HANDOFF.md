@@ -584,13 +584,36 @@ dull. Score cells keep their meaning: `M` is missing, `Z` is excused, blank is
 ungraded, and none of them is a zero — parsing them as one would put failures
 into an average the insight engine reads.
 
+### The schema, and the two decisions in it
+
+`Assignment.source` is `CANVAS` or `HAC`, and a HAC row leaves `canvasId` null —
+Postgres treats nulls as distinct, so the existing unique index tolerates any
+number of them. `AssignmentLink` pairs one row from each side.
+
+**A link, not a merge.** `assignment-match.ts` exists because a wrong merge is
+far worse than a missed one: it averages two different tests into one grade and
+nobody ever notices. Merging rows would make that mistake unrecoverable — the
+other row would be gone. A link is reversible, so a bad guess costs one click,
+and it is what lets the middle confidence band exist at all: above the threshold
+it pairs silently, below it the student is asked, and `confirmedAt` /
+`rejectedAt` mean they are never asked twice. A rejected link is kept rather
+than deleted, or every sync would offer it again.
+
+**No server-side fingerprint of a HAC row**, and this one is worth defending.
+The obvious way to de-duplicate re-synced HAC rows is a hash of course + name +
+due date. Don't: the space of real assignment names is small enough to
+enumerate, so anyone holding the database could recover "Ch 5 Quiz" from its
+hash and the encryption on that field would be decorative. De-duplication
+happens in the browser instead, where the plaintext already is on its way in.
+It costs one decrypt pass over a few hundred rows per sync, which is nothing.
+
+The migration is additive — a new enum, one defaulted column, one table — so
+existing rows are untouched and it needs no backfill.
+
 **Still to do:** the permission prompt (`chrome.permissions.request` needs a
-user gesture, so it belongs on the popup or a button on the Canvas page); the UI
-that triggers a pull; and where HAC assignments are stored. That last one is a
-schema decision rather than a small job — `Assignment` is keyed on `canvasId`
-and HAC has no stable id at all, so matching is by `assignment-match.ts` on
-every sync, and the schema needs a way to hold a HAC-only row that has never
-been matched to anything.
+user gesture, so it belongs on a button); the browser-side de-duplication and
+storage path; the UI that offers a suggested pairing; and a real gradebook to
+check the parser against.
 
 ---
 

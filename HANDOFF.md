@@ -610,10 +610,39 @@ It costs one decrypt pass over a few hundred rows per sync, which is nothing.
 The migration is additive — a new enum, one defaulted column, one table — so
 existing rows are untouched and it needs no backfill.
 
-**Still to do:** the permission prompt (`chrome.permissions.request` needs a
-user gesture, so it belongs on a button); the browser-side de-duplication and
-storage path; the UI that offers a suggested pairing; and a real gradebook to
-check the parser against.
+### How a HAC sync runs
+
+A button on `/canvas`, not a timer. This reads a gradebook — the most sensitive
+thing the app touches — and "a student presses a button" is a far easier promise
+to keep than a background job they have to take on trust.
+
+1. `requestHacPage()` posts to the content script, which asks the background
+   worker to fetch `Assignments.aspx` with the session already in the browser.
+2. The page parses it (`hac-dom.ts` → `hac.ts`).
+3. `fetchHacState()` returns the HAC rows already stored, still encrypted.
+4. The browser decrypts them and diffs on plaintext (`planHacSync`) — the only
+   place that comparison can happen, since neither side is readable server-side.
+5. Only the difference is encrypted and sent to `storeHacData`.
+
+**What identifies a row**, since HAC gives no id: course, name, and the date it
+was *assigned*. Not the due date — teachers move those, and keying on one turns
+a postponed quiz into a second quiz. Not the name alone either: "Warm Up"
+appears weekly in some courses, and collapsing a term of them into one row would
+erase the set.
+
+**Nothing is ever deleted.** Work that vanishes from the page — a hidden
+category, a grading period rolling over — is reported and left alone, because
+the grade it carried still counts.
+
+The permission lives on the extension popup, because `chrome.permissions.request`
+only works from a click inside the extension; a page can't ask, and neither can
+a content script.
+
+**Still to do:** the UI that offers a suggested Canvas↔HAC pairing (the schema
+holds it, nothing writes it yet), and a real gradebook to check any of this
+against. Every selector is confirmed from a working parser, but confirmed
+selectors are not the same as having seen it work — and this session has been a
+run of things that passed their tests and didn't.
 
 ---
 

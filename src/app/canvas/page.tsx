@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getOrCreateUser } from "@/lib/user";
 import { getCanvasStatus } from "@/app/actions/canvas";
 import { CanvasConnect } from "@/components/canvas-connect";
+import { HacSync } from "@/components/hac-sync";
 
 export const metadata = { title: "Canvas — Insight" };
 
@@ -32,6 +33,8 @@ export default async function CanvasPage() {
 
       <div className="mt-10">
         <CanvasConnect status={status} />
+
+        <HacSync />
       </div>
     </div>
   );

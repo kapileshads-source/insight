@@ -20,7 +20,7 @@ pilot. Everything runs on free tiers.
 | Email | Resend — only delivers to the developer until a domain exists |
 | LLM | Groq free tier |
 
-`npm test` runs 524 tests. `npm run build` regenerates the Prisma client,
+`npm test` runs 545 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds. Each native app has its own suite:
 53 on Windows, 61 on Mac, 25 on Android, 16 in the extension.
 
@@ -368,6 +368,41 @@ found: the final post now carries 44 seconds under the old session id.
 Worth noting what this cost invisibly. It only bites when a session *ends*,
 which is every session — and the missing time is always the tail, which is
 disproportionately the part where a student was flagging.
+
+---
+
+## The nudge that reaches a phone nobody is looking at
+
+Sleep and phone time are the only two numbers nothing measures for us, and the
+dashboard can only ask a student who opens it. Someone who forgets for a week
+doesn't leave a smaller dataset — they leave a biased one, because the nights
+that go unlogged are not a random sample of nights.
+
+So: a web push in the morning for last night's sleep, and one in the evening
+for phone time. **Only on days something is actually missing.**
+
+**The server picks who to ask without reading anything.** A sleep entry for a
+date either exists or it doesn't, and row existence is plaintext by design. It
+never learns how long anyone slept.
+
+**The message carries no data**, because the server has none to put in it. "How
+did you sleep?" is the whole payload — which also means a lock-screen
+notification can't show a number to whoever picks the phone up. There's a test
+that the copy never contains one.
+
+**No new cron slots**, which was luck. Vercel Hobby allows two and both were
+spoken for, but they run at 13:00 and 23:00 UTC — 8am and 6pm in Frisco, which
+are exactly the two moments a student can answer. The nudges ride those.
+
+**Set three environment variables in Vercel** or nothing sends:
+`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
+(the same value as the public one). Generate a pair with
+`node -e "console.log(require('web-push').generateVAPIDKeys())"`. A local pair
+is already in `.env`; **the deployed keys must be the ones in Vercel**, and
+changing them later silently invalidates every existing subscription.
+
+On iOS this only works for a Home Screen install, not a Safari tab — one more
+reason `/iphone` leads with "add it to your Home Screen".
 
 ---
 

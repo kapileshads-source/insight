@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendCanvasExpiryWarning, sendWeeklyRecap } from "@/lib/email";
+import { sendNudges } from "@/lib/push";
 
 /**
  * Scheduled jobs, driven by an external cron hitting this endpoint.
@@ -14,6 +15,12 @@ import { sendCanvasExpiryWarning, sendWeeklyRecap } from "@/lib/email";
  *
  * The weekly recap, which is only a nudge. The numbers can't be in it because
  * we can't read them.
+ *
+ * Both schedules also carry a push notification, because Vercel's Hobby plan
+ * allows two cron entries and both were already spoken for — and because the
+ * two times happen to be exactly right. 13:00 UTC is 8am in Frisco, when a
+ * student can answer "how did you sleep?"; 23:00 UTC is 6pm, when the day is
+ * over enough to answer "how much phone time?" without guessing.
  */
 
 export const dynamic = "force-dynamic";
@@ -124,9 +131,14 @@ async function handle(request: Request) {
       // It is unrelated work sharing a schedule, which is worth knowing when
       // one of them fails.
       const purged = await runStagingCleanup();
+      // 13:00 UTC is 8am in Frisco, which is when a student can actually
+      // answer "how did you sleep?" — so the morning nudge rides this
+      // schedule rather than needing a cron slot there isn't one of.
+      const nudged = await sendNudges("SLEEP");
       return NextResponse.json({
         sent: await runCanvasExpiryWarnings(),
         purged,
+        nudged,
       });
     }
     if (job === "staging-cleanup") {
@@ -136,7 +148,10 @@ async function handle(request: Request) {
       // `?force=1` lets you trigger it by hand on a Tuesday to check it works,
       // without waiting until Sunday to find out it doesn't.
       const force = searchParams.get("force") === "1";
-      return NextResponse.json({ sent: await runWeeklyRecaps(force) });
+      // 23:00 UTC is 6pm in Frisco. The day is over enough to answer "how much
+      // phone time?" and early enough that the answer isn't a guess.
+      const nudged = await sendNudges("SCREEN_TIME");
+      return NextResponse.json({ sent: await runWeeklyRecaps(force), nudged });
     }
     return NextResponse.json(
       {

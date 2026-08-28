@@ -229,6 +229,7 @@ model User {
   canvasConnection  CanvasConnection?
   assignmentLinks   AssignmentLink[]
   rejectedPairings  RejectedPairing[]
+  pushSubscriptions PushSubscription[]
   deviceTokens      DeviceToken[]
   studySessions     StudySession[]
   sleepEntries      SleepEntry[]
@@ -401,6 +402,45 @@ model Assignment {
   @@unique([userId, canvasId])
   @@index([userId, dueAt])
   @@index([userId, source])
+}
+
+/// Where to send a nudge, for a browser that agreed to receive one.
+///
+/// None of this is student content: an endpoint is a URL at Apple's or
+/// Google's push service, and the keys encrypt the message on its way there.
+/// Storing it in the clear is consistent with the rule — structure is
+/// plaintext, content is not — and the messages themselves carry no data
+/// either, because the server has none to put in them. "Log last night's
+/// sleep" is the whole payload.
+///
+/// The server *can* tell who needs asking without decrypting anything, because
+/// row existence is plaintext by design: a sleep entry for today either exists
+/// or it doesn't.
+model PushSubscription {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Unique because a browser re-subscribing hands back the same endpoint, and
+  /// two rows would mean two notifications for one phone.
+  endpoint String @unique
+  p256dh   String
+  auth     String
+
+  /// What the student agreed to be asked about. Either can be switched off
+  /// without unsubscribing the device.
+  sleepNudge      Boolean @default(true)
+  screenTimeNudge Boolean @default(true)
+
+  /// Cleared when a push is rejected as gone — a browser that has been
+  /// uninstalled or had permission revoked returns 404 or 410, and retrying
+  /// forever would be both useless and rude.
+  failedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 /// A pairing the student has said is wrong.

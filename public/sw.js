@@ -52,3 +52,53 @@ self.addEventListener("fetch", (event) => {
     }),
   );
 });
+
+// --- nudges ----------------------------------------------------------------
+//
+// The two numbers Insight can't measure — last night's sleep, today's phone
+// time — have to be typed in, and a student who forgets for a week leaves a
+// biased dataset rather than a smaller one. This is the only thing that
+// reaches a phone nobody is looking at.
+//
+// The payload is a fixed question with no numbers in it, because the server
+// has none: it can see that a row is missing, never what would have been in
+// it. So a lock screen never shows anyone's data to whoever picks the phone up.
+
+self.addEventListener("push", (event) => {
+  let message = { title: "Insight", body: "", url: "/dashboard" };
+
+  try {
+    if (event.data) message = { ...message, ...event.data.json() };
+  } catch {
+    // A malformed payload still deserves to open the app rather than nothing.
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(message.title, {
+      body: message.body,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      // One per kind, so a week away doesn't produce seven identical rows.
+      tag: message.kind || "insight-nudge",
+      renotify: false,
+      data: { url: message.url },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/dashboard";
+
+  // Focus a tab that's already open rather than piling up new ones.
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clients) => {
+        for (const client of clients) {
+          if (client.url.includes(url) && "focus" in client) return client.focus();
+        }
+        return self.clients.openWindow(url);
+      }),
+  );
+});

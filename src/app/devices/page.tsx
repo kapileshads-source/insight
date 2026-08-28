@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getOrCreateUser } from "@/lib/user";
 import { listDevices } from "@/app/actions/devices";
 import { DevicesPanel } from "@/components/devices-panel";
+import { NudgeOptIn } from "@/components/nudge-optin";
 
 export const metadata = { title: "Devices — Insight" };
 
@@ -33,6 +34,8 @@ export default async function DevicesPage() {
 
       <div className="mt-10">
         <DevicesPanel devices={devices} appUrl={appUrl} />
+
+        <NudgeOptIn />
       </div>
     </div>
   );

@@ -8,7 +8,7 @@
     "deploy:migrate": "prisma migrate deploy",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx src/lib/__tests__/crypto.test.mjs && tsx src/lib/__tests__/insights.test.mjs && tsx src/lib/__tests__/ocr.test.mjs && tsx src/lib/__tests__/blocklist.test.mjs && tsx src/lib/__tests__/distraction.test.mjs && tsx src/lib/__tests__/assignment-match.test.mjs && tsx src/lib/__tests__/records.test.mjs && tsx src/lib/__tests__/user-agent.test.mjs && tsx src/lib/__tests__/pairing.test.mjs && tsx src/lib/__tests__/bounce.test.mjs && tsx src/lib/__tests__/focus.test.mjs && tsx src/lib/__tests__/ios-apps.test.mjs && tsx src/lib/__tests__/assignments.test.mjs && tsx src/lib/__tests__/routine.test.mjs && tsx src/lib/__tests__/canvas-sync.test.mjs && tsx src/lib/__tests__/hac.test.mjs && tsx src/lib/__tests__/hac-store.test.mjs && tsx src/lib/__tests__/outcomes.test.mjs && tsx src/lib/__tests__/pairing-plan.test.mjs && node extension/logic.test.mjs",
+    "test": "tsx src/lib/__tests__/crypto.test.mjs && tsx src/lib/__tests__/insights.test.mjs && tsx src/lib/__tests__/ocr.test.mjs && tsx src/lib/__tests__/blocklist.test.mjs && tsx src/lib/__tests__/distraction.test.mjs && tsx src/lib/__tests__/assignment-match.test.mjs && tsx src/lib/__tests__/records.test.mjs && tsx src/lib/__tests__/user-agent.test.mjs && tsx src/lib/__tests__/pairing.test.mjs && tsx src/lib/__tests__/bounce.test.mjs && tsx src/lib/__tests__/focus.test.mjs && tsx src/lib/__tests__/ios-apps.test.mjs && tsx src/lib/__tests__/assignments.test.mjs && tsx src/lib/__tests__/routine.test.mjs && tsx src/lib/__tests__/canvas-sync.test.mjs && tsx src/lib/__tests__/hac.test.mjs && tsx src/lib/__tests__/hac-store.test.mjs && tsx src/lib/__tests__/outcomes.test.mjs && tsx src/lib/__tests__/pairing-plan.test.mjs && tsx src/lib/__tests__/nudge.test.mjs && node extension/logic.test.mjs",
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
@@ -21,6 +21,7 @@
     "react-dom": "19.2.4",
     "resend": "^6.18.1",
     "tesseract.js": "^7.0.0",
+    "web-push": "^3.6.7",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -28,6 +29,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",

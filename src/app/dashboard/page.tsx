@@ -10,6 +10,7 @@ import { listDevices } from "@/app/actions/devices";
 import { hasProfile } from "@/app/actions/profile";
 import { AssignmentsPanel } from "@/components/assignments-panel";
 import { CanvasAutoSync } from "@/components/canvas-auto-sync";
+import { AssignmentPairing } from "@/components/assignment-pairing";
 import { GradeOutcomes } from "@/components/grade-outcomes";
 import { GapPrompt } from "@/components/gap-prompt";
 import { RoutinePrompt } from "@/components/routine-prompt";
@@ -249,6 +250,8 @@ export default async function Dashboard() {
       <AssignmentsPanel />
 
       <GradeOutcomes />
+
+      <AssignmentPairing />
 
       <p className="mt-12 text-[13px] text-text-faint">
         {formatToday(today, user.school?.timezone ?? "America/Chicago")}

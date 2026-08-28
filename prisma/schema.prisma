@@ -228,6 +228,7 @@ model User {
   parentConsent     ParentConsent?
   canvasConnection  CanvasConnection?
   assignmentLinks   AssignmentLink[]
+  rejectedPairings  RejectedPairing[]
   deviceTokens      DeviceToken[]
   studySessions     StudySession[]
   sleepEntries      SleepEntry[]
@@ -402,6 +403,29 @@ model Assignment {
   @@index([userId, source])
 }
 
+/// A pairing the student has said is wrong.
+///
+/// Separate from `AssignmentLink` on purpose. A link is one-to-one and both
+/// sides are unique; a refusal is about one *combination*, and each row must
+/// stay free to pair with something else. "Unit 2 Test is not Unit 2 Test
+/// Retake" should not stop Unit 2 Test finding the row it really matches.
+///
+/// Kept rather than forgotten, or the matcher offers the same wrong pairing
+/// after every sync.
+model RejectedPairing {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  canvasAssignmentId String
+  hacAssignmentId    String
+
+  createdAt DateTime @default(now())
+
+  @@unique([canvasAssignmentId, hacAssignmentId])
+  @@index([userId])
+}
+
 /// A Canvas assignment and a HAC assignment believed to be the same thing.
 ///
 /// A link rather than a merge, and that is the whole design. `assignment-match`
@@ -438,11 +462,13 @@ model AssignmentLink {
   /// it and agreed.
   autoLinked Boolean @default(true)
 
-  /// Set when the student confirms a suggestion, or rejects it. A rejected
-  /// link is kept rather than deleted, so the same pairing isn't offered again
-  /// on every sync.
+  /// Set when the student confirms a suggestion. Null on an automatic link.
+  ///
+  /// Rejections deliberately live elsewhere — see `RejectedPairing`. Storing a
+  /// refusal here would occupy both unique slots, so saying "these two are not
+  /// the same" would permanently stop *either* row pairing with anything else,
+  /// including the row it really belongs to.
   confirmedAt DateTime?
-  rejectedAt  DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

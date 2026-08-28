@@ -40,6 +40,31 @@ export type AssignmentRow = {
   state: SubmissionState;
 };
 
+/**
+ * A HAC score cell's meaning, as a submission state.
+ *
+ * The two gradebooks describe the same facts with different words, and the
+ * card reads only one vocabulary. Without this, HAC rows arrived with no
+ * `state` at all, defaulted to unsubmitted, and a test a student sat weeks ago
+ * sat in "Past due" telling them to go and do it.
+ *
+ * `EXCUSED` maps to graded because the question this answers is "is there
+ * anything left to do?", and for excused work there isn't. It is not a score
+ * either — `outcomes.ts` never sees it, because HAC gives no number.
+ */
+export function submissionStateFromHac(status: string): SubmissionState {
+  switch (status) {
+    case "GRADED":
+      return "GRADED";
+    case "MISSING":
+      return "MISSING";
+    case "EXCUSED":
+      return "GRADED";
+    default:
+      return "UNSUBMITTED";
+  }
+}
+
 export type Bucket =
   | "MISSING"
   | "OVERDUE"

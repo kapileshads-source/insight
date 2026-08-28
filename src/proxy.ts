@@ -24,7 +24,6 @@ const isPublic = createRouteMatcher([
   // Setup instructions, which are most useful to someone deciding whether
   // Insight is worth signing up for on the phone they actually own.
   "/iphone",
-  "/chart-preview",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/consent(.*)",

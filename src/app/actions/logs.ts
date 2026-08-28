@@ -251,3 +251,177 @@ export async function routineStatus(): Promise<{
     screenTimeLogged: screen.map((s) => key(s.forDate)),
   };
 }
+
+/**
+ * Record scores worked out from graded assignments.
+ *
+ * The percentages arrive already encrypted: the browser read the gradebook
+ * rows, decrypted them, worked out what was new, and sealed the result. The
+ * server's job is only to file them against the right assignment, which is the
+ * one thing it can check — `assignmentId` is unique on `Outcome`, so the
+ * database itself refuses to record the same test twice even if a second tab
+ * tries at the same moment.
+ */
+const gradeOutcomeSchema = z.object({
+  source: z.enum(["CANVAS", "HAC"]),
+  outcomes: z
+    .array(
+      z.object({
+        assignmentId: z.string().min(1).max(60),
+        courseId: z.string().min(1).max(60).nullable(),
+        occurredOn: z.iso.date(),
+        payload: z.object({
+          cipher: z.string().min(1).max(20_000),
+          iv: z.string().min(1).max(200),
+        }),
+      }),
+    )
+    .max(500),
+});
+
+export async function saveGradeOutcomes(
+  input: unknown,
+): Promise<LogResult & { created?: number }> {
+  const user = await requireUser();
+
+  const parsed = gradeOutcomeSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Those scores didn't look right." };
+  }
+
+  let created = 0;
+
+  for (const o of parsed.data.outcomes) {
+    // Scoped to this user's own assignments: an id from elsewhere must not be
+    // able to attach a score to somebody else's work.
+    const assignment = await db.assignment.findFirst({
+      where: { id: o.assignmentId, userId: user.id },
+      select: { id: true, courseId: true },
+    });
+    if (!assignment) continue;
+
+    // `assignmentId` is unique, so a race between two tabs loses cleanly here
+    // rather than double-counting a test in the insight engine.
+    const existing = await db.outcome.findUnique({
+      where: { assignmentId: assignment.id },
+      select: { id: true },
+    });
+    if (existing) continue;
+
+    await db.outcome.create({
+      data: {
+        userId: user.id,
+        courseId: o.courseId ?? assignment.courseId,
+        assignmentId: assignment.id,
+        source: parsed.data.source,
+        occurredOn: day(o.occurredOn),
+        payloadCipher: o.payload.cipher,
+        payloadIv: o.payload.iv,
+      },
+    });
+    created++;
+  }
+
+  revalidatePath("/dashboard");
+  return { ok: true, created };
+}
+
+/**
+ * Everything needed to work out which grades are already recorded.
+ *
+ * Encrypted, because the comparison is between assignment names and scores and
+ * the server can read neither. The browser decrypts both sides.
+ */
+export async function fetchGradeState() {
+  const user = await getOrCreateUser();
+  if (!user) return null;
+
+  const [assignments, outcomes] = await Promise.all([
+    db.assignment.findMany({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        courseId: true,
+        source: true,
+        dueAt: true,
+        payloadCipher: true,
+        payloadIv: true,
+      },
+      take: 1000,
+    }),
+    db.outcome.findMany({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        assignmentId: true,
+        source: true,
+        occurredOn: true,
+        payloadCipher: true,
+        payloadIv: true,
+      },
+      take: 1000,
+    }),
+  ]);
+
+  return { assignments, outcomes };
+}
+
+/**
+ * Settle a disagreement between a hand-entered score and a gradebook one.
+ *
+ * Either answer attaches the student's own row to the assignment, which is
+ * what stops the question coming back on every sync: once an outcome carries
+ * an `assignmentId`, the planner treats that test as already recorded.
+ *
+ * Choosing the gradebook's number rewrites the payload; keeping their own
+ * leaves it alone. The row stays `MANUAL` either way, because it is still the
+ * score they decided on.
+ */
+export async function resolveGradeConflict(input: unknown): Promise<LogResult> {
+  const user = await requireUser();
+
+  const schema = z.object({
+    outcomeId: z.string().min(1).max(60),
+    assignmentId: z.string().min(1).max(60),
+    payload: z
+      .object({
+        cipher: z.string().min(1).max(20_000),
+        iv: z.string().min(1).max(200),
+      })
+      .nullable(),
+  });
+
+  const parsed = schema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "That didn't look right." };
+
+  const assignment = await db.assignment.findFirst({
+    where: { id: parsed.data.assignmentId, userId: user.id },
+    select: { id: true },
+  });
+  if (!assignment) return { ok: false, error: "That assignment isn't yours." };
+
+  // Another outcome already claims this assignment — the question has been
+  // answered elsewhere, and `assignmentId` is unique.
+  const taken = await db.outcome.findUnique({
+    where: { assignmentId: assignment.id },
+    select: { id: true },
+  });
+  if (taken && taken.id !== parsed.data.outcomeId) return { ok: true };
+
+  await db.outcome.updateMany({
+    where: { id: parsed.data.outcomeId, userId: user.id },
+    data: {
+      assignmentId: assignment.id,
+      conflictsWithSource: null,
+      ...(parsed.data.payload
+        ? {
+            payloadCipher: parsed.data.payload.cipher,
+            payloadIv: parsed.data.payload.iv,
+          }
+        : {}),
+    },
+  });
+
+  revalidatePath("/dashboard");
+  return { ok: true };
+}

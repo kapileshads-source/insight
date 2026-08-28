@@ -8,6 +8,7 @@ import { useCrypto } from "@/components/crypto-provider";
 import {
   assignmentSummary,
   groupAssignments,
+  submissionStateFromHac,
   type AssignmentGroup,
   type AssignmentRow,
   type SubmissionState,
@@ -25,10 +26,15 @@ import {
  * everything Canvas holds is a filing cabinet, and nobody reads those twice.
  */
 
+/// Canvas and HAC store different shapes. Canvas has `state`; HAC has `status`
+/// and carries its own course name. Reading only Canvas's vocabulary is what
+/// put graded HAC rows into "Past due".
 type Payload = {
   name?: string;
+  course?: string;
   pointsPossible?: number | null;
   state?: SubmissionState;
+  status?: string;
   score?: number | null;
 };
 
@@ -128,11 +134,13 @@ export function AssignmentsPanel() {
           return {
             id: a.id,
             name: p.name || "Untitled assignment",
-            course: courseNames.get(a.courseId) ?? "Course",
+            course: courseNames.get(a.courseId) || p.course || "Course",
             dueAt: a.dueAt ? new Date(a.dueAt) : null,
             pointsPossible: p.pointsPossible ?? null,
             score: p.score ?? null,
-            state: p.state ?? "UNSUBMITTED",
+            state:
+              p.state ??
+              (p.status ? submissionStateFromHac(p.status) : "UNSUBMITTED"),
           };
         }),
       );

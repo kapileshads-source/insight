@@ -20,7 +20,7 @@ pilot. Everything runs on free tiers.
 | Email | Resend — only delivers to the developer until a domain exists |
 | LLM | Groq free tier |
 
-`npm test` runs 383 tests. `npm run build` regenerates the Prisma client,
+`npm test` runs 503 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds. Each native app has its own suite:
 53 on Windows, 61 on Mac, 25 on Android, 16 in the extension.
 
@@ -137,7 +137,11 @@ it's right.
 - **HAC** — reconnaissance done, matcher built and tested, parser not written,
   and **nothing imports the matcher**. It has been dead code since it was
   written. See the section at the end for the two facts that unblock it.
-- Canvas ↔ manual grade reconciliation (schema supports it, no UI).
+- Ranking undated assignments by when they were *assigned* and by which Canvas
+  module a class is on ("probably this week"). Designed, not built. Explicitly
+  **not** inventing a due date or hiding work: a fabricated date looks exactly
+  like a real one, and the assignment we'd hide could be the one that mattered.
+- The Canvas↔HAC pairing UI. `AssignmentLink` exists and nothing writes it.
 - **HAC is blocked on the school year, not on us.** Checked on 2026-08-12: the
   Classwork page renders eight courses and not one assignment, because Report
   Card Run 1 has barely started. Writing a parser against an empty page means
@@ -366,6 +370,34 @@ found: the final post now carries 44 seconds under the old session id.
 Worth noting what this cost invisibly. It only bites when a session *ends*,
 which is every session — and the missing time is always the tail, which is
 disproportionately the part where a student was flagging.
+
+---
+
+## Grades become scores
+
+For most of this project the two halves never met. Canvas grades synced every
+ten minutes, HAC grades arrived on request, and the insight engine could see
+neither — every score it used had been typed in by hand. A student with a
+connected gradebook still had to re-enter their own marks for any of it to mean
+anything, which almost nobody would do. `src/lib/outcomes.ts` is that join.
+
+**The rule it is built on: never count the same test twice.** The engine
+averages outcomes, so a hand-entered "Bio test, 82%" and a synced "Unit 2 Test,
+82/100" landing as two rows would weight that test double and distort every
+correlation drawn from it — the same asymmetry as the assignment matcher, for
+the same reason. A hand-entered score within two days, in a matching class,
+counts as the same assessment and nothing new is written.
+
+**When they disagree it asks rather than deciding.** A card offers both numbers.
+Either answer attaches the student's own row to the assignment, which is what
+stops the question returning on the next sync: `assignmentId` is unique on
+`Outcome`, so the database refuses a second score for one test even if two tabs
+try at once.
+
+Skipped on purpose, each with a counter so the UI can explain itself: work with
+no points possible (extra credit and practice have no percentage), and anything
+over 200% — a five-point warm-up recorded as 100 is 2000%, and would move a
+term's average on its own.
 
 ---
 

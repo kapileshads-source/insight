@@ -2,6 +2,7 @@ import {
   assignmentSummary,
   bucketFor,
   groupAssignments,
+  submissionStateFromHac,
 } from "../assignments.ts";
 
 let pass = 0;
@@ -133,6 +134,27 @@ console.log("\nnothing to show");
   ok("a fully graded course shows nothing", groupAssignments([row({ state: "GRADED" })], NOW).length === 0);
   const summary = assignmentSummary([]);
   ok("the summary survives it", summary.total === 0 && summary.missing === 0);
+}
+
+console.log("\nHAC and Canvas speak different languages");
+{
+  // Without this mapping HAC rows arrived with no state at all, defaulted to
+  // unsubmitted, and a test sat weeks ago sat in "Past due" telling the
+  // student to go and do it.
+  ok("graded is graded", submissionStateFromHac("GRADED") === "GRADED");
+  ok("missing is missing", submissionStateFromHac("MISSING") === "MISSING");
+  // The question this answers is "is there anything left to do?", and for
+  // excused work there isn't.
+  ok("excused leaves the list", bucketFor(row({ state: submissionStateFromHac("EXCUSED") }), NOW) === null);
+  ok("ungraded is still to do", submissionStateFromHac("UNGRADED") === "UNSUBMITTED");
+  ok("anything unexpected is still to do", submissionStateFromHac("WHAT") === "UNSUBMITTED");
+
+  // The failure this guards, end to end.
+  const gradedWeeksAgo = row({
+    state: submissionStateFromHac("GRADED"),
+    dueAt: inDays(-21),
+  });
+  ok("a graded HAC row never lands in Past due", bucketFor(gradedWeeksAgo, NOW) === null);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

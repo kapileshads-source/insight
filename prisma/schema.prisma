@@ -452,6 +452,7 @@ model AssignmentLink {
 
 enum OutcomeSource {
   CANVAS
+  HAC
   MANUAL
 }
 

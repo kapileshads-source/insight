@@ -151,3 +151,18 @@ export function submissionState(
   if (s.submitted_at) return "SUBMITTED";
   return "UNSUBMITTED";
 }
+
+/// Modules with their items, so "what is this class on?" and "which
+/// assignments are in it?" arrive together rather than one request per module.
+///
+/// Modules are optional in Canvas and plenty of teachers never make any, so a
+/// failure here is not a failed sync — the caller treats it as "no answer".
+export async function fetchModules(
+  opts: FetchOptions,
+  courseId: string,
+): Promise<import("./modules").CanvasModule[]> {
+  return getAll<import("./modules").CanvasModule>(
+    opts,
+    `/api/v1/courses/${courseId}/modules?include[]=items&per_page=50`,
+  );
+}

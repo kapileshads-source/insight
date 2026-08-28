@@ -120,7 +120,11 @@ export function CanvasAutoSync() {
       const courses = await Promise.all(
         pulled.data.courses.map(async (c) => ({
           canvasId: c.canvasId,
-          payload: await conceal({ name: c.name, shortName: c.shortName }),
+          payload: await conceal({
+            name: c.name,
+            shortName: c.shortName,
+            currentModule: c.currentModule,
+          }),
         })),
       );
 

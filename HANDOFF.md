@@ -20,7 +20,7 @@ pilot. Everything runs on free tiers.
 | Email | Resend — only delivers to the developer until a domain exists |
 | LLM | Groq free tier |
 
-`npm test` runs 545 tests. `npm run build` regenerates the Prisma client,
+`npm test` runs 561 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds. Each native app has its own suite:
 53 on Windows, 61 on Mac, 25 on Android, 16 in the extension.
 
@@ -137,9 +137,7 @@ it's right.
 - **HAC** — reconnaissance done, matcher built and tested, parser not written,
   and **nothing imports the matcher**. It has been dead code since it was
   written. See the section at the end for the two facts that unblock it.
-- Canvas **modules** — "what is my class covering this week" is the one useful
-  thing only Canvas can answer, and we don't fetch them. Would improve the
-  "probably this week" guess and read well on its own ("Unit 3: Stoichiometry").
+- Nothing. The build list is finished.
 - **HAC is blocked on the school year, not on us.** Checked on 2026-08-12: the
   Classwork page renders eight courses and not one assignment, because Report
   Card Run 1 has barely started. Writing a parser against an empty page means
@@ -368,6 +366,36 @@ found: the final post now carries 44 seconds under the old session id.
 Worth noting what this cost invisibly. It only bites when a session *ends*,
 which is every session — and the missing time is always the tail, which is
 disproportionately the part where a student was flagging.
+
+---
+
+## What your classes are on
+
+The one question only Canvas can answer — HAC's gradebook has names, dates and
+scores and no idea what is being taught. Modules are where a teacher writes
+"Unit 3: Stoichiometry", and reading them turns a dashboard that lists work
+into one that can say what the week is about.
+
+It earns its place twice. On screen it is a sentence a student recognises, and
+underneath it is the best available answer to "is this undated assignment
+current?" — better than any date, because it is the teacher's own view of where
+the class is. Work in the current module is marked current even if it was
+handed out months ago.
+
+Choosing the module: one Canvas says is `started` first, since the student has
+opened something in it; otherwise the earliest `unlocked` one, since teachers
+unlock as the term moves; otherwise **nothing**. A course where everything is
+locked or everything is finished has no current unit, and saying so beats
+naming one.
+
+Modules are optional in Canvas and plenty of teachers never make any, so a
+course without them syncs exactly as before. Stored inside the course payload
+rather than a table of its own: it is ephemeral state, rewritten on every sync,
+and it is content, so it is encrypted like everything else.
+
+Every guess carries its evidence on the row — "in Unit 3: Stoichiometry", or
+"handed out Wed, Aug 26" — so a student can disagree with it rather than
+trusting it.
 
 ---
 

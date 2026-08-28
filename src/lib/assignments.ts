@@ -41,6 +41,13 @@ export type AssignmentRow = {
   /// When the work appeared, as YYYY-MM-DD. The only ordering signal either
   /// gradebook gives for something with no due date.
   assignedOn?: string | null;
+  /// Whether it sits in the Canvas module the class is currently on. A better
+  /// answer than any date for "is this undated thing current?", because it is
+  /// the teacher's own view of where the class is.
+  inCurrentModule?: boolean;
+  /// The name of that module, shown as the reason. Every guess this card makes
+  /// carries its evidence, so a student can disagree with it.
+  moduleName?: string | null;
 };
 
 /**
@@ -140,6 +147,9 @@ export function bucketFor(row: AssignmentRow, now: Date): Bucket | null {
     // it. Deliberately *not* written onto the row as a due date: a fabricated
     // one looks exactly like a real one, and the row we'd hide by acting on it
     // could be the one that mattered.
+    // The module the class is on is the teacher's own view of what is current,
+    // which beats any inference from a date.
+    if (row.inCurrentModule) return "RECENT";
     if (row.assignedOn && daysSince(row.assignedOn, now) <= RECENT_DAYS) {
       return "RECENT";
     }

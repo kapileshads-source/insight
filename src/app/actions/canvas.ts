@@ -9,9 +9,11 @@ import {
   CanvasAuthError,
   fetchAssignments,
   fetchCourses,
+  fetchModules,
   submissionState,
   verifyToken,
 } from "@/lib/canvas";
+import { currentModule, type CurrentModule } from "@/lib/modules";
 
 export type CanvasResult = { ok: true } | { ok: false; error: string };
 
@@ -134,7 +136,14 @@ export async function getCanvasStatus(): Promise<CanvasStatus> {
 }
 
 export type CanvasPull = {
-  courses: { canvasId: string; name: string; shortName: string | null }[];
+  courses: {
+    canvasId: string;
+    name: string;
+    shortName: string | null;
+    /// What the class is on now, when Canvas has modules for it. Null is the
+    /// common case — plenty of teachers never make any.
+    currentModule: CurrentModule | null;
+  }[];
   assignments: {
     canvasId: string;
     courseCanvasId: string;
@@ -173,8 +182,20 @@ export async function pullCanvas(): Promise<
   try {
     const courses = await fetchCourses(opts);
     const assignments: CanvasPull["assignments"] = [];
+    const modulesByCourse = new Map<string, CurrentModule | null>();
 
     for (const course of courses) {
+      // Modules are optional and a teacher may have none, so a course without
+      // them syncs exactly as before rather than failing.
+      try {
+        modulesByCourse.set(
+          course.id,
+          currentModule(await fetchModules(opts, course.id)),
+        );
+      } catch {
+        modulesByCourse.set(course.id, null);
+      }
+
       const list = await fetchAssignments(opts, course.id);
       for (const a of list) {
         assignments.push({
@@ -204,6 +225,7 @@ export async function pullCanvas(): Promise<
           canvasId: c.id,
           name: c.name,
           shortName: c.course_code ?? null,
+          currentModule: modulesByCourse.get(c.id) ?? null,
         })),
         assignments,
       },
@@ -355,6 +377,8 @@ export async function fetchStoredAssignments() {
       select: {
         id: true,
         courseId: true,
+        // Needed to tell whether a row sits in the module its class is on.
+        canvasId: true,
         dueAt: true,
         payloadCipher: true,
         payloadIv: true,

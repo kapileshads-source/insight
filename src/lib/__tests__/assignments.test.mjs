@@ -200,5 +200,26 @@ console.log("\nundated work that was handed out recently");
   ok("it says it is a guess", groups.find((g) => g.bucket === "RECENT").label === "Probably this week");
 }
 
+console.log("\nthe module a class is on");
+{
+  const key = (n) => {
+    const d = new Date(NOW);
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0, 10);
+  };
+
+  // The teacher's own view of where the class is, which beats any inference
+  // from a date.
+  ok("work in the current unit is current",
+     bucketFor(row({ dueAt: null, assignedOn: null, inCurrentModule: true }), NOW) === "RECENT");
+  ok("even if it was handed out months ago",
+     bucketFor(row({ dueAt: null, assignedOn: key(-90), inCurrentModule: true }), NOW) === "RECENT");
+  ok("work outside it falls back to the date",
+     bucketFor(row({ dueAt: null, assignedOn: key(-90), inCurrentModule: false }), NOW) === "UNDATED");
+  // A real due date is a fact and still wins over both signals.
+  ok("a due date still wins",
+     bucketFor(row({ dueAt: inDays(12), inCurrentModule: true }), NOW) === "LATER");
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

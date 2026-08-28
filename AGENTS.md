@@ -6,6 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Insight
 
-Read `HANDOFF.md` before doing anything. It covers the encryption model that
+Read `HANDOFF.md` before doing anything. `WALKTHROUGH.md` explains the *why*
+of each subsystem, written for the two students who have to defend it. It covers the encryption model that
 shapes the whole schema, what is built, and the bugs that already cost hours —
 most of which are not visible from the code.

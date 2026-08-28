@@ -54,6 +54,7 @@ export function CanvasConnect({ status }: { status: CanvasStatus }) {
               pointsPossible: a.pointsPossible,
               state: a.state,
               score: a.score,
+              assignedOn: a.assignedOn,
             }),
           })),
         );

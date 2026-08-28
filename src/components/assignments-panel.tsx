@@ -36,6 +36,7 @@ type Payload = {
   state?: SubmissionState;
   status?: string;
   score?: number | null;
+  assignedOn?: string | null;
 };
 
 function relativeDue(dueAt: Date | null, now: Date): string {
@@ -60,6 +61,18 @@ function relativeDue(dueAt: Date | null, now: Date): string {
 function Row({ row, now }: { row: AssignmentRow; now: Date }) {
   const due = relativeDue(row.dueAt, now);
 
+  // With no due date, when it was handed out is the only thing worth saying —
+  // and it is what the "probably this week" guess rests on, so showing it lets
+  // a student judge the guess rather than take it on faith.
+  const assigned =
+    !row.dueAt && row.assignedOn
+      ? new Date(`${row.assignedOn}T12:00:00`).toLocaleDateString(undefined, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        })
+      : null;
+
   return (
     <li className="flex items-baseline justify-between gap-4 border-t border-line py-3 first:border-t-0">
       <div className="min-w-0">
@@ -67,6 +80,7 @@ function Row({ row, now }: { row: AssignmentRow; now: Date }) {
         <p className="mt-0.5 truncate text-[13px] text-text-faint">
           {row.course}
           {due && ` · ${due}`}
+          {assigned && ` · handed out ${assigned}`}
         </p>
       </div>
       {row.pointsPossible ? (
@@ -141,6 +155,7 @@ export function AssignmentsPanel() {
             state:
               p.state ??
               (p.status ? submissionStateFromHac(p.status) : "UNSUBMITTED"),
+            assignedOn: p.assignedOn ?? null,
           };
         }),
       );

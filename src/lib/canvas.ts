@@ -34,6 +34,11 @@ export type CanvasAssignment = {
   id: string;
   name: string;
   due_at: string | null;
+  /// When it became available, and when the teacher made it. Canvas sends both
+  /// and we ignored both — they are the only signal it gives for work with no
+  /// due date, which is otherwise a pile with no order to it.
+  unlock_at?: string | null;
+  created_at?: string | null;
   points_possible: number | null;
   course_id: string;
   submission?: {

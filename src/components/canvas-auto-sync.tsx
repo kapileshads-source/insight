@@ -134,6 +134,7 @@ export function CanvasAutoSync() {
             pointsPossible: a.pointsPossible,
             state: a.state,
             score: a.score,
+            assignedOn: a.assignedOn,
           }),
         })),
       );

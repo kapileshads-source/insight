@@ -38,6 +38,9 @@ export type AssignmentRow = {
   pointsPossible: number | null;
   score: number | null;
   state: SubmissionState;
+  /// When the work appeared, as YYYY-MM-DD. The only ordering signal either
+  /// gradebook gives for something with no due date.
+  assignedOn?: string | null;
 };
 
 /**
@@ -71,6 +74,7 @@ export type Bucket =
   | "TODAY"
   | "TOMORROW"
   | "THIS_WEEK"
+  | "RECENT"
   | "LATER"
   | "UNDATED";
 
@@ -80,6 +84,7 @@ export const BUCKET_LABELS: Record<Bucket, string> = {
   TODAY: "Due today",
   TOMORROW: "Due tomorrow",
   THIS_WEEK: "This week",
+  RECENT: "Probably this week",
   LATER: "Later",
   UNDATED: "No due date",
 };
@@ -91,9 +96,23 @@ export const BUCKET_ORDER: Bucket[] = [
   "TODAY",
   "TOMORROW",
   "THIS_WEEK",
+  "RECENT",
   "LATER",
   "UNDATED",
 ];
+
+/// How recently something must have been handed out to count as current.
+const RECENT_DAYS = 7;
+
+/// Whole days between a YYYY-MM-DD and today. Negative when it is in the
+/// future, which an unlock date often is.
+function daysSince(assignedOn: string, now: Date): number {
+  const [y, m, d] = assignedOn.split("-").map(Number);
+  if (!y || !m || !d) return Number.POSITIVE_INFINITY;
+  const then = Date.UTC(y, m - 1, d);
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return (today - then) / 86_400_000;
+}
 
 function startOfDay(d: Date): Date {
   const out = new Date(d);
@@ -114,7 +133,18 @@ export function bucketFor(row: AssignmentRow, now: Date): Bucket | null {
   // Submitted work is done, whatever its date says.
   if (row.state === "SUBMITTED" || row.state === "LATE") return null;
 
-  if (!row.dueAt) return "UNDATED";
+  if (!row.dueAt) {
+    // No due date is not "due never", and it is not a due date either. Work
+    // handed out in the last week is probably this week's — said as a guess,
+    // in its own group, with the assigned date shown so a student can judge
+    // it. Deliberately *not* written onto the row as a due date: a fabricated
+    // one looks exactly like a real one, and the row we'd hide by acting on it
+    // could be the one that mattered.
+    if (row.assignedOn && daysSince(row.assignedOn, now) <= RECENT_DAYS) {
+      return "RECENT";
+    }
+    return "UNDATED";
+  }
 
   const today = startOfDay(now);
   const due = startOfDay(row.dueAt);

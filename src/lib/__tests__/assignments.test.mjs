@@ -157,5 +157,48 @@ console.log("\nHAC and Canvas speak different languages");
   ok("a graded HAC row never lands in Past due", bucketFor(gradedWeeksAgo, NOW) === null);
 }
 
+console.log("\nundated work that was handed out recently");
+{
+  const key = (n) => {
+    const d = new Date(NOW);
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0, 10);
+  };
+
+  // "No due date" is a pile with no order to it. When it was handed out is the
+  // only signal either gradebook gives, so recent work is guessed as current —
+  // as a guess, in its own group.
+  ok("assigned this week is probably this week",
+     bucketFor(row({ dueAt: null, assignedOn: key(-2) }), NOW) === "RECENT");
+  ok("assigned a month ago is not",
+     bucketFor(row({ dueAt: null, assignedOn: key(-30) }), NOW) === "UNDATED");
+  ok("exactly a week still counts",
+     bucketFor(row({ dueAt: null, assignedOn: key(-7) }), NOW) === "RECENT");
+  // Canvas unlock dates are often in the future.
+  ok("unlocking tomorrow counts",
+     bucketFor(row({ dueAt: null, assignedOn: key(1) }), NOW) === "RECENT");
+  ok("no assigned date is still undated",
+     bucketFor(row({ dueAt: null, assignedOn: null }), NOW) === "UNDATED");
+  ok("nonsense is undated, not crashed",
+     bucketFor(row({ dueAt: null, assignedOn: "soon" }), NOW) === "UNDATED");
+
+  // A real due date always wins; the guess never overrides a fact.
+  ok("a due date beats the guess",
+     bucketFor(row({ dueAt: inDays(0), assignedOn: key(-1) }), NOW) === "TODAY");
+
+  const groups = groupAssignments(
+    [
+      row({ id: "later", dueAt: inDays(20) }),
+      row({ id: "guessed", dueAt: null, assignedOn: key(-1) }),
+      row({ id: "undated", dueAt: null, assignedOn: null }),
+    ],
+    NOW,
+  );
+  const order = groups.map((g) => g.bucket);
+  ok("the guess sits above Later", order.indexOf("RECENT") < order.indexOf("LATER"));
+  ok("and above the rest of the undated pile", order.indexOf("RECENT") < order.indexOf("UNDATED"));
+  ok("it says it is a guess", groups.find((g) => g.bucket === "RECENT").label === "Probably this week");
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

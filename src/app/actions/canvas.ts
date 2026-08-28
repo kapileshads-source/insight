@@ -140,6 +140,9 @@ export type CanvasPull = {
     courseCanvasId: string;
     name: string;
     dueAt: string | null;
+    /// When the work appeared, as a calendar date. Not a due date and never
+    /// shown as one.
+    assignedOn: string | null;
     pointsPossible: number | null;
     state: string;
     score: number | null;
@@ -179,6 +182,9 @@ export async function pullCanvas(): Promise<
           courseCanvasId: course.id,
           name: a.name,
           dueAt: a.due_at,
+          // Unlock first: "when students could start it" is nearer to
+          // "assigned" than "when the teacher typed it up".
+          assignedOn: (a.unlock_at ?? a.created_at)?.slice(0, 10) ?? null,
           pointsPossible: a.points_possible,
           state: submissionState(a),
           score: a.submission?.score ?? null,

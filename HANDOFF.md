@@ -20,7 +20,7 @@ pilot. Everything runs on free tiers.
 | Email | Resend — only delivers to the developer until a domain exists |
 | LLM | Groq free tier |
 
-`npm test` runs 503 tests. `npm run build` regenerates the Prisma client,
+`npm test` runs 524 tests. `npm run build` regenerates the Prisma client,
 **applies pending migrations**, then builds. Each native app has its own suite:
 53 on Windows, 61 on Mac, 25 on Android, 16 in the extension.
 
@@ -137,11 +137,9 @@ it's right.
 - **HAC** — reconnaissance done, matcher built and tested, parser not written,
   and **nothing imports the matcher**. It has been dead code since it was
   written. See the section at the end for the two facts that unblock it.
-- Ranking undated assignments by when they were *assigned* and by which Canvas
-  module a class is on ("probably this week"). Designed, not built. Explicitly
-  **not** inventing a due date or hiding work: a fabricated date looks exactly
-  like a real one, and the assignment we'd hide could be the one that mattered.
-- The Canvas↔HAC pairing UI. `AssignmentLink` exists and nothing writes it.
+- Canvas **modules** — "what is my class covering this week" is the one useful
+  thing only Canvas can answer, and we don't fetch them. Would improve the
+  "probably this week" guess and read well on its own ("Unit 3: Stoichiometry").
 - **HAC is blocked on the school year, not on us.** Checked on 2026-08-12: the
   Classwork page renders eight courses and not one assignment, because Report
   Card Run 1 has barely started. Writing a parser against an empty page means
@@ -370,6 +368,25 @@ found: the final post now carries 44 seconds under the old session id.
 Worth noting what this cost invisibly. It only bites when a session *ends*,
 which is every session — and the missing time is always the tail, which is
 disproportionately the part where a student was flagging.
+
+---
+
+## Undated work is ranked, never dated
+
+"No due date" was a pile with no order to it, and Canvas produces a lot of it.
+Both gradebooks do give one signal — when the work was handed out — and we were
+reading neither: HAC has `dateAssigned`, and Canvas sends `unlock_at` and
+`created_at` in every assignment it has ever returned.
+
+Undated work handed out in the last week now sits in **"Probably this week"**,
+above Later, with the date shown ("handed out Wed, Aug 26") so a student can
+judge the guess instead of taking it on faith.
+
+**What it deliberately does not do is write a due date, or hide anything.** A
+fabricated date is indistinguishable from a real one, and the assignment hidden
+by acting on a wrong guess could be the one that mattered. That is the most
+expensive mistake this app could make, so the guess stays a guess, in its own
+group, with its evidence attached.
 
 ---
 

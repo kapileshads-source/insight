@@ -566,6 +566,31 @@ prints the whole status screen without the phone being in anyone's hand.
 
 ---
 
+## Deploys are blocked until 4 September 2026
+
+Neon's free-tier compute was exhausted on 28 August. Every Vercel build fails
+at `prisma migrate deploy` with `P1001`, because migrations run before the
+compile. It resets on **4 September**.
+
+Local development is unaffected — `.env` points at a local Postgres.
+
+**A diagnostic trap worth knowing.** A TCP connect to a Neon host succeeds even
+for a hostname that does not exist: the regional proxy answers on 5432 for
+anything in the region and routes by SNI afterwards. That made a dead endpoint
+look alive and produced a confident, wrong "it's just a sleeping compute"
+theory. What settled it was five retries over 40 seconds, all refused
+instantly — a waking compute answers well inside that.
+
+`scripts/deploy-migrate.mjs` retries P1001 five times with a 2/4/8/15s backoff.
+Keep it: it is what turned "failed instantly" into evidence.
+
+**If waiting is not acceptable**, a new Neon project gets fresh free-tier hours.
+Production holds no real study data yet, so re-pointing `DATABASE_URL` and
+`DIRECT_DATABASE_URL` and re-running migrations costs only re-pairing devices
+and reconnecting Canvas.
+
+---
+
 ## Distribution
 
 Students are on **their own machines**, and get everything from the website.

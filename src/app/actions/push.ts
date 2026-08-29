@@ -71,3 +71,48 @@ export async function pushSubscribed(endpoint: string): Promise<boolean> {
   });
   return Boolean(row);
 }
+
+/**
+ * Which of the two reminders this device wants.
+ *
+ * Separate from unsubscribing, because "stop asking about my phone but keep
+ * asking about sleep" is a reasonable thing to want, and the alternative —
+ * all or nothing — is how someone ends up turning off the one they'd have
+ * answered.
+ */
+export async function setNudgePreferences(input: unknown): Promise<PushResult> {
+  const user = await getOrCreateUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const parsed = z
+    .object({
+      endpoint: z.string().url().max(1000),
+      sleepNudge: z.boolean(),
+      screenTimeNudge: z.boolean(),
+    })
+    .safeParse(input);
+  if (!parsed.success) return { ok: false, error: "That didn't look right." };
+
+  await db.pushSubscription.updateMany({
+    where: { endpoint: parsed.data.endpoint, userId: user.id },
+    data: {
+      sleepNudge: parsed.data.sleepNudge,
+      screenTimeNudge: parsed.data.screenTimeNudge,
+    },
+  });
+
+  return { ok: true };
+}
+
+export async function getNudgePreferences(
+  endpoint: string,
+): Promise<{ sleepNudge: boolean; screenTimeNudge: boolean } | null> {
+  const user = await getOrCreateUser();
+  if (!user) return null;
+
+  const row = await db.pushSubscription.findFirst({
+    where: { endpoint, userId: user.id },
+    select: { sleepNudge: true, screenTimeNudge: true },
+  });
+  return row ?? null;
+}

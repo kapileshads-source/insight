@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
+  getNudgePreferences,
   pushSubscribed,
   removePushSubscription,
   savePushSubscription,
+  setNudgePreferences,
 } from "@/app/actions/push";
 
 /**
@@ -39,6 +41,7 @@ type State =
 
 export function NudgeOptIn() {
   const [state, setState] = useState<State | null>(null);
+  const [prefs, setPrefs] = useState({ sleepNudge: true, screenTimeNudge: true });
 
   const look = useCallback(async () => {
     // iOS only allows this in an installed Home Screen app, so on a Safari tab
@@ -62,6 +65,8 @@ export function NudgeOptIn() {
     const existing = await registration.pushManager.getSubscription();
 
     if (existing && (await pushSubscribed(existing.endpoint))) {
+      const saved = await getNudgePreferences(existing.endpoint);
+      if (saved) setPrefs(saved);
       setState({ kind: "on", endpoint: existing.endpoint });
       return;
     }
@@ -136,9 +141,18 @@ export function NudgeOptIn() {
 
   if (!state || state.kind === "unsupported") return null;
 
+  async function toggle(which: "sleepNudge" | "screenTimeNudge") {
+    if (state?.kind !== "on") return;
+    const next = { ...prefs, [which]: !prefs[which] };
+    setPrefs(next);
+    await setNudgePreferences({ endpoint: state.endpoint, ...next });
+  }
+
   return (
     <NudgeCard
       state={state}
+      prefs={prefs}
+      onToggle={(which) => void toggle(which)}
       onTurnOn={() => void turnOn()}
       onTurnOff={() => void turnOff()}
     />
@@ -154,10 +168,14 @@ export function NudgeOptIn() {
  */
 export function NudgeCard({
   state,
+  prefs = { sleepNudge: true, screenTimeNudge: true },
+  onToggle,
   onTurnOn,
   onTurnOff,
 }: {
   state: State;
+  prefs?: { sleepNudge: boolean; screenTimeNudge: boolean };
+  onToggle?: (which: "sleepNudge" | "screenTimeNudge") => void;
   onTurnOn: () => void;
   onTurnOff: () => void;
 }) {
@@ -179,9 +197,34 @@ export function NudgeCard({
       <section className="mt-10 rounded-lg border border-line bg-surface p-6">
         <h2 className="h3 text-[17px]">Daily reminders are on</h2>
         <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
-          One in the morning for last night&rsquo;s sleep, one in the evening
-          for phone time — and only on days you haven&rsquo;t already logged.
+          Only on days you haven&rsquo;t already logged.
         </p>
+
+        {/* Two switches rather than one, because "stop asking about my phone
+            but keep asking about sleep" is a reasonable thing to want — and
+            all-or-nothing is how someone turns off the one they'd have
+            answered. */}
+        <div className="mt-4 space-y-2">
+          <label className="flex items-center gap-3 text-[15px] text-text-muted">
+            <input
+              type="checkbox"
+              checked={prefs.sleepNudge}
+              onChange={() => onToggle?.("sleepNudge")}
+              className="h-4 w-4 accent-sky"
+            />
+            Mornings — how did you sleep?
+          </label>
+          <label className="flex items-center gap-3 text-[15px] text-text-muted">
+            <input
+              type="checkbox"
+              checked={prefs.screenTimeNudge}
+              onChange={() => onToggle?.("screenTimeNudge")}
+              className="h-4 w-4 accent-sky"
+            />
+            Evenings — phone time today?
+          </label>
+        </div>
+
         <button
           type="button"
           onClick={onTurnOff}

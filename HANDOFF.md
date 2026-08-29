@@ -138,6 +138,13 @@ it's right.
   and **nothing imports the matcher**. It has been dead code since it was
   written. See the section at the end for the two facts that unblock it.
 - Nothing. The build list is finished.
+
+**A habit worth keeping:** twice now, code has shipped that nothing could
+reach — the assignment matcher sat unimported for weeks, and `unlinkAssignments`
+existed while the undo it powers had no button, which made the whole
+link-rather-than-merge argument a comment instead of a feature. Before calling
+anything done, grep for the new export outside the file that defines it. If the
+only hit is its own definition, it isn't built.
 - **HAC is blocked on the school year, not on us.** Checked on 2026-08-12: the
   Classwork page renders eight courses and not one assignment, because Report
   Card Run 1 has barely started. Writing a parser against an empty page means

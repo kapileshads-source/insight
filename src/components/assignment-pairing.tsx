@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { fetchPairingState, saveAssignmentLinks } from "@/app/actions/pairing";
+import {
+  fetchPairingState,
+  saveAssignmentLinks,
+  unlinkAssignments,
+} from "@/app/actions/pairing";
 import { useCrypto } from "@/components/crypto-provider";
 import type { MatchCandidate, Pairing } from "@/lib/assignment-match";
 import { planPairings } from "@/lib/pairing-plan";
@@ -29,9 +33,20 @@ type Payload = {
 
 export type PairingChoice = Pairing & { canvasTitle: string; hacTitle: string };
 
+/// A pairing already made, with a way back out. The undo is the whole reason
+/// this is a link and not a merge — without it the schema's justification is
+/// a comment rather than a feature.
+export type LinkedPair = {
+  id: string;
+  canvasTitle: string;
+  hacTitle: string;
+  autoLinked: boolean;
+};
+
 export function AssignmentPairing() {
   const { reveal, status } = useCrypto();
   const [review, setReview] = useState<PairingChoice[]>([]);
+  const [linked, setLinked] = useState<LinkedPair[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
 
   const run = useCallback(async () => {
@@ -99,6 +114,19 @@ export function AssignmentPairing() {
           hacTitle: titles.get(p.hacId) ?? "",
         })),
       );
+
+      // Titles come from the same decrypt pass, so showing what is already
+      // linked costs nothing extra.
+      setLinked(
+        state.links
+          .map((l) => ({
+            id: l.id,
+            canvasTitle: titles.get(l.canvasAssignmentId) ?? "",
+            hacTitle: titles.get(l.hacAssignmentId) ?? "",
+            autoLinked: l.autoLinked,
+          }))
+          .filter((l) => l.canvasTitle && l.hacTitle),
+      );
     } catch {
       // A row that won't decrypt after a password change must not take the
       // dashboard down with it.
@@ -133,13 +161,27 @@ export function AssignmentPairing() {
     );
   }
 
-  if (status !== "unlocked" || review.length === 0) return null;
+  async function undo(pair: LinkedPair) {
+    setBusy(pair.id);
+    await unlinkAssignments(pair.id);
+    setBusy(null);
+    setLinked((current) => current.filter((l) => l.id !== pair.id));
+    // Re-run, so a row freed by the undo can be offered against something
+    // else rather than sitting unpaired until the next sync.
+    void run();
+  }
+
+  if (status !== "unlocked" || (review.length === 0 && linked.length === 0)) {
+    return null;
+  }
 
   return (
     <PairingCard
       choices={review}
+      linked={linked}
       busy={busy}
       onAnswer={(choice, same) => void answer(choice, same)}
+      onUndo={(pair) => void undo(pair)}
     />
   );
 }
@@ -153,21 +195,29 @@ export function AssignmentPairing() {
  */
 export function PairingCard({
   choices,
+  linked = [],
   busy = null,
   onAnswer,
+  onUndo,
 }: {
   choices: PairingChoice[];
+  linked?: LinkedPair[];
   busy?: string | null;
   onAnswer: (choice: PairingChoice, same: boolean) => void;
+  onUndo?: (pair: LinkedPair) => void;
 }) {
   return (
     <section className="mt-14 rounded-lg border border-line bg-surface p-6">
-      <h2 className="h3 text-[17px]">Same assignment?</h2>
-      <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
-        These look like one assignment listed in both gradebooks, but
-        they&rsquo;re close enough to be two. Linking them keeps one score
-        instead of two.
-      </p>
+      <h2 className="h3 text-[17px]">
+        {choices.length > 0 ? "Same assignment?" : "Linked assignments"}
+      </h2>
+      {choices.length > 0 && (
+        <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
+          These look like one assignment listed in both gradebooks, but
+          they&rsquo;re close enough to be two. Linking them keeps one score
+          instead of two.
+        </p>
+      )}
 
       <ul className="mt-6">
         {choices.map((c) => {
@@ -209,6 +259,39 @@ export function PairingCard({
           );
         })}
       </ul>
+
+      {linked.length > 0 && (
+        <div className="mt-6 border-t border-line pt-4">
+          <h3 className="label text-text-faint">
+            Already linked · {linked.length}
+          </h3>
+          <ul className="mt-2">
+            {linked.map((l) => (
+              <li
+                key={l.id}
+                className="flex flex-wrap items-baseline justify-between gap-3 py-2"
+              >
+                <span className="min-w-0 text-[14px] text-text-muted">
+                  {l.canvasTitle}
+                  <span className="text-text-faint"> ↔ </span>
+                  {l.hacTitle}
+                  {l.autoLinked && (
+                    <span className="text-text-faint"> · matched automatically</span>
+                  )}
+                </span>
+                <button
+                  type="button"
+                  disabled={busy === l.id}
+                  onClick={() => onUndo?.(l)}
+                  className="shrink-0 text-[13px] text-text-faint hover:text-text-muted disabled:opacity-40"
+                >
+                  Not the same
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <p className="mt-6 border-t border-line pt-4 text-[13px] leading-relaxed text-text-faint">
         Nothing is merged or deleted either way — both rows stay, and a link can

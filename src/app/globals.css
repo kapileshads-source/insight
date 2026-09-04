@@ -21,8 +21,19 @@
    without being a scoreboard. Not taken: their palette, their shapes, their
    mascot, or anything rewarding a student for reporting "good" data.
 
-   Still no gradients and no glows. Contrast comes from scale and from large
-   flat areas of color, never from ornament.
+   REVISED, September 2026. This block used to end "no gradients and no glows,
+   contrast comes from scale alone" — and that rule, applied honestly, produced
+   a marketing page so bare it read as a template rather than as a decision.
+   Restraint is not the same thing as being designed. The tell of a generated
+   interface is the *specific* violet-to-pink mesh and the neon indigo, not
+   depth as such.
+
+   So: the app's interior stays flat, because a dashboard full of glow is a
+   dashboard you can't read. The marketing surfaces get atmosphere — layered
+   warm light over midnight, drawn from Apple's gold and Alpine finishes rather
+   than from a purple everyone has seen. Utilities below are prefixed `mk-` so
+   the split is enforced by name: if `mk-` appears anywhere under /dashboard,
+   the line has been crossed.
 --------------------------------------------------------------------------- */
 
 :root {
@@ -54,6 +65,12 @@
   --flat: #98a1b5;
 
   --butter: #e5c77e; /* attention: due soon, needs a look */
+
+  /* Marketing-only. Warm, slightly earthy, and deliberately not in the violet
+     family — the ember is close to a terracotta anodize, and it is the one
+     saturated colour in the whole set. */
+  --ember: #d08258;
+  --ember-deep: #a75f3c;
 }
 
 @theme inline {
@@ -81,6 +98,8 @@
   --color-down: var(--down);
   --color-flat: var(--flat);
   --color-butter: var(--butter);
+  --color-ember: var(--ember);
+  --color-ember-deep: var(--ember-deep);
 
   /* Familjen Grotesk. Chosen for its digits — the 1 has a real foot, the 2 and
      4 have drawn joints. A column of figures reads as set rather than as the
@@ -214,6 +233,170 @@ body {
   .btn-primary-inverted,
   .btn-secondary,
   .btn-secondary-on-light {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Marketing surfaces only — see the note at the top of this file.
+
+   Everything below is `mk-` prefixed, and nothing under /dashboard may use it.
+   These are for the pages someone sees before they have any data: the landing
+   page, /privacy, /download. They carry atmosphere because there is nothing
+   else on those pages to look at yet.
+--------------------------------------------------------------------------- */
+
+/* The hero field. Three offset radial pools rather than a linear gradient — a
+   linear one reads as a CSS default, and pools of light read as a lit surface.
+   Sized in vmax so the composition holds from a phone to a wide monitor. */
+.mk-aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* Positions are percentages of this element, which is as tall as the hero —
+     so they are kept in the top third deliberately. Spread evenly down a
+     1,400px section, each pool is stretched past the point where it reads as
+     light at all. */
+  background:
+    radial-gradient(
+      58vmax 34vmax at 12% 2%,
+      rgba(208, 130, 88, 0.5),
+      transparent 60%
+    ),
+    radial-gradient(
+      46vmax 30vmax at 84% 10%,
+      rgba(168, 200, 224, 0.3),
+      transparent 58%
+    ),
+    radial-gradient(
+      64vmax 34vmax at 50% 34%,
+      rgba(229, 199, 126, 0.16),
+      transparent 62%
+    );
+}
+
+/* Grain over the pools. Without it, large soft gradients band visibly on an
+   8-bit display and look like a screensaver; the noise is what makes them read
+   as a photographed surface. Generated in the file rather than fetched, so it
+   costs no request and cannot 404. */
+.mk-grain::after {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.32'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* Graph paper. The hero sits on this rather than on a colour field, because
+   the honest image for this app is a plot — and a faint ruled grid says
+   "measured" without a single word of copy.
+
+   Masked at the edges: a grid that runs into the viewport edge looks like a
+   background image, and one that fades looks like a sheet lying on a page. */
+.mk-dotgrid {
+  background-image: radial-gradient(
+    rgba(27, 31, 42, 0.16) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+  mask-image: radial-gradient(80% 70% at 50% 38%, #000 30%, transparent 78%);
+}
+
+/* Warm paper, lit slightly from the upper left. Starlight flat over a whole
+   viewport reads as an unstyled beige; the two pools give it a surface. */
+.mk-paper {
+  background:
+    radial-gradient(
+      50vmax 34vmax at 8% 0%,
+      rgba(255, 252, 246, 0.95),
+      transparent 60%
+    ),
+    radial-gradient(
+      44vmax 30vmax at 96% 12%,
+      rgba(208, 130, 88, 0.14),
+      transparent 62%
+    ),
+    var(--starlight);
+}
+
+/* Hairline that fades at both ends, so a section break doesn't terminate in
+   two hard pixels against the page edge. */
+.mk-rule {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--line-hi) 18%,
+    var(--line-hi) 82%,
+    transparent
+  );
+}
+
+.mk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--line-hi);
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(6px);
+}
+
+/* Cards that respond to a cursor. The border warming is doing more work than
+   the lift: it is what distinguishes something clickable from a printed panel,
+   and it survives on a touch screen where the lift never fires. */
+.mk-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    170deg,
+    var(--surface-hi) 0%,
+    var(--surface) 70%
+  );
+  transition:
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms ease;
+}
+
+.mk-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(208, 130, 88, 0.45);
+}
+
+/* Scroll reveal with no JavaScript. Note the direction of the @supports: the
+   default is *visible*, and only a browser that can actually drive the
+   timeline is allowed to hide anything. Written the other way round, every
+   browser without view() — and every crawler — gets a blank page. */
+@keyframes mk-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .mk-reveal {
+      animation: mk-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 24%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-card {
     transition: none;
   }
 }

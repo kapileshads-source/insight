@@ -790,6 +790,86 @@ run of things that passed their tests and didn't.
 
 ---
 
+## To build: reminders about work, not just about logging
+
+Kapilesh's ask, 2026-09-04: *students are swarmed with work, so remind them —
+email, app notifications.* Worth writing down properly, because half of it
+already exists and the half that doesn't has a real constraint in front of it.
+
+**What already ships.** Four reminders, all live:
+
+| Reminder | Channel | When |
+|---|---|---|
+| Canvas token expiring | Email (Resend) | 14, 3 and 0 days out |
+| Weekly recap | Email | Sundays |
+| "How did you sleep?" | Web push | 8am Frisco |
+| "How much phone time?" | Web push | 6pm Frisco |
+
+So the plumbing is done: `src/lib/email.ts`, `src/lib/push.ts`,
+`src/lib/nudge.ts`, `src/app/api/cron/route.ts`, VAPID keys, the
+`PushSubscription` table, and an opt-in card at `src/components/nudge-optin.tsx`
+with a switch per reminder.
+
+**What's missing is the thing actually asked for.** Every reminder above is
+about *feeding the app*. None is about the work. Nothing says "you have three
+things due tomorrow."
+
+**The good news: this is possible, and the schema already allows it.**
+`Assignment.dueAt` is deliberately plaintext (`prisma/schema.prisma:385`) so the
+dashboard can order by what's next without decrypting every row. Which means the
+server can *count* what's due without being able to *name* it. A reminder can
+honestly say "3 things due tomorrow, 1 already overdue" and physically cannot
+say which — the titles are in `payloadCipher`.
+
+That is the right design rather than a limitation to apologise for: a count on a
+lock screen tells the student what they need and tells whoever picks up the
+phone nothing. It's the same rule the existing nudges follow.
+
+**The constraint to solve first.** Vercel's Hobby plan allows **two** cron
+entries and both are taken, and it rejects any schedule firing more than once a
+day. An after-school reminder wants ~4pm Frisco (21:00 UTC), which is neither of
+the two slots. Three ways out, cheapest first:
+
+1. **GitHub Actions on a schedule**, hitting `/api/cron` with the `CRON_SECRET`
+   bearer token. Free, unlimited schedules, no minimum interval, and the
+   endpoint already accepts `?job=` and authenticates by bearer rather than by
+   Vercel's signature. This is almost certainly the answer.
+2. Ride the existing 23:00 UTC job — but that already sends the phone-time push,
+   and two notifications in the same second is how someone turns both off.
+3. Vercel Pro, $20/month. Don't.
+
+**Design notes for whoever builds it, so the same arguments aren't had twice:**
+
+- **Bucketing already exists.** `src/lib/assignments.ts` sorts work into
+  `MISSING → OVERDUE → TODAY → TOMORROW → THIS_WEEK → RECENT → LATER → UNDATED`.
+  A reminder should be counts drawn from those buckets, not a new ranking.
+- **Silence on quiet days.** The existing nudges skip students who already
+  logged; this must skip students with nothing due. A reminder that fires
+  every day saying "0 things due" trains people to swipe it away, and then the
+  one that mattered gets swiped too.
+- **Email and push are not interchangeable.** Push is for *today* and is
+  ignorable; email is for *this is going to hurt* — the Sunday recap and a
+  genuine backlog. Sending both for the same event halves the value of each.
+- **iOS needs the app installed to Home Screen** for push to work at all. On a
+  Safari tab the feature genuinely isn't there, which is why `NudgeOptIn`
+  renders nothing rather than a button that fails.
+- **One switch per reminder**, following the existing card. "Stop telling me
+  about assignments but keep asking about sleep" is a reasonable thing to want,
+  and all-or-nothing is how someone turns off the one they'd have answered.
+- **Resend's free tier is 100 emails/day, 3,000/month.** Fine for a pilot;
+  worth knowing before a campus-wide rollout.
+
+**Not yet decided, and worth a real answer before building:** whether a reminder
+about work is Insight's job at all. Canvas already sends assignment
+notifications, and the honest pitch of this app is that it says *less* than a
+normal tracker, not more. The strongest version is probably the one thing Canvas
+can't do — tie the reminder to a pattern the engine actually found, e.g. a
+nudge at 9pm on a night before a test *because* late sessions came before lower
+scores for this student. That is not a to-do; it's a design question for
+Kapilesh and Sahas.
+
+---
+
 ## Outstanding, for Kapilesh
 
 - **Rotate the leaked credentials.** Neon password, Groq and Resend keys, and one

@@ -872,17 +872,33 @@ Kapilesh and Sahas.
 
 ## Outstanding, for Kapilesh
 
-- **Rotate the leaked credentials.** Neon password, Groq and Resend keys, and one
-  extension pairing code all appeared in screenshots pasted into chat. A phone
-  pairing code has since gone through a messaging app too.
+- **Rotate the Neon password first, and soon.** On 2026-09-05 it was printed in
+  full into a chat transcript by a diagnostic that echoed its input on a parse
+  error. That is worse than the screenshots below, and it is the credential with
+  the most behind it. Reset it in the Neon console, then update `DATABASE_URL`
+  (and `DIRECT_DATABASE_URL` if set — `scripts/deploy-migrate.mjs:21` prefers it)
+  in Vercel **and redeploy**, or production keeps the old value and breaks.
+- **Rotate the rest when convenient.** Groq and Resend keys and one extension
+  pairing code appeared in screenshots pasted into chat. A phone pairing code has
+  since gone through a messaging app too. Kapilesh chose to defer these to the
+  end of the project, which is reasonable — none of them guards real student
+  data yet.
 - **Host the three binaries** and set the three env vars, or `/download` offers
   nothing.
 - **The Chrome Web Store**, $5 and twenty minutes, using `extension/STORE.md`.
-- **Run `npm run seed` against production once.** The bell times were corrected
-  on 2026-08-12 from a real student's schedule, and the seed now *updates*
-  existing periods rather than skipping them — but until it is run, the live
-  database still holds the old, wrong ones and every "you studied during 3rd
-  period" is wrong. Safe to re-run.
+- ~~**Run `npm run seed` against production once.**~~ **Done 2026-09-05**:
+  30 schools, 264 periods, 60 terms, 196 calendar days (82 A / 82 B). The bell
+  times in the live database are now the ones corrected on 2026-08-12 from a
+  real student's schedule, so period attribution is right from here on. Safe to
+  re-run; the seed updates existing periods rather than skipping them.
+
+  Two notes for next time. Run it with the URL inline and in **single** quotes —
+  `DATABASE_URL='postgresql://…' npm run seed` — because zsh treats the `?` and
+  `&` in a Neon connection string as a glob and a background operator, and
+  double quotes let a `$` in the password expand. And copy the *connection
+  string*, not the password field beside it: pasting the password alone produced
+  `P1001: Can't reach database server at base`, which reads like a network
+  fault and is not one.
 - **Lunch waves.** A, B and C lunch sit inside the 3rd block and differ per
   campus *and* per course — one student's HAC showed A Lunch on one class and C
   Lunch on another. Period lookup treats the whole block as one period, which is

@@ -36,17 +36,7 @@ const isPublic = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, request) => {
   if (!isPublic(request)) {
-    // The redirect target is stated here rather than left to
-    // NEXT_PUBLIC_CLERK_SIGN_IN_URL. With no explicit URL and that variable
-    // unset, `protect()` has nowhere to send a signed-out visitor and answers
-    // **404** — which is what production did to every protected route,
-    // including the landing page's own "Open the dashboard" button, while
-    // local development redirected correctly because the variable is in
-    // `.env`. A missing environment variable should not be able to turn the
-    // front door into a dead link.
-    await auth.protect({
-      unauthenticatedUrl: new URL("/sign-in", request.url).toString(),
-    });
+    await auth.protect();
   }
 });
 

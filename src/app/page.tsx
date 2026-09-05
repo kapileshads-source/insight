@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { InsightRow } from "@/components/insight-row";
+import { SiteFooter, SiteNav } from "@/components/chrome";
 
 /**
  * The landing page.
@@ -108,7 +109,7 @@ const STEPS = [
 export default function Home() {
   return (
     <main className="flex-1">
-      <Nav />
+      <SiteNav />
 
       {/* ---- Hero. Paper, asymmetric, chart on the right. ----------------- */}
       <section className="mk-paper relative overflow-hidden text-on-light">
@@ -401,81 +402,14 @@ export default function Home() {
         </div>
       </section>
 
-      <Footer />
+      <SiteFooter />
     </main>
   );
 }
 
 /* -------------------------------------------------------------------------- */
 
-/// Sticky, blurred, and thin. It stays midnight over the paper hero rather
-/// than going transparent: a nav that inverts as you scroll past four
-/// alternating bands is four chances to render unreadable text on its own
-/// background, and it buys nothing.
-function Nav() {
-  return (
-    <header className="sticky top-0 z-50 border-b border-line/70 bg-bg/85 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-6 py-4">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Mark />
-          <span className="h3 text-[17px]">Insight</span>
-        </Link>
 
-        <nav className="hidden items-center gap-7 text-[15px] text-text-muted sm:flex">
-          <Link href="/privacy" className="hover:text-text">
-            Privacy
-          </Link>
-          <Link href="/download" className="hover:text-text">
-            Download
-          </Link>
-          <Link href="/demo" className="hover:text-text">
-            Sample data
-          </Link>
-        </nav>
-
-        <Link
-          href="/dashboard"
-          className="btn-primary px-4 py-2 text-[15px] sm:px-5"
-        >
-          Open
-        </Link>
-      </div>
-    </header>
-  );
-}
-
-/// Two plotted points and the line through them. A logo that is a tiny chart,
-/// for the same reason the hero is a chart — and it stays legible at 20px,
-/// which a glyph or a gradient blob does not.
-function Mark({ size = 22 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden
-      className="shrink-0"
-    >
-      <rect
-        x="1"
-        y="1"
-        width="22"
-        height="22"
-        rx="6"
-        stroke="var(--line-hi)"
-      />
-      <path
-        d="M5 17.5 L19 7"
-        stroke="var(--sky-deep)"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <circle cx="7.5" cy="15.5" r="2.6" fill="var(--ember)" />
-      <circle cx="16.5" cy="8.5" r="2.6" fill="var(--sky)" />
-    </svg>
-  );
-}
 
 /**
  * The hero image: a real scatter plot.
@@ -726,65 +660,3 @@ function WeekPanel() {
   );
 }
 
-function Footer() {
-  return (
-    <footer className="border-t border-line">
-      <div className="mx-auto w-full max-w-6xl px-6 py-14">
-        <div className="flex flex-wrap items-start justify-between gap-10">
-          <div className="max-w-sm">
-            <div className="flex items-center gap-2.5">
-              <Mark size={20} />
-              <span className="h3 text-[16px]">Insight</span>
-            </div>
-            <p className="mt-4 text-[14px] leading-relaxed text-text-faint">
-              Insight compares your data against your own averages. It describes
-              what happened together, never what caused what.
-            </p>
-          </div>
-
-          <nav className="flex gap-14 text-[15px]">
-            <div>
-              <p className="label text-text-faint">Product</p>
-              <ul className="mt-3 space-y-2 text-text-muted">
-                <li>
-                  <Link href="/dashboard" className="hover:text-text">
-                    Dashboard
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/download" className="hover:text-text">
-                    Download
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/demo" className="hover:text-text">
-                    Sample data
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <p className="label text-text-faint">About</p>
-              <ul className="mt-3 space-y-2 text-text-muted">
-                <li>
-                  <Link href="/privacy" className="hover:text-text">
-                    Privacy
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/sign-in" className="hover:text-text">
-                    Sign in
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </nav>
-        </div>
-
-        <p className="mt-12 text-[13px] text-text-faint">
-          © 2026 Insight · Built in Frisco ISD
-        </p>
-      </div>
-    </footer>
-  );
-}

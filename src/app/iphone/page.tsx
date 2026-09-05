@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHero, SiteFooter, SiteNav } from "@/components/chrome";
 
 import { appsToBlock } from "@/lib/ios-apps";
 
@@ -41,18 +42,16 @@ function Step({
 
 export default function IPhonePage() {
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-      <Link href="/" className="h3 text-[17px]">
-        Insight
-      </Link>
+    <main className="flex-1">
+      <SiteNav />
 
-      <h1 className="h1 mt-10 text-[clamp(2rem,6vw,2.75rem)]">
-        Insight on iPhone.
-      </h1>
+      <PageHero
+        eyebrow="Setup"
+        title="Insight on iPhone."
+        lede="Three things to set up, about ten minutes, and you only do it once."
+      />
 
-      <p className="mt-5 text-[17px] leading-relaxed text-text-muted">
-        Three things to set up, about ten minutes, and you only do it once.
-      </p>
+      <div className="mx-auto w-full max-w-3xl px-6 py-16">
 
       <section className="mt-10 rounded-lg border border-line bg-surface p-6">
         <h2 className="h3 text-[17px]">First, what an iPhone can&rsquo;t do</h2>
@@ -219,6 +218,9 @@ export default function IPhonePage() {
           , with no setup beyond two permissions.
         </p>
       </section>
+      </div>
+
+      <SiteFooter />
     </main>
   );
 }

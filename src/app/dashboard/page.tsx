@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppNav } from "@/components/chrome";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { isIOS } from "@/lib/user-agent";
@@ -199,64 +200,52 @@ export default async function Dashboard() {
   const onIPhone = isIOS((await headers()).get("user-agent"));
 
   return (
-    <div className="mx-auto w-full max-w-3xl flex-1 px-6 pb-32">
-      <header className="flex items-center justify-between border-b border-line py-6">
-        <span className="h3 text-[17px]">Insight</span>
-        <nav className="flex items-center gap-5 text-[14px]">
-          <span className="hidden text-text-faint sm:inline">
-            {user.school?.name}
-          </span>
-          <Link href="/canvas" className="text-text-muted">
-            Canvas
-          </Link>
-          <Link href="/devices" className="text-text-muted">
-            Devices
-          </Link>
-          <Link href="/settings" className="text-text-muted">
-            Settings
-          </Link>
-        </nav>
-      </header>
+    <>
+      <AppNav email={user.email} />
 
-      {user.schoolId && <RightNow schoolId={user.schoolId} />}
+      <div className="mx-auto w-full max-w-3xl flex-1 px-6 pb-32 pt-8">
 
-      <RoutinePrompt />
+        {user.schoolId && <RightNow schoolId={user.schoolId} />}
 
-      <GapPrompt />
+        <RoutinePrompt />
 
-      <FinishSetup
-        hasCanvas={canvas.connected}
-        // Any paired device counts. A student on a Mac who never installs the
-        // extension has still done this, and nagging them for a checkbox they
-        // deliberately skipped is how a checklist gets ignored entirely.
-        hasExtension={devices.length > 0}
-        hasBaseline={hasBaseline}
-      />
+        <GapPrompt />
 
-      <StudyPanel
-        isIOS={onIPhone}
-        running={
-          running
-            ? {
-                id: running.id,
-                startedAt: running.startedAt.toISOString(),
-                focusModeActive: running.focusModeActive,
-              }
-            : null
-        }
-      />
+        <FinishSetup
+          hasCanvas={canvas.connected}
+          // Any paired device counts. A student on a Mac who never installs the
+          // extension has still done this, and nagging them for a checkbox they
+          // deliberately skipped is how a checklist gets ignored entirely.
+          hasExtension={devices.length > 0}
+          hasBaseline={hasBaseline}
+        />
 
-      <CanvasAutoSync />
-      <AssignmentsPanel />
+        <StudyPanel
+          isIOS={onIPhone}
+          running={
+            running
+              ? {
+                  id: running.id,
+                  startedAt: running.startedAt.toISOString(),
+                  focusModeActive: running.focusModeActive,
+                }
+              : null
+          }
+        />
 
-      <GradeOutcomes />
+        <CanvasAutoSync />
+        <AssignmentsPanel />
 
-      <AssignmentPairing />
+        <GradeOutcomes />
 
-      <p className="mt-12 text-[13px] text-text-faint">
-        {formatToday(today, user.school?.timezone ?? "America/Chicago")}
-        {user.gradeLevel ? ` · Grade ${user.gradeLevel}` : ""}
-      </p>
-    </div>
+        <AssignmentPairing />
+
+        <p className="mt-12 text-[13px] text-text-faint">
+          {formatToday(today, user.school?.timezone ?? "America/Chicago")}
+          {user.gradeLevel ? ` · Grade ${user.gradeLevel}` : ""}
+          {user.school?.name ? ` · ${user.school.name}` : ""}
+        </p>
+      </div>
+    </>
   );
 }

@@ -1,23 +1,22 @@
 import { SignIn } from "@clerk/nextjs";
-import Link from "next/link";
+import { SiteNav } from "@/components/chrome";
 
 export const metadata = { title: "Sign in — Insight" };
 
 export default function SignInPage() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 py-16">
-      <Link href="/" className="h3 text-[17px]">
-        Insight
-      </Link>
+    <main className="flex-1">
+      <SiteNav />
 
-      <h1 className="h2 mt-8 text-3xl">Welcome back.</h1>
-      <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
-        You&rsquo;ll be asked for your password after this to unlock your
-        data.
-      </p>
+      <div className="mx-auto flex w-full max-w-md flex-col px-6 py-16">
+        <h1 className="h1 text-[clamp(2rem,5vw,2.6rem)]">Welcome back.</h1>
+        <p className="mt-4 text-[16px] leading-relaxed text-text-muted">
+          You&rsquo;ll be asked for your password after this to unlock your data.
+        </p>
 
-      <div className="mt-8">
-        <SignIn />
+        <div className="mt-8">
+          <SignIn />
+        </div>
       </div>
     </main>
   );

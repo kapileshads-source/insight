@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PageHero, SiteFooter, SiteNav } from "@/components/chrome";
 
 import { DemoSeeder } from "@/components/demo-seeder";
 
@@ -15,18 +15,16 @@ export const metadata = { title: "Sample data — Insight" };
  */
 export default function DemoPage() {
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-      <Link href="/dashboard" className="h3 text-[17px]">
-        Insight
-      </Link>
+    <main className="flex-1">
+      <SiteNav />
 
-      <h1 className="h1 mt-10 text-[clamp(2rem,6vw,2.75rem)]">Sample data.</h1>
+      <PageHero
+        eyebrow="Demonstration"
+        title="Sample data."
+        lede="Twelve weeks of a made-up student, so the dashboard has something to show. Useful for a demo video, a screenshot, or checking that the insight engine behaves."
+      />
 
-      <p className="mt-5 text-[17px] leading-relaxed text-text-muted">
-        Twelve weeks of a made-up student, so the dashboard has something to
-        show. Useful for a demo video, a screenshot, or checking that the
-        insight engine behaves.
-      </p>
+      <div className="mx-auto w-full max-w-3xl px-6 py-16">
 
       <section className="mt-10 rounded-lg border border-butter/40 bg-surface p-6">
         <h2 className="h3 text-[17px]">This is not real data</h2>
@@ -66,6 +64,9 @@ export default function DemoPage() {
           of the app does — the server has no key.
         </p>
       </section>
+      </div>
+
+      <SiteFooter />
     </main>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHero, SiteFooter, SiteNav } from "@/components/chrome";
 import { headers } from "next/headers";
 import { detectOs } from "@/lib/user-agent";
 import { DownloadPanel } from "@/components/download-panel";
@@ -12,20 +13,16 @@ export default async function DownloadPage() {
   const os = detectOs((await headers()).get("user-agent"));
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-      <Link href="/" className="h3 text-[17px]">
-        Insight
-      </Link>
+    <main className="flex-1">
+      <SiteNav />
 
-      <h1 className="h1 mt-10 text-[clamp(2.25rem,6vw,3rem)]">
-        The desktop apps.
-      </h1>
-      <p className="mt-5 text-[17px] leading-relaxed text-text-muted">
-        Optional. Insight works without them — they add the half of your time
-        that isn&rsquo;t in a browser, and let Focus Mode reach apps rather than
-        only websites. On a phone, that means Android: iOS doesn&rsquo;t allow
-        it, and never will without Apple&rsquo;s permission.
-      </p>
+      <PageHero
+        eyebrow="Optional"
+        title="The desktop apps."
+        lede="Optional. Insight works without them — they add the half of your time that isn’t in a browser, and let Focus Mode reach apps rather than only websites. On a phone, that means Android: iOS doesn’t allow it, and never will without Apple’s permission."
+      />
+
+      <div className="mx-auto w-full max-w-3xl px-6 py-16">
       <p className="mt-4 text-[15px] text-text-faint">
         On an iPhone there&rsquo;s nothing to download — Apple doesn&rsquo;t
         allow it. There is{" "}
@@ -50,6 +47,9 @@ export default async function DownloadPage() {
           androidUrl={process.env.NEXT_PUBLIC_DOWNLOAD_ANDROID_URL}
         />
       </div>
+      </div>
+
+      <SiteFooter />
     </main>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHero, SiteFooter, SiteNav } from "@/components/chrome";
 
 export const metadata = { title: "Privacy — Insight" };
 
@@ -24,19 +25,16 @@ function Section({
 
 export default function PrivacyPage() {
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-      <Link href="/" className="h3 text-[17px]">
-        Insight
-      </Link>
+    <main className="flex-1">
+      <SiteNav />
 
-      <h1 className="h1 mt-10 text-[clamp(2.25rem,6vw,3rem)]">
-        What we do with your data.
-      </h1>
-      <p className="mt-5 text-[17px] leading-relaxed text-text-muted">
-        Insight is built by Kapilesh Rajaravisankar and Sahas Raghav
-        Vijayakumar for students in Frisco ISD. It is not run by, endorsed by,
-        or affiliated with the district.
-      </p>
+      <PageHero
+        eyebrow="Privacy"
+        title="What we do with your data."
+        lede="Insight is built by Kapilesh Rajaravisankar and Sahas Raghav Vijayakumar for students in Frisco ISD. It is not run by, endorsed by, or affiliated with the district."
+      />
+
+      <div className="mx-auto w-full max-w-3xl px-6 py-16">
       <p className="mt-4 text-[15px] text-text-faint">
         Parents: there&rsquo;s a{" "}
         <Link
@@ -219,6 +217,9 @@ export default function PrivacyPage() {
           first, and anyone under 13 will need a parent to consent again.
         </p>
       </Section>
+      </div>
+
+      <SiteFooter />
     </main>
   );
 }

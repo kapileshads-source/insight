@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHero, SiteFooter, SiteNav } from "@/components/chrome";
 
 export const metadata = { title: "For parents — Insight" };
 
@@ -8,19 +9,16 @@ export const metadata = { title: "For parents — Insight" };
 /// the detail.
 export default function ParentsPage() {
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-      <Link href="/" className="h3 text-[17px]">
-        Insight
-      </Link>
+    <main className="flex-1">
+      <SiteNav />
 
-      <h1 className="h1 mt-10 text-[clamp(2.25rem,6vw,3rem)]">
-        For parents.
-      </h1>
-      <p className="mt-5 text-[17px] leading-relaxed text-text-muted">
-        Your child has asked to use Insight. Here&rsquo;s what it does, what it
-        keeps, and what you can do about it — in plain terms, without needing to
-        take our word for anything.
-      </p>
+      <PageHero
+        eyebrow="For parents"
+        title="For parents."
+        lede="Your child has asked to use Insight. Here’s what it does, what it keeps, and what you can do about it — in plain terms, without needing to take our word for anything."
+      />
+
+      <div className="mx-auto w-full max-w-3xl px-6 py-16">
 
       <div className="mt-10 space-y-8">
         {[
@@ -96,6 +94,9 @@ export default function ParentsPage() {
           .
         </p>
       </div>
+      </div>
+
+      <SiteFooter />
     </main>
   );
 }

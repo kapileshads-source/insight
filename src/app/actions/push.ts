@@ -89,6 +89,7 @@ export async function setNudgePreferences(input: unknown): Promise<PushResult> {
       endpoint: z.string().url().max(1000),
       sleepNudge: z.boolean(),
       screenTimeNudge: z.boolean(),
+      dueWorkNudge: z.boolean(),
     })
     .safeParse(input);
   if (!parsed.success) return { ok: false, error: "That didn't look right." };
@@ -98,6 +99,7 @@ export async function setNudgePreferences(input: unknown): Promise<PushResult> {
     data: {
       sleepNudge: parsed.data.sleepNudge,
       screenTimeNudge: parsed.data.screenTimeNudge,
+      dueWorkNudge: parsed.data.dueWorkNudge,
     },
   });
 
@@ -106,13 +108,17 @@ export async function setNudgePreferences(input: unknown): Promise<PushResult> {
 
 export async function getNudgePreferences(
   endpoint: string,
-): Promise<{ sleepNudge: boolean; screenTimeNudge: boolean } | null> {
+): Promise<{
+  sleepNudge: boolean;
+  screenTimeNudge: boolean;
+  dueWorkNudge: boolean;
+} | null> {
   const user = await getOrCreateUser();
   if (!user) return null;
 
   const row = await db.pushSubscription.findFirst({
     where: { endpoint, userId: user.id },
-    select: { sleepNudge: true, screenTimeNudge: true },
+    select: { sleepNudge: true, screenTimeNudge: true, dueWorkNudge: true },
   });
   return row ?? null;
 }

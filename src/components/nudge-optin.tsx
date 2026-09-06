@@ -32,6 +32,10 @@ function decodeKey(base64: string): Uint8Array {
   return Uint8Array.from(binary, (c) => c.charCodeAt(0));
 }
 
+/// The three things a device can be asked about, kept in one place so the
+/// card, the toggle handler and the server action cannot drift apart.
+type NudgeSwitch = "sleepNudge" | "screenTimeNudge" | "dueWorkNudge";
+
 type State =
   | { kind: "unsupported" }
   | { kind: "blocked" }
@@ -41,7 +45,11 @@ type State =
 
 export function NudgeOptIn() {
   const [state, setState] = useState<State | null>(null);
-  const [prefs, setPrefs] = useState({ sleepNudge: true, screenTimeNudge: true });
+  const [prefs, setPrefs] = useState({
+    sleepNudge: true,
+    screenTimeNudge: true,
+    dueWorkNudge: true,
+  });
 
   const look = useCallback(async () => {
     // iOS only allows this in an installed Home Screen app, so on a Safari tab
@@ -141,7 +149,7 @@ export function NudgeOptIn() {
 
   if (!state || state.kind === "unsupported") return null;
 
-  async function toggle(which: "sleepNudge" | "screenTimeNudge") {
+  async function toggle(which: NudgeSwitch) {
     if (state?.kind !== "on") return;
     const next = { ...prefs, [which]: !prefs[which] };
     setPrefs(next);
@@ -168,14 +176,18 @@ export function NudgeOptIn() {
  */
 export function NudgeCard({
   state,
-  prefs = { sleepNudge: true, screenTimeNudge: true },
+  prefs = { sleepNudge: true, screenTimeNudge: true, dueWorkNudge: true },
   onToggle,
   onTurnOn,
   onTurnOff,
 }: {
   state: State;
-  prefs?: { sleepNudge: boolean; screenTimeNudge: boolean };
-  onToggle?: (which: "sleepNudge" | "screenTimeNudge") => void;
+  prefs?: {
+    sleepNudge: boolean;
+    screenTimeNudge: boolean;
+    dueWorkNudge: boolean;
+  };
+  onToggle?: (which: NudgeSwitch) => void;
   onTurnOn: () => void;
   onTurnOff: () => void;
 }) {
@@ -197,7 +209,7 @@ export function NudgeCard({
       <section className="mt-10 rounded-lg border border-line bg-surface p-6">
         <h2 className="h3 text-[17px]">Daily reminders are on</h2>
         <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
-          Only on days you haven&rsquo;t already logged.
+          Only when there&rsquo;s something to ask, or something to tell you.
         </p>
 
         {/* Two switches rather than one, because "stop asking about my phone
@@ -223,6 +235,15 @@ export function NudgeCard({
             />
             Evenings — phone time today?
           </label>
+          <label className="flex items-center gap-3 text-[15px] text-text-muted">
+            <input
+              type="checkbox"
+              checked={prefs.dueWorkNudge}
+              onChange={() => onToggle?.("dueWorkNudge")}
+              className="h-4 w-4 accent-sky"
+            />
+            After school — what&rsquo;s due tomorrow
+          </label>
         </div>
 
         <button
@@ -241,9 +262,13 @@ export function NudgeCard({
       <h2 className="h3 text-[17px]">Get reminded</h2>
       <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
         Sleep and phone time are the only two things Insight can&rsquo;t measure
-        for itself, and they feed four of the seven patterns it looks for.
-        Two reminders a day — morning and evening — and nothing on the days
-        you&rsquo;ve already logged.
+        for itself, and they feed four of the seven patterns it looks for. So it
+        asks once in the morning and once at night — and never on a day
+        you&rsquo;ve already answered.
+      </p>
+      <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
+        The third is the other way round: after school, what&rsquo;s due
+        tomorrow. Nothing is sent on an evening with nothing due.
       </p>
       <button
         type="button"
@@ -254,8 +279,9 @@ export function NudgeCard({
         {state.kind === "working" ? "Just a second…" : "Turn on reminders"}
       </button>
       <p className="mt-4 text-[13px] leading-relaxed text-text-faint">
-        The reminder itself says nothing about you — just the question. Insight
-        can see that a night is unlogged, never what you would have written.
+        The reminders carry no data about you. Insight can see that a night is
+        unlogged and that a due date is tomorrow — never what you slept, and
+        never what the work is.
       </p>
     </section>
   );

@@ -431,6 +431,11 @@ model PushSubscription {
   /// without unsubscribing the device.
   sleepNudge      Boolean @default(true)
   screenTimeNudge Boolean @default(true)
+  /// The evening "what's due tomorrow" reminder. Separate from the two above
+  /// because it is a different kind of thing: those ask the student for a
+  /// number, this one tells them something. Wanting one and not the other is
+  /// entirely reasonable.
+  dueWorkNudge    Boolean @default(true)
 
   /// Cleared when a push is rejected as gone — a browser that has been
   /// uninstalled or had permission revoked returns 404 or 410, and retrying

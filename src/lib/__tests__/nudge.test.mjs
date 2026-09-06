@@ -1,4 +1,9 @@
-import { nudgeMessage, shouldNudge } from "../nudge.ts";
+import {
+  dueWorkMessage,
+  nudgeMessage,
+  shouldNudge,
+  shouldSendDueWork,
+} from "../nudge.ts";
 
 let pass = 0;
 let fail = 0;
@@ -53,6 +58,32 @@ console.log("\nwhat it says");
     const { body } = nudgeMessage(kind, 0);
     ok(`${kind} carries no personal number`, !/\d+(\.\d+)?\s*(hours|hrs|minutes|mins|%)/.test(body));
   }
+}
+
+console.log("\nthe due-work reminder only fires when there is something to say");
+{
+  // A reminder that fires every evening saying "0 due" trains people to swipe
+  // it away, and then the one that mattered gets swiped too.
+  ok("nothing due, nothing late, no push", shouldSendDueWork(0, 0) === false);
+  ok("something due fires", shouldSendDueWork(1, 0) === true);
+  ok("something late fires", shouldSendDueWork(0, 1) === true);
+}
+
+console.log("\nand counts what is due, never what is undone");
+{
+  // Whether a thing has been handed in is encrypted; the server can only see
+  // that a due date is tomorrow. "3 you still need to do" would sometimes be
+  // a lie, "3 due tomorrow" is true either way.
+  const m = dueWorkMessage(3, 0);
+  const said = `${m.title} ${m.body}`.toLowerCase();
+  ok("says what is due", m.title.includes("3 due tomorrow"));
+  ok("does not claim the work is undone", !said.includes("need to do") && !said.includes("still have"));
+
+  ok("one is grammatical", dueWorkMessage(1, 0).body.includes("One thing"));
+  ok("overdue alone reads as overdue", dueWorkMessage(0, 2).title.includes("2 past"));
+  ok("both are mentioned together", dueWorkMessage(2, 1).body.includes("1 past its date"));
+  // Never tells anyone off — the same rule the other two nudges follow.
+  ok("late work is not scolded", dueWorkMessage(0, 4).body.includes("Still worth handing in"));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

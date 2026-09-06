@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendCanvasExpiryWarning, sendWeeklyRecap } from "@/lib/email";
-import { sendNudges } from "@/lib/push";
+import { sendDueWorkNudges, sendNudges } from "@/lib/push";
 
 /**
  * Scheduled jobs, driven by an external cron hitting this endpoint.
@@ -153,10 +153,20 @@ async function handle(request: Request) {
       const nudged = await sendNudges("SCREEN_TIME");
       return NextResponse.json({ sent: await runWeeklyRecaps(force), nudged });
     }
+    if (job === "due-work") {
+      // Driven by GitHub Actions rather than Vercel. The Hobby plan allows two
+      // cron entries and both are spoken for, and it refuses any schedule
+      // firing more than once a day — while this wants an evening slot that is
+      // neither of the other two. A scheduled workflow calling this endpoint
+      // with the same bearer token costs nothing and removes the limit, and
+      // this route already authenticates by secret rather than by Vercel's
+      // signature, so nothing here had to change to allow it.
+      return NextResponse.json({ nudged: await sendDueWorkNudges() });
+    }
     return NextResponse.json(
       {
         error:
-          "Unknown job. Use ?job=canvas-expiry, ?job=weekly-recap or ?job=staging-cleanup",
+          "Unknown job. Use ?job=canvas-expiry, ?job=weekly-recap, ?job=due-work or ?job=staging-cleanup",
       },
       { status: 400 },
     );

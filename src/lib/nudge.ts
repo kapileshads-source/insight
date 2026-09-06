@@ -17,7 +17,7 @@
  * notification never shows a number to whoever picks the phone up.
  */
 
-export type NudgeKind = "SLEEP" | "SCREEN_TIME";
+export type NudgeKind = "SLEEP" | "SCREEN_TIME" | "DUE_WORK";
 
 export type NudgeAudience = {
   /// The device agreed to be asked at all.
@@ -68,6 +68,54 @@ export function nudgeMessage(
         ? `${missedDays + 1} nights unlogged. Settings → Screen Time has it.`
         : "Settings → Screen Time, or drop in a screenshot.",
   };
+}
+
+/**
+ * What the "due tomorrow" reminder says.
+ *
+ * **The count is of assignments due, not of work outstanding, and the wording
+ * has to keep that distinction.** Whether something has been handed in lives in
+ * the encrypted payload, so the server genuinely cannot tell — it can only see
+ * that a due date is tomorrow and that no grade has landed against it yet. For
+ * work due tomorrow those are usually the same thing, but not always, and
+ * "3 things you still need to do" would sometimes be a lie.
+ *
+ * "3 due tomorrow" is true either way. The app itself, which can decrypt, shows
+ * the filtered list once opened — which is the point of the reminder.
+ */
+export function dueWorkMessage(
+  dueTomorrow: number,
+  overdue: number,
+): { title: string; body: string } {
+  if (overdue > 0 && dueTomorrow > 0) {
+    return {
+      title: `${dueTomorrow} due tomorrow`,
+      body: `And ${overdue} past its date. Open Insight to see what's left.`,
+    };
+  }
+  if (overdue > 0) {
+    return {
+      title: `${overdue} past its due date`,
+      body: "Still worth handing in — have a look at what's outstanding.",
+    };
+  }
+  return {
+    title: `${dueTomorrow} due tomorrow`,
+    body:
+      dueTomorrow === 1
+        ? "One thing on the list. Worth a look tonight."
+        : "Worth a look tonight rather than in the morning.",
+  };
+}
+
+/// Nothing due and nothing late is not worth a notification. A reminder that
+/// fires every evening saying "0 due" trains people to swipe it away, and then
+/// the one that mattered gets swiped too.
+export function shouldSendDueWork(
+  dueTomorrow: number,
+  overdue: number,
+): boolean {
+  return dueTomorrow > 0 || overdue > 0;
 }
 
 /// Where tapping the notification should land.

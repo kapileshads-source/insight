@@ -836,6 +836,42 @@ run of things that passed their tests and didn't.
 
 ---
 
+## Reminders about work — built 2026-09-06
+
+**The due-work reminder now exists.** After school on school nights, a push
+saying how many things are due tomorrow and how many are past their date, with
+its own switch beside the other two. Nothing is sent on an evening with nothing
+due — a reminder that fires every day saying "0 due" trains people to swipe it
+away, and then the one that mattered gets swiped too.
+
+**What the server can and cannot see, because it shapes the wording.** A due
+date is plaintext, so counting what falls tomorrow is free. Whether something
+has been *handed in* is not — it is in the encrypted payload. The only proxy
+available is a graded outcome, whose `assignmentId` is a plain foreign key, so
+marked work can be excluded and "submitted but not yet marked" cannot. That is
+why the copy says **"3 due tomorrow"** and never "3 you still need to do": the
+first is true either way, and there are tests that fail if it drifts.
+
+**The scheduling problem is solved without paying Vercel.** Hobby allows two
+cron entries, both were spoken for, and it refuses anything firing more than
+once a day. `.github/workflows/reminders.yml` calls `/api/cron?job=due-work` on
+a schedule instead — free, no limit, and the endpoint already authenticated by
+bearer secret rather than Vercel signature, so nothing had to change to allow
+it. **Two repository secrets are required before it does anything:**
+`CRON_SECRET` (matching the Vercel variable) and `APP_URL`. The workflow fails
+loudly on a non-200, because a reminder that silently stops firing is worse
+than one that was never built.
+
+### Still to build
+
+The original ask also covered tying a reminder to a pattern the engine found —
+a nudge before a test *because* late sessions came before lower scores for this
+student. That is the one thing Canvas cannot do and it is still unbuilt. It is
+also the one that needs care: it means a notification whose existence implies a
+finding about the student, which is a different privacy question from a count.
+
+### The original note, kept for the reasoning
+
 ## To build: reminders about work, not just about logging
 
 Kapilesh's ask, 2026-09-04: *students are swarmed with work, so remind them —

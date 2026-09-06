@@ -5,6 +5,8 @@ import { z } from "zod";
 
 import { db } from "@/lib/db";
 import { getOrCreateUser } from "@/lib/user";
+import { decryptToken, encryptToken } from "@/lib/server-crypto";
+import { fetchClasswork } from "@/lib/hac-login";
 
 /**
  * Storing what the student's own browser read out of HAC.
@@ -173,4 +175,153 @@ export async function fetchHacState() {
   ]);
 
   return { assignments, courses };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Signing in with credentials, for students without the extension.           */
+/* -------------------------------------------------------------------------- */
+
+const credentialsSchema = z.object({
+  username: z.string().trim().min(1).max(100),
+  password: z.string().min(1).max(200),
+});
+
+export type HacConnectResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+/// Fixed, non-revealing messages. Nothing derived from what was typed.
+const FAILURE_TEXT: Record<string, string> = {
+  BAD_CREDENTIALS: "HAC didn't accept that username and password.",
+  UNREACHABLE: "Couldn't reach HAC just now. Try again in a minute.",
+  BLOCKED: "HAC's sign-in page didn't look the way we expect. Nothing was sent.",
+  NO_CLASSWORK: "Signed in, but the classwork page wouldn't load.",
+};
+
+/**
+ * Store HAC credentials, after proving they work.
+ *
+ * The login is attempted *before* anything is written, so a typo is never
+ * saved. Nothing about the attempt is logged, and the failure text is a fixed
+ * lookup rather than anything built from what the student typed.
+ */
+export async function connectHac(input: unknown): Promise<HacConnectResult> {
+  const user = await getOrCreateUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const parsed = credentialsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Enter your HAC username and password." };
+  }
+
+  const { username, password } = parsed.data;
+
+  const attempt = await fetchClasswork(username, password);
+  if (!attempt.ok) {
+    return {
+      ok: false,
+      error: FAILURE_TEXT[attempt.reason] ?? "Couldn't sign in to HAC.",
+    };
+  }
+
+  const sealed = encryptToken(password);
+  await db.hacConnection.upsert({
+    where: { userId: user.id },
+    create: {
+      userId: user.id,
+      username,
+      password: sealed.cipher,
+      passwordIv: sealed.iv,
+    },
+    update: {
+      username,
+      password: sealed.cipher,
+      passwordIv: sealed.iv,
+      disconnectedAt: null,
+    },
+  });
+
+  revalidatePath("/canvas");
+  return { ok: true };
+}
+
+/// Remove the row rather than blank the field. A stored credential that is no
+/// longer wanted should stop existing.
+export async function disconnectHac(): Promise<HacConnectResult> {
+  const user = await getOrCreateUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  await db.hacConnection.deleteMany({ where: { userId: user.id } });
+  revalidatePath("/canvas");
+  return { ok: true };
+}
+
+export async function hacConnectionStatus(): Promise<{
+  connected: boolean;
+  username: string | null;
+  disconnected: boolean;
+  lastSyncedAt: string | null;
+}> {
+  const user = await getOrCreateUser();
+  if (!user) {
+    return { connected: false, username: null, disconnected: false, lastSyncedAt: null };
+  }
+
+  const row = await db.hacConnection.findUnique({
+    where: { userId: user.id },
+    select: { username: true, disconnectedAt: true, lastSyncedAt: true },
+  });
+
+  return {
+    connected: Boolean(row),
+    username: row?.username ?? null,
+    disconnected: Boolean(row?.disconnectedAt),
+    lastSyncedAt: row?.lastSyncedAt?.toISOString() ?? null,
+  };
+}
+
+/**
+ * Fetch the gradebook page using the stored credentials.
+ *
+ * Returns the HTML to the caller's own browser, which parses and encrypts it —
+ * the same round trip Canvas takes, and for the same reason: the server has no
+ * key, so it cannot store what it just fetched.
+ *
+ * This is what makes a phone work. The extension can't run there, but the
+ * server has no CORS to worry about, so the phone asks the server to fetch and
+ * then encrypts the result itself.
+ */
+export async function pullHac(): Promise<
+  { ok: true; html: string } | { ok: false; error: string }
+> {
+  const user = await getOrCreateUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const row = await db.hacConnection.findUnique({ where: { userId: user.id } });
+  if (!row) return { ok: false, error: "HAC isn't connected." };
+
+  const password = decryptToken(row.password, row.passwordIv);
+  const result = await fetchClasswork(row.username, password);
+
+  if (!result.ok) {
+    // Only a rejected login marks the connection dead. A network blip must not
+    // make a student retype their password.
+    if (result.reason === "BAD_CREDENTIALS") {
+      await db.hacConnection.update({
+        where: { userId: user.id },
+        data: { disconnectedAt: new Date() },
+      });
+    }
+    return {
+      ok: false,
+      error: FAILURE_TEXT[result.reason] ?? "Couldn't read HAC.",
+    };
+  }
+
+  await db.hacConnection.update({
+    where: { userId: user.id },
+    data: { lastSyncedAt: new Date(), disconnectedAt: null },
+  });
+
+  return { ok: true, html: result.html };
 }

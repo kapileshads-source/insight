@@ -952,6 +952,36 @@ Kapilesh and Sahas.
 
 ---
 
+## HAC credentials — the second server-readable secret
+
+Added 2026-09-06 on Kapilesh's explicit instruction, after the trade was put to
+him twice.
+
+**What changed.** A student can now sign into HAC with a username and password
+instead of the extension. The password is encrypted with the *server* key, like
+`CanvasConnection.accessToken`, so the server can log in on their behalf. That
+makes it **the second student secret the server can read, and a heavier one** —
+a Canvas token is scoped, revocable and 90-day; a HAC password is the student's
+school identity and is often the same one behind their district Google account.
+
+**Why it was worth it.** The extension is desktop Chrome only. A Frisco student
+on a phone had no way to see their real gradebook, which is most of the point of
+the app.
+
+**What did not change.** The server still cannot read the gradebook. It has no
+encryption key, so `pullHac` fetches the page and hands the HTML back to the
+student's own browser to parse and encrypt — the same round trip Canvas takes.
+Holding the page in memory for one request is the most it can do.
+
+**Rules enforced in code, not intention:** credentials only in a POST body,
+never a URL; every failure is a fixed code so nothing typed can reach a log or
+a stack trace; nothing is stored until a login succeeds, so a typo is never
+saved; disconnecting deletes the row rather than blanking a field.
+
+**Still to do:** `DATA.md` and both privacy pages must say this before anyone
+other than Kapilesh uses it. The app currently promises more than it delivers
+for this one field, and that gap is the kind that matters.
+
 ## Outstanding, for Kapilesh
 
 - **Rotate the Neon password first, and soon.** On 2026-09-05 it was printed in

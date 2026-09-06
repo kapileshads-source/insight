@@ -2,8 +2,10 @@ import { AppNav, PageTitle } from "@/components/chrome";
 import { redirect } from "next/navigation";
 import { getOrCreateUser } from "@/lib/user";
 import { getCanvasStatus } from "@/app/actions/canvas";
+import { hacConnectionStatus } from "@/app/actions/hac";
 import { CanvasConnect } from "@/components/canvas-connect";
 import { HacSync } from "@/components/hac-sync";
+import { HacConnect } from "@/components/hac-connect";
 
 export const metadata = { title: "Canvas — Insight" };
 
@@ -11,7 +13,10 @@ export default async function CanvasPage() {
   const user = await getOrCreateUser();
   if (!user) redirect("/sign-in");
 
-  const status = await getCanvasStatus();
+  const [status, hac] = await Promise.all([
+    getCanvasStatus(),
+    hacConnectionStatus(),
+  ]);
 
   return (
     <>
@@ -28,6 +33,12 @@ export default async function CanvasPage() {
           <CanvasConnect status={status} />
 
           <HacSync />
+
+          <HacConnect
+            connected={hac.connected}
+            username={hac.username}
+            disconnected={hac.disconnected}
+          />
       </div>
       </div>
     </>

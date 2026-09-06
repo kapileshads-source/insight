@@ -227,6 +227,7 @@ model User {
   encryptionKey     EncryptionKey?
   parentConsent     ParentConsent?
   canvasConnection  CanvasConnection?
+  hacConnection     HacConnection?
   assignmentLinks   AssignmentLink[]
   rejectedPairings  RejectedPairing[]
   pushSubscriptions PushSubscription[]
@@ -303,6 +304,52 @@ model ParentConsent {
 // ---------------------------------------------------------------------------
 // Canvas
 // ---------------------------------------------------------------------------
+
+/// Home Access Center, signed into on the student's behalf.
+///
+/// **This is the second and last student secret the server can read, and it is
+/// a heavier one than the Canvas token.** A Canvas token is scoped, revocable
+/// and expires in 90 days; a HAC password is the student's school identity and
+/// is often the same one behind their district Google account. Storing it is a
+/// deliberate trade, made because the alternative — the browser extension —
+/// only exists on desktop Chrome, so a student on a phone had no way to see
+/// their real gradebook at all.
+///
+/// The rules that make it defensible, all enforced in code rather than by
+/// intention:
+///
+///  - Encrypted at rest with the SERVER key, exactly like the Canvas token.
+///  - Never in a URL, a query string, a log line or an error message. The
+///    public project that does this passes it in a query string, which lands
+///    in access logs and browser history.
+///  - Optional. The extension path stays, and it is the one that needs no
+///    password.
+///  - Deletable, and deleting it removes the row rather than blanking a field.
+///
+/// The server still cannot read the gradebook it fetches. It has no encryption
+/// key, so the page it pulls is handed to the student's own browser to be
+/// encrypted before storage — the same round trip Canvas takes.
+model HacConnection {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Not a secret, and needed to show which account is connected.
+  username String
+
+  /// Encrypted with the SERVER key. See the note above.
+  password   String
+  passwordIv String
+
+  lastSyncedAt DateTime?
+  /// Set when HAC rejects the credentials, so a dead login shows as
+  /// disconnected rather than as an empty gradebook. The two must never be
+  /// conflated: one needs the student to act, the other is normal in August.
+  disconnectedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
 model CanvasConnection {
   id     String @id @default(cuid())

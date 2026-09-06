@@ -332,7 +332,7 @@ export function StudyPanel({
       )}
 
       {recap && recap.sessions > 0 && (
-        <section className="mt-14 rounded-lg border border-line bg-surface p-6">
+        <section className="mt-14 panel p-6">
           <div className="flex items-baseline justify-between gap-4">
             <h2 className="h3 text-[17px]">Your week</h2>
             <span className="label text-text-faint">Last 7 days</span>
@@ -373,7 +373,7 @@ export function StudyPanel({
       )}
 
       {lastDevice && lastDevice.entries.length > 0 && (
-        <section className="mt-14 rounded-lg border border-line bg-surface p-6">
+        <section className="mt-14 panel p-6">
           <div className="flex items-baseline justify-between gap-4">
             <h2 className="h3 text-[17px]">What your devices saw</h2>
             <span className="label text-text-faint">

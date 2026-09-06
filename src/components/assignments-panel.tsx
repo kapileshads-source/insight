@@ -202,7 +202,7 @@ export function AssignmentsPanel() {
 
   if (failed) {
     return (
-      <section className="mt-14 rounded-lg border border-line bg-surface p-6">
+      <section className="mt-14 panel p-6">
         <h2 className="h3 text-[17px]">What&rsquo;s due</h2>
         <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
           These couldn&rsquo;t be read with your current password. Syncing{" "}
@@ -254,7 +254,7 @@ export function AssignmentList({
   const hidden = groups.length - visible.length;
 
   return (
-    <section className="mt-14 rounded-lg border border-line bg-surface p-6">
+    <section className="mt-14 panel p-6">
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="h3 text-[17px]">What&rsquo;s due</h2>
         <Link href="/canvas" className="label text-text-faint hover:text-text-muted">

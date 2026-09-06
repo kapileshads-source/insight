@@ -28,12 +28,20 @@
    interface is the *specific* violet-to-pink mesh and the neon indigo, not
    depth as such.
 
-   So: the app's interior stays flat, because a dashboard full of glow is a
-   dashboard you can't read. The marketing surfaces get atmosphere — layered
-   warm light over midnight, drawn from Apple's gold and Alpine finishes rather
-   than from a purple everyone has seen. Utilities below are prefixed `mk-` so
-   the split is enforced by name: if `mk-` appears anywhere under /dashboard,
-   the line has been crossed.
+   So: the marketing surfaces get atmosphere — layered warm light over midnight,
+   drawn from Apple's gold and Alpine finishes rather than from a purple
+   everyone has seen. Those utilities are prefixed `mk-`, and the split is
+   enforced by name: if `mk-` appears anywhere under /dashboard, the line has
+   been crossed.
+
+   AMENDED again, later the same month. This block used to say the app's
+   interior "stays flat", and that was too strong — it was read as a ban on
+   depth rather than as a ban on ornament, and it produced a dashboard of
+   identical flat rectangles on a flat ground with nothing for the eye to
+   catch. The distinction that actually matters is between *decoration*, which
+   a screen you open daily should not have, and *separation*, which it needs
+   more than a marketing page does. Hence `.panel` below: a lift you would not
+   notice if you were looking for it, and would miss if it were gone.
 --------------------------------------------------------------------------- */
 
 :root {
@@ -215,6 +223,27 @@ body {
 
 .btn-secondary-on-light:hover {
   border-color: var(--on-light);
+}
+
+/* The panels the app itself is made of.
+
+   Not an `mk-` utility: this is for the screens a student opens daily, so it
+   carries no atmosphere, no glow and no gradient you would notice. What it
+   does carry is a very slight lift from top to bottom and a warmer border than
+   a flat box has, which is enough to separate one card from the next.
+
+   The problem it fixes is monotony rather than dullness. A column of
+   identical flat rectangles on a flat ground gives the eye nothing to catch,
+   so a dashboard of eight panels reads as one grey wall — and no amount of
+   good typography inside them fixes that from the outside. */
+.panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    176deg,
+    var(--surface-hi) 0%,
+    var(--surface) 62%
+  );
 }
 
 /* One visible focus ring for everything reachable by keyboard.

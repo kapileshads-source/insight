@@ -162,7 +162,7 @@ export function GradesPanel() {
 
 function GradesUnreadable() {
   return (
-    <section className="mt-14 rounded-lg border border-line bg-surface p-6">
+    <section className="mt-14 panel p-6">
       <h2 className="h3 text-[17px]">Your grades</h2>
       <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
         These couldn&rsquo;t be read with your current password. Syncing{" "}
@@ -224,7 +224,7 @@ function CourseCard({ course }: { course: CourseGrades }) {
   const shown = all ? graded : graded.slice(0, PREVIEW);
 
   return (
-    <div className="rounded-lg border border-line bg-surface px-6 py-5">
+    <div className="panel px-6 py-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h3 className="text-[16px] text-text">{course.course}</h3>
         {course.reportedGrade ? (

@@ -153,7 +153,7 @@ function FinishSetup({
   if (remaining === 0) return null;
 
   return (
-    <section className="mt-6 rounded-lg border border-line bg-surface px-7 py-6">
+    <section className="mt-6 panel px-7 py-6">
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="h3 text-[17px]">Finish setting up</h2>
         <span className="label text-text-faint">{remaining} left</span>

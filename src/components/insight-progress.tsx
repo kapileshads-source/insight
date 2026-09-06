@@ -34,7 +34,7 @@ export function InsightProgress({
   if (state.ready) return null;
 
   return (
-    <section className="mt-14 rounded-lg border border-line bg-surface px-7 py-6">
+    <section className="mt-14 panel px-7 py-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="h3 text-[17px]">{state.headline}</h2>
         <span className="label text-text-faint">Before any pattern shows</span>

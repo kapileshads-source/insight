@@ -55,8 +55,35 @@ export type CurrentModule = {
  * Modules with no name are skipped: Canvas allows them and they read as blank
  * lines on the dashboard.
  */
+/**
+ * Whether a module name is a unit, or a teacher talking.
+ *
+ * Canvas modules are named by whoever set the course up, and plenty are not
+ * unit names at all: a real Frisco account showed one reading "Flashing Lights
+ * - Complete each task earn credit for this course." Rendered under "What your
+ * classes are on", that is a sentence pretending to be a heading, and it made
+ * the whole feature look broken.
+ *
+ * The test is shape, not content. A unit name is short and is not a sentence —
+ * "Unit 3: Kinematics", "Module 5". Anything long, or carrying sentence
+ * punctuation mid-string, is prose. Rejecting it costs nothing: the fallback
+ * is showing no unit for that class, which is the honest answer and is what
+ * already happens for a course with no modules.
+ */
+export function looksLikeUnitName(name: string): boolean {
+  const text = name.trim();
+  if (text.length === 0 || text.length > 48) return false;
+  // A full stop or comma anywhere but the very end means a sentence.
+  if (/[.,;!?]\s+\S/.test(text)) return false;
+  // More than about eight words is prose however it is punctuated.
+  if (text.split(/\s+/).length > 8) return false;
+  return true;
+}
+
 export function currentModule(modules: CanvasModule[]): CurrentModule | null {
-  const named = modules.filter((m) => m.name?.trim());
+  const named = modules.filter(
+    (m) => m.name?.trim() && looksLikeUnitName(m.name),
+  );
   if (named.length === 0) return null;
 
   const ordered = [...named].sort(

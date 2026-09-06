@@ -1,4 +1,4 @@
-import { currentModule } from "../modules.ts";
+import { looksLikeUnitName, currentModule } from "../modules.ts";
 
 let pass = 0;
 let fail = 0;
@@ -70,6 +70,20 @@ console.log("\nthe assignments inside it");
   ok("ignores everything that isn't one", !chosen.assignmentIds.includes("202"));
   ok("ignores an item with no id", chosen.assignmentIds.length === 2);
   ok("keeps the name whole", chosen.name === "Unit 2: Stoichiometry");
+}
+
+console.log("\nmodule names that are teachers talking, not units");
+{
+  // Seen on a real Frisco account. Rendered under "What your classes are on"
+  // it was a sentence pretending to be a heading.
+  ok("a sentence is not a unit", looksLikeUnitName("Flashing Lights - Complete each task earn credit for this course.") === false);
+  ok("a unit is a unit", looksLikeUnitName("Unit 3: Kinematics") === true);
+  ok("a short module is fine", looksLikeUnitName("Module 5") === true);
+  ok("trailing punctuation is fine", looksLikeUnitName("Unit 1.") === true);
+  ok("mid-sentence punctuation is not", looksLikeUnitName("Read this. Then do that") === false);
+  ok("very long is not", looksLikeUnitName("A".repeat(60)) === false);
+  ok("many words is not", looksLikeUnitName("one two three four five six seven eight nine") === false);
+  ok("blank is not", looksLikeUnitName("   ") === false);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -53,61 +53,50 @@ async function RightNow({ schoolId }: { schoolId: string }) {
   const state = await getSchoolDayState(schoolId);
   if (!state) return null;
 
+  // Prominence tracks usefulness, which it did not used to.
+  //
+  // All three states rendered the same full-bleed Sky slab with an h1 in it —
+  // so "no school today" arrived as the loudest thing on the dashboard, a
+  // screen-height block of pale blue announcing that nothing was happening. It
+  // was the first thing anyone saw and the least worth seeing, and it pushed
+  // the work that *was* due below the fold.
+  //
+  // Only one of these three states tells a student something they can act on:
+  // which class they are sitting in right now. That one keeps the panel. The
+  // other two are a line of text, because that is what they are worth.
   if (state.kind === "NO_SCHOOL") {
     return (
-      <section className="mt-10 rounded-xl bg-sky px-7 py-9 text-on-light sm:px-10 sm:py-11">
-        <span className="label text-on-light-muted">No school today</span>
-        <h1 className="h1 mt-4 text-[clamp(2.25rem,6vw,3.25rem)]">
-          Nothing scheduled.
-        </h1>
-        {state.nextSchoolDay && (
-          <p className="mt-5 text-[17px] leading-relaxed text-on-light-muted">
-            Next school day is {formatCalendarDate(state.nextSchoolDay)}.
-          </p>
-        )}
-      </section>
+      <p className="mt-8 text-[15px] text-text-faint">
+        No school today
+        {state.nextSchoolDay
+          ? ` · next is ${formatCalendarDate(state.nextSchoolDay)}`
+          : ""}
+      </p>
     );
   }
 
   if (state.kind === "BEFORE_OR_AFTER") {
     return (
-      <section className="mt-10 rounded-xl bg-sky px-7 py-9 text-on-light sm:px-10 sm:py-11">
-        <span className="label text-on-light-muted">
-          {state.dayLabel || "Today"}
-        </span>
-        <h1 className="h1 mt-4 text-[clamp(2.25rem,6vw,3.25rem)]">
-          Outside class hours.
-        </h1>
-        <p className="mt-5 max-w-lg text-[17px] leading-relaxed text-on-light-muted">
-          Good time to log a session. Nothing you do now counts against a
-          period.
-        </p>
-      </section>
+      <p className="mt-8 text-[15px] text-text-faint">
+        {state.dayLabel ? `${state.dayLabel} · ` : ""}Outside class hours —
+        nothing you log now counts against a period.
+      </p>
     );
   }
 
   return (
-    <section className="mt-10 rounded-xl bg-sky px-7 py-9 text-on-light sm:px-10 sm:py-11">
-      <span className="label text-on-light-muted">
-        {[
-          state.dayLabel,
-          state.rounded
-            ? `starts in ${state.minutesRemaining} min`
-            : `ends in ${state.minutesRemaining} min`,
-        ]
-          .filter(Boolean)
-          .join(" · ")}
+    <section className="panel mt-8 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 px-7 py-5">
+      <div>
+        <span className="label text-text-faint">
+          {state.dayLabel || "Today"}
+        </span>
+        <h2 className="h3 mt-1 text-[19px]">{state.description}</h2>
+      </div>
+      <span className="text-[15px] text-sky">
+        {state.rounded
+          ? `starts in ${state.minutesRemaining} min`
+          : `ends in ${state.minutesRemaining} min`}
       </span>
-
-      <h1 className="h1 mt-4 text-[clamp(2.25rem,6vw,3.25rem)]">
-        {state.description}
-      </h1>
-
-      <p className="mt-5 max-w-lg text-[17px] leading-relaxed text-on-light-muted">
-        Connect Canvas and this will show what&rsquo;s due for the class
-        you&rsquo;re sitting in.
-      </p>
-
     </section>
   );
 }

@@ -50,6 +50,11 @@ console.log("\nscore cells carry meaning beyond the number");
   ok("M is missing, not zero", parseScore("M").status === "MISSING" && parseScore("M").score === null);
   ok("Z is excused, not zero", parseScore("Z").status === "EXCUSED" && parseScore("Z").score === null);
   ok("blank is ungraded, not zero", parseScore("").status === "UNGRADED" && parseScore("").score === null);
+  // Seen on a real Frisco gradebook, 2026-09-05. The danger is not that it
+  // becomes UNGRADED — that is harmless — but that some later "strip the
+  // letters and take the digits" change turns it into a score.
+  ok("INS is incomplete, not zero", parseScore("INS").status === "INCOMPLETE" && parseScore("INS").score === null);
+  ok("INS is not read as a number", parseScore("INS").score === null);
   ok("whitespace is still blank", parseScore("   ").status === "UNGRADED");
   ok("undefined is safe", parseScore(undefined).score === null);
   ok("nonsense is ungraded", parseScore("see teacher").status === "UNGRADED");

@@ -672,6 +672,52 @@ dependency — see the warning below.
 | Assignment rows | `div.sg-content-grid tr.sg-asp-table-data-row` |
 | Assignment name | the row's `<a>`; a row without one is a totals row |
 
+### Checked against a real gradebook, 2026-09-05
+
+Kapilesh sent the live Classwork page. It settles most of what was guesswork,
+and corrects two things written above.
+
+**The URL moved.** The footer of the real page prints
+`https://hac.friscoisd.org/HomeAccess/Classes/Classwork`. The
+`Assignments.aspx` path above came from the third-party parser and was never
+checked; PowerSchool has moved it. `extension/hac-bridge.js` now tries the new
+address first and keeps the old one as a fallback. Had this shipped unchecked,
+every HAC sync would have failed on a feature nobody had run yet.
+
+**The six column headers are confirmed, exactly:** `Date Due`, `Date Assigned`,
+`Assignment`, `Category`, `Score`, `Total Points`. Every one already matches an
+alias in `HEADERS` in `src/lib/hac.ts`, and `FALLBACK_INDEX` matches too —
+`[2]` is the assignment name, which is why the positional parser appears to skip
+it. The parser is right.
+
+**The course grade is on the page**, as `Student Grades 93.00%` beside each
+course heading, so GradeWay parity does not need the Report Card tab — which is
+empty this early in the year anyway, as are IPR and Transcript-for-this-year.
+
+**Never compute a course average ourselves.** Categories are weighted:
+`Progress Check for Learning` and `Assessment of Learning`. One course showed
+**`Student Grades 0.00%` while holding seven graded progress checks** — because
+the assessment category was empty. Any average we derived would contradict the
+number the student sees in HAC, and being wrong about a grade is the fastest way
+to lose them.
+
+**`INS` is a real score cell.** Handed in, not yet marked. Now parsed as
+`INCOMPLETE` rather than falling through to `UNGRADED`; both keep it out of the
+average, only one explains the blank.
+
+**Corrections to the course-string note further up.** `SST22300A - 1 AP World
+History S1` carries the code and a **section**, not the period. The period is on
+the Week View as a separate `Per: 2`. And:
+
+- **The lunch wave is in the course title** — `AP Pre Calculus S1 - C Lunch`,
+  `Computer Science 1 Adv S1 - A Lunch`. That is the outstanding "lunch waves"
+  item: it is parseable from the title and needs no per-campus table.
+- **The doubled periods are an A/B rotation**, which answers the open question
+  about two courses sharing a period. The Week View labels each day `Day: A` or
+  `Day: B` — Mon B, Tue A, Wed B, Thu A, Fri B. Two courses share one period and
+  alternate. The seeded calendar already carries A/B days (82 each), so period
+  attribution needs to consult the day type, not just the clock.
+
 **That parser reads cells by position** — `tds[0]` due, `[1]` assigned, `[3]`
 category, `[4]` score, `[5]` total — which is the exact failure mode called out
 above. Ours must bind to header labels. Note `[2]` is skipped, so the columns

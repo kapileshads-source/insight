@@ -57,7 +57,10 @@ export type HacStatus =
   | "MISSING"
   /// "Z" — excused, exempt, or dropped depending on the campus. Either way it
   /// does not belong in an average.
-  | "EXCUSED";
+  | "EXCUSED"
+  /// "INS" — handed in, not yet worth a mark. Distinct from UNGRADED, which
+  /// means the teacher has not looked at it at all.
+  | "INCOMPLETE";
 
 /// Header labels we have seen or expect, per field. Compared case- and
 /// space-insensitively, so "Date Due" and "DateDue" both land.
@@ -133,6 +136,13 @@ export function parseScore(cell: string | undefined): {
   }
   if (upper === "Z" || upper === "X" || upper === "EXC" || upper === "EXCUSED") {
     return { score: null, status: "EXCUSED" };
+  }
+  // Seen on a real Frisco gradebook, 2026-09-05, on an assignment that had been
+  // handed in. It is not a number and must not become one. Named rather than
+  // left to fall through to UNGRADED below: both keep it out of the average,
+  // but only this tells the student why the row is blank.
+  if (upper === "INS" || upper === "INC" || upper === "INCOMPLETE") {
+    return { score: null, status: "INCOMPLETE" };
   }
 
   // Strip anything that isn't part of a number: percent signs, stray letters,

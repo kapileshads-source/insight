@@ -19,7 +19,26 @@
  */
 
 const HAC_ORIGIN = "https://hac.friscoisd.org";
-const ASSIGNMENTS_URL = `${HAC_ORIGIN}/HomeAccess/Content/Student/Assignments.aspx`;
+
+/**
+ * Where the classwork actually lives, newest first.
+ *
+ * `Assignments.aspx` came from the third-party parser we read in August and was
+ * never checked against the live site. A real Frisco HAC page, captured
+ * 2026-09-05, prints its own URL in the footer: `/HomeAccess/Classes/Classwork`.
+ * PowerSchool moved it, so the only address we had was one that no longer
+ * resolves — which would have made every HAC sync fail with an error about the
+ * page rather than about the address, on a feature nobody had run yet.
+ *
+ * Both are kept and tried in order. The old path may still redirect on some
+ * campuses or older installs, and a fallback costs one request in the case
+ * where the first works.
+ */
+const ASSIGNMENT_URLS = [
+  `${HAC_ORIGIN}/HomeAccess/Classes/Classwork`,
+  `${HAC_ORIGIN}/HomeAccess/Content/Student/Assignments.aspx`,
+];
+const ASSIGNMENTS_URL = ASSIGNMENT_URLS[0];
 
 /// The page asks by posting to itself; this content script is the only thing
 /// listening. Replies carry the same id so two requests can't be confused.

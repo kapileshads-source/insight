@@ -52,6 +52,15 @@ const storeSchema = z.object({
       }),
     )
     .max(500),
+  /// Existing course rows whose payload the browser has rewritten — in
+  /// practice, to carry the overall grade the gradebook printed beside the
+  /// class. The parser has always read it and storage used to drop it, so the
+  /// app knew every student's course grade and had nowhere to put it.
+  courseUpdates: z
+    .array(z.object({ id: z.string().min(1).max(60), payload: sealed }))
+    .max(30)
+    .optional()
+    .default([]),
 });
 
 export type HacStoreResult =
@@ -67,7 +76,7 @@ export async function storeHacData(input: unknown): Promise<HacStoreResult> {
     return { ok: false, error: "That gradebook data didn't look right." };
   }
 
-  const { newCourses, create, update } = parsed.data;
+  const { newCourses, create, update, courseUpdates } = parsed.data;
 
   // Courses first, so the assignments below have something to hang off.
   // A HAC course has no canvasId; the column stays null, which the unique
@@ -120,6 +129,15 @@ export async function storeHacData(input: unknown): Promise<HacStoreResult> {
       },
     });
     updated += result.count;
+  }
+
+  // Scoped to this user, like the assignment updates above. A course id from
+  // somewhere else must not be able to rewrite anyone's row.
+  for (const c of courseUpdates) {
+    await db.course.updateMany({
+      where: { id: c.id, userId: user.id },
+      data: { payloadCipher: c.payload.cipher, payloadIv: c.payload.iv },
+    });
   }
 
   revalidatePath("/dashboard");

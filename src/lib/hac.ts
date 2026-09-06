@@ -237,16 +237,28 @@ export function readTable(table: HacTable): {
 /// Everything on the page, and whether any of it had to be guessed at.
 export function readPage(tables: HacTable[]): {
   assignments: HacAssignment[];
+  /// The overall figure the gradebook printed beside each course, verbatim.
+  /// Carried out of here because it used to be parsed and then dropped: the
+  /// app read every student's course grade off the page and had nowhere to
+  /// put it, so the one number they actually care about was thrown away.
+  grades: { course: string; grade: string }[];
   usedFallback: boolean;
 } {
   const all: HacAssignment[] = [];
+  const grades: { course: string; grade: string }[] = [];
   let usedFallback = false;
 
   for (const table of tables) {
     const read = readTable(table);
     all.push(...read.assignments);
     usedFallback ||= read.usedFallback;
+
+    // An empty string is not a grade. Early in a term HAC prints the heading
+    // with nothing after it, and storing "" would render as a blank percentage
+    // rather than as "no grade posted yet".
+    const grade = (table.grade ?? "").trim();
+    if (table.course && grade) grades.push({ course: table.course, grade });
   }
 
-  return { assignments: all, usedFallback };
+  return { assignments: all, grades, usedFallback };
 }

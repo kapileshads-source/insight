@@ -124,5 +124,26 @@ console.log("\nthe whole page");
   ok("an empty page is safe", readPage([]).assignments.length === 0);
 }
 
+console.log("the course grade is carried out of the page");
+{
+  const page = readPage([
+    table({ course: "AP Biology", grade: "94.5" }),
+    table({ course: "English 2", grade: "0.00" }),
+  ]);
+  ok("one entry per graded course", page.grades.length === 2);
+  ok("verbatim, not parsed", page.grades[0].grade === "94.5");
+  // The real case this guards: a class with seven graded progress checks and
+  // an empty assessment category prints 0.00%. It is a real grade, not a
+  // missing one, and must survive any truthiness check on the way through.
+  ok("0.00 survives as a grade", page.grades[1].grade === "0.00");
+  ok("and is attributed to its course", page.grades[1].course === "English 2");
+
+  // Blank early in a term. Storing "" would render as a blank percentage
+  // rather than as "no grade posted yet".
+  ok("blank is not a grade", readPage([table({ grade: "" })]).grades.length === 0);
+  ok("whitespace is not a grade", readPage([table({ grade: "   " })]).grades.length === 0);
+  ok("null is not a grade", readPage([table({ grade: null })]).grades.length === 0);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

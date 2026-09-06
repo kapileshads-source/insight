@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppNav } from "@/components/chrome";
+import { GradesPanel } from "@/components/grades-panel";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { isIOS } from "@/lib/user-agent";
@@ -185,6 +186,32 @@ function FinishSetup({
   );
 }
 
+/// Wraps StudyPanel so the two orderings above don't have to repeat the prop
+/// shaping. A Date can't cross into a client component, so it goes as an ISO
+/// string, which is the only reason this exists.
+function StudyTimer({
+  isIOS,
+  running,
+}: {
+  isIOS: boolean;
+  running: { id: string; startedAt: Date; focusModeActive: boolean } | null;
+}) {
+  return (
+    <StudyPanel
+      isIOS={isIOS}
+      running={
+        running
+          ? {
+              id: running.id,
+              startedAt: running.startedAt.toISOString(),
+              focusModeActive: running.focusModeActive,
+            }
+          : null
+      }
+    />
+  );
+}
+
 export default async function Dashboard() {
   const user = await getOrCreateUser();
   if (!user) redirect("/sign-in");
@@ -211,6 +238,38 @@ export default async function Dashboard() {
 
         <GapPrompt />
 
+        {/* Kept high so the ten-minute Canvas pull starts on load rather than
+            after everything below has rendered. It draws nothing. */}
+        <CanvasAutoSync />
+
+        {/* Order is the whole argument of this screen.
+
+            It used to open with a setup checklist and a 550-line timer, and
+            put grades and deadlines below both. But the timer is something you
+            touch once when you sit down to work, whereas what's due and what
+            just got marked are what a student opens the app *for*, several
+            times a day. An app that buries them is one you stop opening, and
+            the insight engine says nothing for the first few weeks — so
+            without a reason to come back, nobody is still here when it does.
+
+            The exception is a session already running: then the timer is the
+            live thing on the screen and belongs at the top. */}
+        {running ? (
+          <>
+            <StudyTimer isIOS={onIPhone} running={running} />
+            <AssignmentsPanel />
+            <GradesPanel />
+          </>
+        ) : (
+          <>
+            <AssignmentsPanel />
+            <GradesPanel />
+            <StudyTimer isIOS={onIPhone} running={running} />
+          </>
+        )}
+
+        {/* Setup, below the daily things. It is finite and mostly done; a
+            checklist above the content is how a checklist gets ignored. */}
         <FinishSetup
           hasCanvas={canvas.connected}
           // Any paired device counts. A student on a Mac who never installs the
@@ -219,22 +278,6 @@ export default async function Dashboard() {
           hasExtension={devices.length > 0}
           hasBaseline={hasBaseline}
         />
-
-        <StudyPanel
-          isIOS={onIPhone}
-          running={
-            running
-              ? {
-                  id: running.id,
-                  startedAt: running.startedAt.toISOString(),
-                  focusModeActive: running.focusModeActive,
-                }
-              : null
-          }
-        />
-
-        <CanvasAutoSync />
-        <AssignmentsPanel />
 
         <GradeOutcomes />
 

@@ -72,9 +72,11 @@ export function HacSync() {
     }
 
     try {
-      const { assignments: incoming, usedFallback } = readPage(
-        parseHacHtml(fetched.html),
-      );
+      const {
+        assignments: incoming,
+        grades: incomingGrades,
+        usedFallback,
+      } = readPage(parseHacHtml(fetched.html));
 
       if (incoming.length === 0) {
         setOutcome({
@@ -95,11 +97,23 @@ export function HacSync() {
       // can happen: the server can't read either side.
       const courses = await Promise.all(
         state.courses.map(async (c) => {
-          const p = await reveal<{ name?: string; shortName?: string }>({
+          const p = await reveal<{
+            name?: string;
+            shortName?: string;
+            reportedGrade?: string | null;
+          }>({
             cipher: c.payloadCipher,
             iv: c.payloadIv,
           });
-          return { id: c.id, name: p.shortName || p.name || "" };
+          return {
+            id: c.id,
+            name: p.shortName || p.name || "",
+            // Kept so rewriting the payload to add a grade cannot blank the
+            // name — a payload is replaced whole, not merged.
+            payloadName: p.name,
+            payloadShortName: p.shortName,
+            reportedGrade: p.reportedGrade ?? null,
+          };
         }),
       );
 
@@ -163,7 +177,33 @@ export function HacSync() {
         })),
       );
 
-      const stored = await storeHacData({ newCourses, create, update });
+      // The overall figure beside each class, written onto the course rows we
+      // already hold. New courses created above get theirs on the next sync
+      // rather than complicating the two-phase ref dance for a number that is
+      // one pull away.
+      const gradeByCourse = new Map(
+        incomingGrades.map((g) => [g.course, g.grade]),
+      );
+      const courseUpdates = [];
+      for (const c of courses) {
+        const grade = gradeByCourse.get(c.name);
+        if (!grade || grade === c.reportedGrade) continue;
+        courseUpdates.push({
+          id: c.id,
+          payload: await conceal({
+            name: c.payloadName,
+            shortName: c.payloadShortName,
+            reportedGrade: grade,
+          }),
+        });
+      }
+
+      const stored = await storeHacData({
+        newCourses,
+        create,
+        update,
+        courseUpdates,
+      });
       if (!stored.ok) {
         setOutcome({ kind: "problem", message: stored.error });
         return;

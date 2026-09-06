@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { fetchGradebook } from "@/app/actions/grades";
 import { useCrypto } from "@/components/crypto-provider";
+import { GpaCard, type GpaInput } from "@/components/gpa-card";
 import {
   buildGradebook,
   gradedSince,
@@ -64,6 +65,7 @@ export function GradesPanel() {
   const { status, reveal } = useCrypto();
   const [courses, setCourses] = useState<CourseGrades[] | null>(null);
   const [fresh, setFresh] = useState<GradeRow[]>([]);
+  const [gpa, setGpa] = useState<GpaInput[]>([]);
   const [failed, setFailed] = useState(false);
 
   /// Gathers and decrypts, and touches no state. Keeping the fetch and the
@@ -71,15 +73,16 @@ export function GradesPanel() {
   /// also the difference between this and the two panels beside it, which set
   /// state directly inside their effects and trip the lint rule about it.
   const gather = useCallback(async (): Promise<
-    | { ok: true; courses: CourseGrades[]; fresh: GradeRow[] }
+    | { ok: true; courses: CourseGrades[]; fresh: GradeRow[]; gpa: GpaInput[] }
     | { ok: false }
   > => {
     const stored = await fetchGradebook();
-    if (!stored) return { ok: true, courses: [], fresh: [] };
+    if (!stored) return { ok: true, courses: [], fresh: [], gpa: [] };
 
     try {
       const names = new Map<string, string>();
       const reported = new Map<string, string | null>();
+      const gpa: GpaInput[] = [];
       await Promise.all(
         stored.courses.map(async (c) => {
           const p = await reveal<{
@@ -92,6 +95,15 @@ export function GradesPanel() {
           // Only the gradebook's own figure is ever shown. See `gradebook.ts`
           // for why nothing is computed here.
           if (p.reportedGrade != null) reported.set(label, p.reportedGrade);
+
+          // The same figure, parsed, for the GPA estimate. A course with no
+          // grade posted contributes nothing rather than a zero.
+          const asNumber = p.reportedGrade == null ? NaN : Number(p.reportedGrade);
+          gpa.push({
+            id: c.id,
+            title: label,
+            grade: Number.isFinite(asNumber) ? asNumber : null,
+          });
         }),
       );
 
@@ -119,6 +131,7 @@ export function GradesPanel() {
         ok: true,
         courses: buildGradebook(rows, reported),
         fresh: gradedSince(rows, seen),
+        gpa,
       };
     } catch {
       // A row that won't decrypt is a real possibility after a password change,
@@ -142,6 +155,7 @@ export function GradesPanel() {
       }
       setCourses(result.courses);
       setFresh(result.fresh);
+      setGpa(result.gpa);
       // Written only once the marks are actually on screen. Stamping "seen" at
       // fetch time would clear the badge for grades the student never saw,
       // because the tab closed or the decrypt failed halfway.
@@ -157,7 +171,12 @@ export function GradesPanel() {
   if (failed) return <GradesUnreadable />;
   if (courses.length === 0) return null;
 
-  return <GradesList courses={courses} newCount={fresh.length} />;
+  return (
+    <>
+      <GradesList courses={courses} newCount={fresh.length} />
+      <GpaCard courses={gpa} />
+    </>
+  );
 }
 
 function GradesUnreadable() {

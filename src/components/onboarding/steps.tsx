@@ -8,6 +8,7 @@ import {
   UnsupportedBrowserError,
   createEncryptionSetup,
 } from "@/lib/crypto";
+import { ScatterCard } from "@/components/scatter-card";
 import type { ActionResult } from "@/app/onboarding/actions";
 import {
   requestParentConsent,
@@ -15,6 +16,7 @@ import {
   saveDevices,
   saveEncryptionSetup,
   saveSchool,
+  skipRemainingSetup,
 } from "@/app/onboarding/actions";
 
 const STEP_ORDER = ["BIRTHDATE", "PASSWORD", "SCHOOL", "DEVICES"] as const;
@@ -101,6 +103,8 @@ export function BirthDateStep() {
           {pending ? "Saving…" : "Continue"}
         </button>
       </form>
+
+      <SkipForNow note="Insight can still track your studying. It just won't know which period you were in until you tell it — and once you do, it labels everything you've already logged." />
     </OnboardingShell>
   );
 }
@@ -234,6 +238,27 @@ export function PasswordStep() {
       title="Pick a password."
       intro="Your sleep, your sessions and your grades get encrypted on this device before they're sent anywhere. This password is the only thing that opens them."
     >
+      {/* What the password is for, shown rather than described.
+      
+          This is the most expensive thing Insight asks anyone to do — invent a
+          second password, permanently unrecoverable, and tick a box confirming
+          they accept that — and until now it was asked on a screen with
+          nothing on it. The cost was concrete and the benefit was abstract,
+          which is the wrong way round at the highest drop-off point in the
+          product.
+      
+          It has to be a labelled sample rather than their own dashboard:
+          nothing can be stored before this key exists, so a "real" preview
+          here would be empty or invented, and an invented dashboard is exactly
+          what this app is not. */}
+      <div className="mb-8">
+        <ScatterCard />
+        <p className="mt-3 text-[13px] leading-relaxed text-text-faint">
+          What Insight builds once it has a few weeks of your logs. This one is
+          a made-up student — yours would be readable only by you.
+        </p>
+      </div>
+
       <form onSubmit={submit}>
         <label htmlFor="password" className="label text-text-muted">
           Password
@@ -411,7 +436,41 @@ export function SchoolStep({ schools }: { schools: SchoolOption[] }) {
   );
 }
 
+
+/**
+ * "Skip for now", on the two steps that ask for something recoverable.
+ *
+ * Deliberately quiet — a link, not a second button — because it is the lesser
+ * path, not an equal one. But it is present, and it is present because five
+ * compulsory screens before a student had seen anything was costing more
+ * signups than either answer was worth.
+ */
+function SkipForNow({ note }: { note: string }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <div className="mt-6">
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          startTransition(async () => {
+            await skipRemainingSetup();
+            router.refresh();
+          })
+        }
+        className="text-[15px] text-text-faint underline underline-offset-4 hover:text-text-muted disabled:opacity-50"
+      >
+        {pending ? "One moment…" : "Skip for now"}
+      </button>
+      <p className="mt-2 text-[13px] leading-relaxed text-text-faint">{note}</p>
+    </div>
+  );
+}
+
 // --- 5. devices -------------------------------------------------------------
+
 
 function ChoiceGroup({
   name,
@@ -494,6 +553,8 @@ export function DevicesStep() {
           </button>
         </div>
       </form>
+
+      <SkipForNow note="This only decides which downloads we offer you. Nothing depends on it." />
     </OnboardingShell>
   );
 }

@@ -248,3 +248,29 @@ export async function saveDevices(
   revalidatePath("/onboarding");
   return { ok: true };
 }
+
+/**
+ * Leave the rest for later.
+ *
+ * Only reachable from the school and device steps, which are the two that ask
+ * for something recoverable. It marks onboarding finished rather than
+ * remembering which step was skipped: the dashboard's setup card already
+ * exists to chase what is missing, and it does it somewhere the student has
+ * seen the app first.
+ *
+ * A skipped school costs nothing permanent. Period attribution is computed at
+ * read time from the session's timestamp, not stored on the row, so setting a
+ * school in week three correctly labels every session already logged.
+ */
+export async function skipRemainingSetup(): Promise<ActionResult> {
+  const user = await requireUser();
+
+  await db.user.update({
+    where: { id: user.id },
+    data: { onboardingCompletedAt: new Date() },
+  });
+
+  revalidatePath("/onboarding");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}

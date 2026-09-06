@@ -141,6 +141,20 @@ export function nextOnboardingStep(user: UserWithRelations): OnboardingStep {
   if (isTooYoung(user.birthDate)) return "TOO_YOUNG";
 
   if (!user.encryptionKey) return "PASSWORD";
+
+  // Everything above this line is required: the age gate is a legal
+  // obligation, and without a key there is nowhere to put anything.
+  //
+  // Everything below it is not, and used to behave as though it were — five
+  // compulsory steps before a student saw a single screen of the app, ending
+  // on an empty dashboard. Both remaining answers are editable later and
+  // neither blocks any feature outright, so both can be deferred.
+  //
+  // `onboardingCompletedAt` is what makes a skip stick. Without it this
+  // function is a pure test of "is the column null", and a skipped step would
+  // bounce the student straight back to the screen they just declined.
+  if (user.onboardingCompletedAt) return "DONE";
+
   if (!user.schoolId || user.gradeLevel == null) return "SCHOOL";
   if (!user.laptopOs || !user.phoneOs) return "DEVICES";
 

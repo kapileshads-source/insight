@@ -81,7 +81,10 @@ console.log("\nthe order the list appears in");
   ok("missing comes first, always", order[0] === "MISSING");
   ok("then past due", order[1] === "OVERDUE");
   ok("then today", order[2] === "TODAY");
-  ok("undated sits at the end, not the top", order[order.length - 1] === "UNDATED");
+  // The "No due date" group used to sit at the bottom collecting the term's
+  // leftovers, which pushed the dates a student needed off the card. Rows with
+  // no date and nothing to place them are now dropped entirely.
+  ok("undated is not shown at all", !order.includes("UNDATED"));
   ok("graded work never appears", !groups.some((g) => g.rows.some((r) => r.id === "graded")));
   ok("every group has a readable label", groups.every((g) => g.label.length > 0));
   ok("no empty groups are rendered", groups.every((g) => g.rows.length > 0));
@@ -196,7 +199,10 @@ console.log("\nundated work that was handed out recently");
   );
   const order = groups.map((g) => g.bucket);
   ok("the guess sits above Later", order.indexOf("RECENT") < order.indexOf("LATER"));
-  ok("and above the rest of the undated pile", order.indexOf("RECENT") < order.indexOf("UNDATED"));
+  // The guess still surfaces work that is probably current; what disappears is
+  // the row with no date and no signal at all.
+  ok("the guessed row still appears", order.includes("RECENT"));
+  ok("the truly undated row does not", !order.includes("UNDATED"));
   ok("it says it is a guess", groups.find((g) => g.bucket === "RECENT").label === "Probably this week");
 }
 

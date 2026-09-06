@@ -83,6 +83,8 @@ export type Bucket =
   | "THIS_WEEK"
   | "RECENT"
   | "LATER"
+  /// Kept as a return value so the caller can drop these rows. Never shown:
+  /// see `groupAssignments`.
   | "UNDATED";
 
 export const BUCKET_LABELS: Record<Bucket, string> = {
@@ -105,7 +107,6 @@ export const BUCKET_ORDER: Bucket[] = [
   "THIS_WEEK",
   "RECENT",
   "LATER",
-  "UNDATED",
 ];
 
 /// How recently something must have been handed out to count as current.
@@ -194,6 +195,13 @@ export function groupAssignments(
     else groups.set(bucket, [row]);
   }
 
+  // Driven by BUCKET_ORDER, which no longer contains UNDATED — so a row with
+  // no due date and nothing to place it is collected above and then never
+  // rendered. Dropped rather than shown in a "No due date" pile: that group
+  // filled up with the term's leftovers and pushed the dates a student
+  // actually needed off the bottom of the card. Anything genuinely current
+  // still appears, because RECENT catches it from the class's module or from
+  // having been handed out this week.
   return BUCKET_ORDER.filter((bucket) => groups.has(bucket)).map((bucket) => ({
     bucket,
     label: BUCKET_LABELS[bucket],

@@ -384,6 +384,22 @@ model Assignment {
   /// every row first.
   dueAt    DateTime?
 
+  /// When the student ticked this off, or null.
+  ///
+  /// **The fifth documented exception to "content is not plaintext", and the
+  /// reasoning is the same as the second.** `focusModeActive` is readable
+  /// because the trackers have to act on it without a key; this is readable
+  /// because the *server* has to act on it. The evening reminder counts what
+  /// is due tomorrow, and a student who has ticked three things off and is
+  /// told "3 due tomorrow" anyway will conclude the app is broken and turn the
+  /// reminder off — which costs more than this leaks.
+  ///
+  /// What it reveals is that a row was ticked and when. Not what the work is,
+  /// which stays in `payloadCipher`. The server already knows a due date and
+  /// whether a grade has landed, so this adds a flag beside two facts it holds
+  /// anyway rather than opening a new category.
+  completedAt DateTime?
+
   /// Assignment name, points possible, submission state.
   payloadCipher String
   payloadIv     String

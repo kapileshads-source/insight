@@ -380,6 +380,9 @@ export async function fetchStoredAssignments() {
         // Needed to tell whether a row sits in the module its class is on.
         canvasId: true,
         dueAt: true,
+        // Ticked-off work is filtered out of the buckets rather than shown
+        // struck through, so the panel has to know.
+        completedAt: true,
         payloadCipher: true,
         payloadIv: true,
       },

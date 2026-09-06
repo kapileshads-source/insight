@@ -31,6 +31,10 @@ export type SubmissionState =
   | "GRADED";
 
 export type AssignmentRow = {
+  /// Ticked off by the student, and therefore not something to chase. Kept out
+  /// of the buckets entirely rather than shown struck through: "what's due" is
+  /// a list of what is left, and a finished item on it is noise.
+  completedAt?: Date | null;
   id: string;
   name: string;
   course: string;
@@ -188,6 +192,11 @@ export function groupAssignments(
   const groups = new Map<Bucket, AssignmentRow[]>();
 
   for (const row of rows) {
+    // A finished item is not something due. Dropped rather than struck
+    // through: "what's due" is a list of what is left, and last week's ticked
+    // work sitting in it is exactly the clutter that made the undated pile
+    // useless.
+    if (row.completedAt) continue;
     const bucket = bucketFor(row, now);
     if (!bucket) continue;
     const existing = groups.get(bucket);

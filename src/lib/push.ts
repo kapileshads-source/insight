@@ -112,6 +112,10 @@ export async function sendDueWorkNudges(): Promise<number> {
           userId: sub.user.id,
           dueAt: { gte: startOfTomorrow, lt: endOfTomorrow },
           outcome: null,
+          // Ticked off by the student. This is the whole reason completedAt is
+          // plaintext: telling someone who has finished three things that three
+          // are still due is how a reminder gets turned off for good.
+          completedAt: null,
         },
       }),
       // Only the last fortnight. A term's worth of never-submitted work is a
@@ -125,6 +129,7 @@ export async function sendDueWorkNudges(): Promise<number> {
             lt: startOfToday,
           },
           outcome: null,
+          completedAt: null,
         },
       }),
     ]);

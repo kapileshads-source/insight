@@ -227,5 +227,30 @@ console.log("\nthe module a class is on");
      bucketFor(row({ dueAt: inDays(12), inCurrentModule: true }), NOW) === "LATER");
 }
 
+console.log("\nticked-off work leaves the list");
+{
+  const groups = groupAssignments(
+    [
+      row({ id: "done", dueAt: inDays(1), completedAt: new Date() }),
+      row({ id: "left", dueAt: inDays(1) }),
+    ],
+    NOW,
+  );
+  const ids = groups.flatMap((g) => g.rows.map((r) => r.id));
+  ok("the finished one is gone", !ids.includes("done"));
+  ok("the unfinished one stays", ids.includes("left"));
+
+  // Un-ticking has to bring it back, or the button is a one-way door.
+  const back = groupAssignments([row({ id: "done", dueAt: inDays(1), completedAt: null })], NOW);
+  ok("un-ticking restores it", back.flatMap((g) => g.rows).length === 1);
+
+  // Missing work that has been handed in should stop being chased too.
+  const missing = groupAssignments(
+    [row({ id: "m", dueAt: inDays(-3), state: "MISSING", completedAt: new Date() })],
+    NOW,
+  );
+  ok("even overdue work leaves once ticked", missing.length === 0);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

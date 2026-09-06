@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 import { fetchStoredAssignments } from "@/app/actions/canvas";
+import { setAssignmentDone } from "@/app/actions/grades";
 import { useCrypto } from "@/components/crypto-provider";
 import {
   assignmentSummary,
@@ -58,7 +59,15 @@ function relativeDue(dueAt: Date | null, now: Date): string {
     : `${date}, ${time}`;
 }
 
-function Row({ row, now }: { row: AssignmentRow; now: Date }) {
+function Row({
+  row,
+  now,
+  onDone,
+}: {
+  row: AssignmentRow;
+  now: Date;
+  onDone?: (id: string) => void;
+}) {
   const due = relativeDue(row.dueAt, now);
 
   // With no due date, when it was handed out is the only thing worth saying —
@@ -74,9 +83,25 @@ function Row({ row, now }: { row: AssignmentRow; now: Date }) {
       : null;
 
   return (
-    <li className="flex items-baseline justify-between gap-4 border-t border-line py-3 first:border-t-0">
-      <div className="min-w-0">
-        <p className="truncate text-[15px] text-text">{row.name}</p>
+    <li className="flex items-start justify-between gap-3 border-t border-line py-3 first:border-t-0">
+      {/* The tick. A real checkbox rather than a styled div, so it is
+          keyboard-reachable and announces itself; the label is the assignment
+          name because "checkbox" on its own tells a screen reader nothing. */}
+      <input
+        type="checkbox"
+        checked={false}
+        onChange={() => onDone?.(row.id)}
+        aria-label={`Mark "${row.name}" done`}
+        className="mt-1 h-4 w-4 shrink-0 accent-sky"
+      />
+      <div className="min-w-0 flex-1">
+        {/* Two lines, not one. Canvas titles run long — "Final Research
+            Question- Assessment Grade- After completing the Peer Reviews
+            please submit yo…" was being cut mid-word, which loses the part
+            that says what the work actually is. */}
+        <p className="line-clamp-2 text-[15px] leading-snug text-text">
+          {row.name}
+        </p>
         <p className="mt-0.5 truncate text-[13px] text-text-faint">
           {row.course}
           {due && ` · ${due}`}
@@ -85,7 +110,7 @@ function Row({ row, now }: { row: AssignmentRow; now: Date }) {
         </p>
       </div>
       {row.pointsPossible ? (
-        <span className="shrink-0 text-[13px] text-text-muted">
+        <span className="mt-0.5 shrink-0 text-[13px] text-text-muted">
           {row.pointsPossible} pts
         </span>
       ) : null}
@@ -93,7 +118,15 @@ function Row({ row, now }: { row: AssignmentRow; now: Date }) {
   );
 }
 
-function Group({ group, now }: { group: AssignmentGroup; now: Date }) {
+function Group({
+  group,
+  now,
+  onDone,
+}: {
+  group: AssignmentGroup;
+  now: Date;
+  onDone?: (id: string) => void;
+}) {
   // Missing work is the only category where the student can still change the
   // outcome and where nobody else will tell them, so it gets the one colour.
   const urgent = group.bucket === "MISSING" || group.bucket === "OVERDUE";
@@ -108,7 +141,7 @@ function Group({ group, now }: { group: AssignmentGroup; now: Date }) {
       </h3>
       <ul className="mt-2">
         {group.rows.map((row) => (
-          <Row key={row.id} row={row} now={now} />
+          <Row key={row.id} row={row} now={now} onDone={onDone} />
         ))}
       </ul>
     </section>
@@ -168,6 +201,7 @@ export function AssignmentsPanel() {
             name: p.name || "Untitled assignment",
             course: courseNames.get(a.courseId) || p.course || "Course",
             dueAt: a.dueAt ? new Date(a.dueAt) : null,
+            completedAt: a.completedAt ? new Date(a.completedAt) : null,
             pointsPossible: p.pointsPossible ?? null,
             score: p.score ?? null,
             state:
@@ -219,12 +253,31 @@ export function AssignmentsPanel() {
   // a student with no Canvas connection should be told that instead.
   if (groups.length === 0) return null;
 
+  /// Ticking an item off.
+  ///
+  /// The row disappears immediately rather than after a round trip. It is the
+  /// student's own click, so the outcome is not in doubt, and a checkbox that
+  /// pauses before responding feels broken in a way that a wrong guess here
+  /// would not — and if the write does fail, the next load simply shows the
+  /// item again.
+  function markDone(id: string) {
+    setGroups((prev) =>
+      prev === null
+        ? prev
+        : prev
+            .map((g) => ({ ...g, rows: g.rows.filter((r) => r.id !== id) }))
+            .filter((g) => g.rows.length > 0),
+    );
+    void setAssignmentDone(id, true);
+  }
+
   return (
     <AssignmentList
       groups={groups}
       units={units}
       showAll={showAll}
       onShowAll={() => setShowAll(true)}
+      onDone={markDone}
     />
   );
 }
@@ -241,6 +294,7 @@ export function AssignmentList({
   units = [],
   showAll = false,
   onShowAll,
+  onDone,
 }: {
   groups: AssignmentGroup[];
   /// What each class is currently on, from Canvas modules. The one question
@@ -248,6 +302,9 @@ export function AssignmentList({
   units?: { course: string; unit: string }[];
   showAll?: boolean;
   onShowAll?: () => void;
+  /// Ticking an item off. Optional so the card can still be rendered against
+  /// fixtures with no server behind it.
+  onDone?: (id: string) => void;
 }) {
   const summary = assignmentSummary(groups);
   const visible = showAll ? groups : groups.slice(0, 3);
@@ -293,7 +350,12 @@ export function AssignmentList({
 
       <div className="mt-6">
         {visible.map((group) => (
-          <Group key={group.bucket} group={group} now={new Date()} />
+          <Group
+            key={group.bucket}
+            group={group}
+            now={new Date()}
+            onDone={onDone}
+          />
         ))}
       </div>
 

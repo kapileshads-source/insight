@@ -39,6 +39,7 @@ export async function fetchGradebook() {
         source: true,
         dueAt: true,
         updatedAt: true,
+        completedAt: true,
         payloadCipher: true,
         payloadIv: true,
       },
@@ -52,4 +53,33 @@ export async function fetchGradebook() {
   ]);
 
   return { assignments, courses };
+}
+
+/**
+ * Tick an assignment off, or un-tick it.
+ *
+ * Scoped to the caller's own rows, like every other write here — an id from
+ * somewhere else must not be able to mark a stranger's homework done.
+ *
+ * `completedAt` is plaintext, which is a deliberate exception documented on the
+ * model. The server has to act on this: the evening reminder counts what is due
+ * tomorrow, and telling a student who has ticked three things off that three
+ * are still due is how a reminder gets switched off for good.
+ */
+export async function setAssignmentDone(
+  id: string,
+  done: boolean,
+): Promise<{ ok: boolean }> {
+  const user = await getOrCreateUser();
+  if (!user) return { ok: false };
+  if (typeof id !== "string" || id.length === 0 || id.length > 60) {
+    return { ok: false };
+  }
+
+  const result = await db.assignment.updateMany({
+    where: { id, userId: user.id },
+    data: { completedAt: done ? new Date() : null },
+  });
+
+  return { ok: result.count > 0 };
 }

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { AppNav } from "@/components/chrome";
 import { GradesPanel } from "@/components/grades-panel";
+import { InsightProgress } from "@/components/insight-progress";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { isIOS } from "@/lib/user-agent";
+import { db } from "@/lib/db";
 import { getOrCreateUser, nextOnboardingStep } from "@/lib/user";
 import { getSchoolDayState } from "@/lib/current-period";
 import { getRunningSession } from "@/app/actions/sessions";
@@ -226,6 +228,14 @@ export default async function Dashboard() {
   // nothing is worse than no button.
   const onIPhone = isIOS((await headers()).get("user-agent"));
 
+  // Counts, not contents. Row existence is plaintext by the schema rule, so
+  // the server can say how many sessions there are without being able to read
+  // one — which is what lets the wait be shown before the student unlocks.
+  const [sessionCount, outcomeCount] = await Promise.all([
+    db.studySession.count({ where: { userId: user.id, endedAt: { not: null } } }),
+    db.outcome.count({ where: { userId: user.id } }),
+  ]);
+
   return (
     <>
       <AppNav email={user.email} />
@@ -267,6 +277,8 @@ export default async function Dashboard() {
             <StudyTimer isIOS={onIPhone} running={running} />
           </>
         )}
+
+        <InsightProgress sessions={sessionCount} outcomes={outcomeCount} />
 
         {/* Setup, below the daily things. It is finite and mostly done; a
             checklist above the content is how a checklist gets ignored. */}

@@ -9,6 +9,7 @@ import { GpaCard, type GpaInput } from "@/components/gpa-card";
 import {
   buildGradebook,
   gradedSince,
+  hasSomethingToShow,
   percentOf,
   showsPercent,
   type CourseGrades,
@@ -212,6 +213,9 @@ export function GradesList({
   courses: CourseGrades[];
   newCount: number;
 }) {
+  const shown = courses.filter(hasSomethingToShow);
+  const waiting = courses.filter((c) => !hasSomethingToShow(c));
+
   return (
     <section className="mt-14">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -223,11 +227,29 @@ export function GradesList({
         )}
       </div>
 
+      {/* Cards for classes with something in them; one line for the rest.
+      
+          Both extremes were wrong on a real account. Drawing every class gave
+          six identical "Nothing marked yet" cards that buried the marks under
+          them. Dropping the empty ones made the whole section disappear in
+          September, when every class can be empty — which looked like the
+          feature had been deleted. Saying how many are waiting is the honest
+          middle: nothing is hidden, and nothing is buried. */}
       <div className="mt-4 space-y-3">
-        {courses.map((c) => (
+        {shown.map((c) => (
           <CourseCard key={c.course} course={c} />
         ))}
       </div>
+
+      {waiting.length > 0 && (
+        <p className="mt-4 text-[14px] leading-relaxed text-text-faint">
+          {shown.length === 0
+            ? `None of your ${waiting.length} classes has posted a grade yet. They'll appear here as soon as one does.`
+            : `${waiting.length} other ${waiting.length === 1 ? "class has" : "classes have"} nothing marked yet — ${waiting
+                .map((c) => c.course)
+                .join(", ")}.`}
+        </p>
+      )}
 
       <p className="mt-4 text-[13px] leading-relaxed text-text-faint">
         Percentages are your gradebook&rsquo;s own. Insight never works one out

@@ -2,6 +2,7 @@ import {
   buildGradebook,
   showsPercent,
   gradedSince,
+  hasSomethingToShow,
   isGraded,
   percentOf,
 } from "../gradebook.ts";
@@ -100,18 +101,19 @@ console.log("classes with nothing to say are not shown");
     row({ course: "AP Biology" }),
   ]);
   ok("a class with a mark leads", out[0].course === "AP Biology");
-  // On a real account, keeping these produced six identical "Nothing marked
-  // yet" cards that buried the marks underneath them.
-  ok("a class with no marks is dropped", out.length === 1);
+  // Every class is still returned. Filtering here made the whole grades
+  // section vanish in September, when every class can be empty — which looked
+  // like the feature had been deleted. The card decides what to draw.
+  ok("empty classes are still reported", out.length === 2);
+  ok("but flagged as having nothing", !hasSomethingToShow(out[1]));
+  ok("and the one with a mark is flagged", hasSomethingToShow(out[0]));
 
-  // Unless the gradebook has posted a percentage for it, which is something
-  // worth seeing even before any single assignment is marked.
+  // A posted percentage is worth showing even before any assignment is marked.
   const withGrade = buildGradebook(
     [row({ course: "Zoology", status: "UNGRADED", score: null })],
     new Map([["Zoology", "88.5"]]),
   );
-  ok("a posted grade is enough to appear", withGrade.length === 1);
-  ok("and it carries the grade", withGrade[0].reportedGrade === "88.5");
+  ok("a posted grade is enough to show", hasSomethingToShow(withGrade[0]));
 }
 
 console.log("what is new since you last looked");

@@ -126,7 +126,16 @@ export function buildGradebook(
     });
   }
 
-  // A class with nothing to say is not shown at all.
+  // Every class is returned, including the ones with nothing in them.
+  //
+  // An earlier version filtered the empty ones out here, and that was the wrong
+  // place for the decision: in September *every* class can be empty, so the
+  // whole grades section vanished and the feature looked deleted. The library's
+  // job is to report what exists; how much of it to draw is the card's problem,
+  // and the card can say "six others have nothing yet" in one line, which
+  // neither buries the marks nor pretends the classes are missing.
+  //
+  // Kept below: classes with marks first.
   //
   // The first version sorted these to the bottom instead, on the reasoning that
   // a missing class looks like a broken sync. On a real account that produced a
@@ -138,14 +147,17 @@ export function buildGradebook(
   //
   // A course reappears the instant it has either a posted grade or one marked
   // assignment, which is the only state in which it has anything to show.
-  return courses
-    .filter((c) => c.gradedCount > 0 || c.reportedGrade !== null)
-    .sort((a, b) => {
-      if ((a.gradedCount > 0) !== (b.gradedCount > 0)) {
-        return a.gradedCount > 0 ? -1 : 1;
-      }
-      return a.course.localeCompare(b.course);
-    });
+  return courses.sort((a, b) => {
+    if ((a.gradedCount > 0) !== (b.gradedCount > 0)) {
+      return a.gradedCount > 0 ? -1 : 1;
+    }
+    return a.course.localeCompare(b.course);
+  });
+}
+
+/// Whether a class has anything worth drawing a card for.
+export function hasSomethingToShow(course: CourseGrades): boolean {
+  return course.gradedCount > 0 || course.reportedGrade !== null;
 }
 
 /**

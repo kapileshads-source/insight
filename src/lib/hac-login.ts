@@ -59,9 +59,17 @@ const LOGIN_URL = `${ORIGIN}/HomeAccess/Account/LogOn?ReturnUrl=%2fHomeAccess%2f
  * tables from either, and `hasGradebook` decides which answer was real rather
  * than the status code.
  */
+const TRANSCRIPT_URLS = [
+  `${ORIGIN}/HomeAccess/Grades/Transcript`,
+  `${ORIGIN}/HomeAccess/Content/Student/Transcript.aspx`,
+];
+
 const CLASSWORK_URLS = [
-  `${ORIGIN}/HomeAccess/Content/Student/Assignments.aspx`,
+  // The address a browser actually sits at. Both work now that frames are
+  // followed, but starting where a student starts means one request rather
+  // than two on the common path.
   `${ORIGIN}/HomeAccess/Classes/Classwork`,
+  `${ORIGIN}/HomeAccess/Content/Student/Assignments.aspx`,
 ];
 
 /// A browser string. HAC has been observed to behave differently without one,
@@ -95,7 +103,11 @@ export type HacFailure =
   | "BAD_CREDENTIALS"
   | "UNREACHABLE"
   | "BLOCKED"
-  | "NO_CLASSWORK";
+  | "NO_CLASSWORK"
+  /// Distinct from NO_CLASSWORK so the message can name the right page. The
+  /// transcript reported "the classwork page wouldn't load", which is the kind
+  /// of small lie that sends someone looking in the wrong place.
+  | "NO_TRANSCRIPT";
 
 /// Cookies, kept in memory for exactly one login. Deliberately not a persistent
 /// session store: a stored HAC cookie is a second credential to protect, and
@@ -185,14 +197,29 @@ export async function fetchTranscript(
   if (!session.ok) return session;
 
   const tried = session.tried;
-  const url = `${ORIGIN}/HomeAccess/Content/Student/Transcript.aspx`;
-  const html = await fetchThrough(url, session.jar, hasTranscript, "transcript", tried).catch(
-    () => null,
-  );
 
-  return html
-    ? { ok: true, html, from: url }
-    : { ok: false, reason: "NO_CLASSWORK", tried };
+  // The wrapper first, exactly as with the classwork page — and for the same
+  // reason, which I had already been shown and applied in only one place.
+  //
+  // A browser sits at `/HomeAccess/Grades/Transcript`; the content path
+  // returns a 5KB stub. Every HAC page follows this shape, so the content
+  // paths are the fallback rather than the first guess.
+  for (const url of TRANSCRIPT_URLS) {
+    try {
+      const html = await fetchThrough(
+        url,
+        session.jar,
+        hasTranscript,
+        "transcript",
+        tried,
+      );
+      if (html) return { ok: true, html, from: url };
+    } catch {
+      tried.push({ url: url.replace(ORIGIN, ""), status: 0, kb: 0, gradebook: false });
+    }
+  }
+
+  return { ok: false, reason: "NO_TRANSCRIPT", tried };
 }
 
 type Attempt = { url: string; status: number; kb: number; gradebook: boolean };

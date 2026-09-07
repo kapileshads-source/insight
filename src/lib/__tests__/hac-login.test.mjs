@@ -1,6 +1,7 @@
 import {
   frameSource,
   hasGradebook,
+  hasTranscript,
   isStillLoginPage,
   loginErrorText,
   verificationToken,
@@ -104,6 +105,18 @@ console.log("\nfinding the frame the content actually lives in");
   const withVendor = '<iframe src="https://web-sdk-us2.aptrinsic.com/x.html"></iframe><iframe id="sg-legacy-iframe" src="/HomeAccess/Content/Student/Assignments.aspx"></iframe>';
   ok("prefers the one that matches the hint", frameSource(withVendor) === "/HomeAccess/Content/Student/Assignments.aspx");
   ok("never follows an absolute URL off-origin", frameSource('<iframe src="https://web-sdk-us2.aptrinsic.com/x.html"></iframe>') === null);
+}
+
+console.log("\nthe transcript page, which has the same shape");
+{
+  // The real transcript, from a browser at /HomeAccess/Grades/Transcript.
+  const real = '<span id="plnMain_rpTranscriptGroup_lblYearValue_0">2024-2025</span>';
+  ok("year blocks identify it", hasTranscript(real));
+  ok("so does the GPA table", hasTranscript('<table id="plnMain_rpTranscriptGroup_tblCumGPAInfo"></table>'));
+
+  // The 5KB stub at the content path, and the gradebook, are both not it.
+  ok("a stub is not a transcript", hasTranscript("<html><body></body></html>") === false);
+  ok("the gradebook is not a transcript", hasTranscript('<div class="AssignmentClass">Student Grades 96.50%</div>') === false);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

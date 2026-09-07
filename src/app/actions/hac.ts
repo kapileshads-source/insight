@@ -196,6 +196,8 @@ const FAILURE_TEXT: Record<string, string> = {
   UNREACHABLE: "Couldn't reach HAC just now. Try again in a minute.",
   BLOCKED: "HAC's sign-in page didn't look the way we expect. Nothing was sent.",
   NO_CLASSWORK: "Signed in, but the classwork page wouldn't load.",
+  NO_TRANSCRIPT:
+    "Signed in, but the transcript page wouldn't load. If you're in your first semester of high school there may not be one yet.",
 };
 
 /**

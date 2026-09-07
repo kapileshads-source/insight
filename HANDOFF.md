@@ -672,6 +672,28 @@ dependency — see the warning below.
 | Assignment rows | `div.sg-content-grid tr.sg-asp-table-data-row` |
 | Assignment name | the row's `<a>`; a row without one is a totals row |
 
+### Every HAC page is a wrapper around a frame
+
+Learned twice, a day apart, because the lesson was applied in one place and not
+generalised. **The address a browser sits at is the wrapper; the content is one
+frame further in, and the `Content/Student/*.aspx` path is a 5KB stub.**
+
+| What a student sees | The stub that is not it |
+|---|---|
+| `/HomeAccess/Classes/Classwork` | `Content/Student/Assignments.aspx` |
+| `/HomeAccess/Grades/Transcript` | `Content/Student/Transcript.aspx` |
+
+Both wrappers answer 200 with no content, which is why this produced five
+consecutive wrong diagnoses on the classwork page — storage, course matching,
+first-sync ordering, the URL, and the selectors — before a browser's frame tree
+showed `sg-legacy-iframe` sitting under the page. `fetchThrough` now follows one
+hop, same-origin only, and a vendor analytics frame sits right beside the real
+one so that restriction is not theoretical.
+
+**The rule to apply to any new HAC page:** start at the URL a browser shows,
+expect a shell, and let the frame follower find the content. Never assume the
+`.aspx` path is the data.
+
 ### The full HAC selector map, 2026-09-07
 
 Read out of a second working implementation. **Our selectors were already

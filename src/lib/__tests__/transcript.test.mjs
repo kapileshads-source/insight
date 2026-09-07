@@ -1,5 +1,7 @@
 import {
+  buildTranscript,
   countsTowardGpa,
+  officialGpa,
   creditOf,
   looksLikeCourseRow,
   semesterGrade,
@@ -83,6 +85,64 @@ console.log("\nflattening a transcript into semester grades");
   ok("the waiver is not in there", !flat.some((g) => g.description === "Tech Waiver"));
   ok("grades come through intact", flat.map((g) => g.grade).join(",") === "93,83,99,100");
   ok("an empty transcript is empty", semesterGrades({ years: [], gpa: [] }).length === 0);
+}
+
+console.log("\nbuilding a transcript, dropping rows that are not courses");
+{
+  const t = buildTranscript({
+    years: [
+      {
+        year: "2025-2026",
+        gradeLevel: "09",
+        building: "Centennial High School",
+        rows: [
+          ["03010200 - 1", "BIO", "93", "83", "", "1.0000"],
+          ["waivertech - 1", "Tech Waiver", "W", "", "", "0.0000"],
+          // A totals row read at course offsets would invent a course called
+          // "" with a grade of nothing. Dropped instead.
+          ["Total Credit: 8.0000", "", "", "", "", ""],
+        ],
+      },
+    ],
+    gpa: [
+      { label: "Weighted GPA", value: "4.6940", rank: "12" },
+      { label: "4.0 College GPA", value: "3.7780", rank: null },
+    ],
+  });
+
+  ok("one year", t.years.length === 1);
+  ok("the totals row is dropped", t.years[0].courses.length === 2);
+  ok("grades come through", t.years[0].courses[0].sem1 === 93);
+  ok("a W stays null", t.years[0].courses[1].sem1 === null);
+  ok("zero credit is recorded", t.years[0].courses[1].credit === 0);
+}
+
+console.log("\nthe district's own GPA, which outranks ours");
+{
+  const t = buildTranscript({
+    years: [],
+    gpa: [
+      { label: "Weighted GPA", value: "4.6940", rank: "12" },
+      { label: "4.0 College GPA", value: "3.7780", rank: null },
+    ],
+  });
+  const official = officialGpa(t);
+
+  ok("finds the weighted one", official.weighted.value === 4.694);
+  ok("keeps the rank with it", official.weighted.rank === "12");
+  // "4.0" is how the unweighted one is labelled today, and neither label is
+  // promised, so both are matched by keyword.
+  ok("finds the unweighted one", official.unweighted.value === 3.778);
+
+  // A label carrying both words must not land in the weighted slot.
+  const tricky = buildTranscript({ years: [], gpa: [{ label: "Unweighted GPA", value: "3.5", rank: null }] });
+  ok("unweighted is not read as weighted", officialGpa(tricky).weighted === null);
+  ok("and lands in its own slot", officialGpa(tricky).unweighted.value === 3.5);
+
+  ok("no GPA table is null, not zero", officialGpa({ years: [], gpa: [] }).weighted === null);
+  // A non-numeric value must never become 0.0 on a student's screen.
+  const bad = buildTranscript({ years: [], gpa: [{ label: "Weighted GPA", value: "N/A", rank: null }] });
+  ok("a non-numeric GPA is dropped", bad.gpa.length === 0);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

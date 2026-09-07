@@ -94,3 +94,91 @@ export function parseHacHtml(html: string): HacTable[] {
   const doc = new DOMParser().parseFromString(html, "text/html");
   return extractTables(doc);
 }
+
+/* -------------------------------------------------------------------------- */
+/* The transcript                                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Lift the transcript page into the structures `transcript.ts` reads.
+ *
+ * Year blocks are index-suffixed with no count published anywhere, so the only
+ * way to read them is to walk upward until an id is missing.
+ *
+ * These `plnMain_*` ids are ASP.NET's, generated from the page's control tree,
+ * and they will change if the page is rebuilt. That is acceptable *here* in a
+ * way positional cell indices are not: an id that no longer exists yields
+ * nothing and is obvious, while a shifted column yields a wrong grade and is
+ * not. Where this file does read cells by position — the course rows have no
+ * header to bind to — every row is validated in `transcript.ts` before it is
+ * believed.
+ */
+export function extractTranscript(doc: Document): {
+  years: {
+    year: string;
+    gradeLevel: string;
+    building: string;
+    rows: string[][];
+  }[];
+  gpa: { label: string; value: string; rank: string | null }[];
+} {
+  const years: {
+    year: string;
+    gradeLevel: string;
+    building: string;
+    rows: string[][];
+  }[] = [];
+
+  const id = (name: string, i: number) =>
+    doc.getElementById(`plnMain_rpTranscriptGroup_${name}_${i}`);
+
+  // No count anywhere, so walk until one is missing. Capped rather than
+  // unbounded: a malformed page must not spin.
+  for (let i = 0; i < 40; i++) {
+    const yearEl = id("lblYearValue", i);
+    if (!yearEl) break;
+
+    const table = id("dgCourses", i);
+    const rows: string[][] = [];
+    if (table) {
+      for (const row of Array.from(
+        table.querySelectorAll("tr.sg-asp-table-data-row"),
+      )) {
+        rows.push(Array.from(row.querySelectorAll("td")).map(text));
+      }
+    }
+
+    years.push({
+      year: text(yearEl),
+      gradeLevel: text(id("lblGradeValue", i)),
+      building: text(id("lblBuildingValue", i)),
+      rows,
+    });
+  }
+
+  // The district's own GPA, which is authoritative where ours is an estimate.
+  // Label matching downstream is keyword-based rather than exact, because
+  // "Weighted GPA" and "4.0 College GPA" are the labels today and neither is
+  // guaranteed.
+  const gpa: { label: string; value: string; rank: string | null }[] = [];
+  const table = doc.getElementById("plnMain_rpTranscriptGroup_tblCumGPAInfo");
+  if (table) {
+    for (const row of Array.from(table.querySelectorAll("tr"))) {
+      const label = row.querySelector('span[id*="lblGPADescr"]');
+      const value = row.querySelector('span[id*="lblGPACum"]');
+      if (!label || !value) continue;
+      gpa.push({
+        label: text(label),
+        value: text(value),
+        rank: text(row.querySelector('span[id*="lblGPARank"]')) || null,
+      });
+    }
+  }
+
+  return { years, gpa };
+}
+
+/// Parse a transcript page fetched as HTML. Browser only, same as above.
+export function parseTranscriptHtml(html: string) {
+  return extractTranscript(new DOMParser().parseFromString(html, "text/html"));
+}

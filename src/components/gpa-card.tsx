@@ -5,7 +5,7 @@ import { useState } from "react";
 import {
   estimateGpa,
   hasUsableGrade,
-  keepEnrolled,
+  onlyEnrolled,
   levelOf,
   looksNonAcademic,
   type CourseLevel,
@@ -51,7 +51,7 @@ export function GpaCard({ courses: all }: { courses: GpaInput[] }) {
   // shell rather than a class — "Frisco ISD 1forAll Student Course 26-27" was
   // sitting at 100% and lifting a real GPA. When HAC has said nothing yet,
   // everything is kept rather than the estimate silently blanking.
-  const courses = keepEnrolled(all);
+  const courses = onlyEnrolled(all);
 
   // Excluded by default where the title says so, and adjustable by hand.
   // Deliberately a student's decision rather than a model's: a guess about

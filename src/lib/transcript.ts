@@ -129,3 +129,66 @@ export function semesterGrades(
   }
   return out;
 }
+
+/**
+ * Turn the raw page structures into a transcript.
+ *
+ * Every row is validated rather than trusted. The course table has no header
+ * row to bind to, so the cell indices are positional — the failure mode this
+ * codebase works hardest to avoid, because an inserted column shifts every
+ * field with no error. A row that does not look like a course row is dropped
+ * instead of being read at the wrong offsets: a missing course is visible on
+ * screen, a wrong grade is not.
+ */
+export function buildTranscript(raw: {
+  years: {
+    year: string;
+    gradeLevel: string;
+    building: string;
+    rows: string[][];
+  }[];
+  gpa: { label: string; value: string; rank: string | null }[];
+}): Transcript {
+  const years: TranscriptYear[] = raw.years.map((y) => ({
+    year: y.year,
+    gradeLevel: y.gradeLevel,
+    building: y.building,
+    courses: y.rows.filter(looksLikeCourseRow).map((cells) => ({
+      code: cells[0].trim(),
+      description: cells[1].trim(),
+      sem1: semesterGrade(cells[2]),
+      sem2: semesterGrade(cells[3]),
+      credit: creditOf(cells[5]),
+    })),
+  }));
+
+  const gpa: TranscriptGpa[] = [];
+  for (const row of raw.gpa) {
+    const value = Number(row.value.trim());
+    if (!Number.isFinite(value)) continue;
+    gpa.push({ label: row.label.trim(), value, rank: row.rank });
+  }
+
+  return { years, gpa };
+}
+
+/**
+ * The district's own weighted and unweighted figures, picked out by keyword.
+ *
+ * Matched loosely because the labels are "Weighted GPA" and "4.0 College GPA"
+ * today and neither is promised. "Unweighted" has to be excluded from the
+ * weighted match explicitly, or a label containing both words lands in the
+ * wrong slot.
+ */
+export function officialGpa(transcript: Transcript): {
+  weighted: TranscriptGpa | null;
+  unweighted: TranscriptGpa | null;
+} {
+  const find = (test: (label: string) => boolean) =>
+    transcript.gpa.find((g) => test(g.label.toLowerCase())) ?? null;
+
+  return {
+    weighted: find((l) => l.includes("weighted") && !l.includes("unweighted")),
+    unweighted: find((l) => l.includes("unweighted") || l.includes("4.0")),
+  };
+}

@@ -203,86 +203,30 @@ export function estimateGpa(courses: GpaCourse[]): GpaEstimate {
  * state and wrong on first use.
  */
 /**
- * The words in a course title that identify the class.
+ * Keep only the classes the student is actually enrolled in.
  *
- * The two systems name one class nothing alike:
+ * HAC is the roll. Once it has named anything, every row not on that roll is
+ * either a duplicate of one that is, or a district shell that was never a
+ * class — and both should go.
  *
- *   HAC     SCI22200A - 6 Chemistry Adv S1
- *   Canvas  Chemistry Adv YR (Whitt, Austin)
+ * **This replaced a version that tried to match Canvas titles against HAC
+ * ones**, keeping a Canvas row when it looked like the same subject. That kept
+ * both: a student saw Chemistry twice, at 80.02% from Canvas and 83.00% from
+ * HAC, because both passed. The grades list meanwhile used the simpler rule
+ * and showed it once. Two filters that disagreed about the same question, and
+ * the more clever one was the wrong one.
  *
- * So the code and section prefix, the teacher in parentheses, and the term
- * marker all come off, leaving "chemistry adv" on both sides.
+ * A class HAC matched onto an existing Canvas row is still on the roll — the
+ * sync marks it when it writes the grade — so nothing is lost by dropping the
+ * matching logic.
  *
- * The general assignment matcher cannot be reused here — it vetoes on
- * disagreeing numbers, and `22200` against nothing is exactly that. That
- * caution is right when filing a grade against a class and wrong when asking
- * "are these the same subject", which is all this needs to answer.
+ * **If HAC has said nothing yet, nothing is dropped.** A filter that empties
+ * the screen before the first sync is the failure this codebase keeps
+ * repeating.
  */
-export function classTokens(title: string): string[] {
-  return title
-    .toLowerCase()
-    // The teacher, which only Canvas carries.
-    .replace(/\([^)]*\)/g, " ")
-    // HAC's course code and section: "SCI22200A - 6 ".
-    .replace(/^[a-z]{2,4}\d{3,6}[a-z]?\s*-\s*\d+\s*/i, " ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .split(" ")
-    .filter(
-      (t) =>
-        t.length > 0 &&
-        // Term and semester markers, which the two systems disagree about for
-        // the same class — S1 against YR.
-        !["s1", "s2", "yr", "a", "b", "the", "of", "and"].includes(t) &&
-        // Anything left that is purely a number is a code fragment.
-        !/^\d+$/.test(t),
-    );
-}
-
-/**
- * Whether two titles name the same class.
- *
- * Every significant word of the shorter title must appear in the longer one.
- * "chemistry adv" matches "chemistry adv"; it does not match "chemistry" alone,
- * because an on-level class and an advanced one are different courses and
- * conflating them would move a GPA.
- */
-export function sameClass(a: string, b: string): boolean {
-  const left = classTokens(a);
-  const right = classTokens(b);
-  if (left.length === 0 || right.length === 0) return false;
-
-  // Level markers must agree on both sides before anything else is compared.
-  //
-  // Subset matching alone said "Chemistry Adv" and "Chemistry" were the same
-  // class, because every word of the shorter appears in the longer. They are
-  // different courses with different GPA maxima, and merging them would move
-  // the number silently.
-  const LEVELS = ["ap", "adv", "advanced", "honors", "hon", "gt", "ib", "dc"];
-  const leftLevel = new Set(left.filter((t) => LEVELS.includes(t)));
-  const rightLevel = new Set(right.filter((t) => LEVELS.includes(t)));
-  if ((leftLevel.size > 0) !== (rightLevel.size > 0)) return false;
-
-  const [short, long] =
-    left.length <= right.length ? [left, right] : [right, left];
-  const bag = new Set(long);
-  return short.every((t) => bag.has(t));
-}
-
-export function keepEnrolled<T extends { title: string; fromHac: boolean }>(
-  courses: T[],
-  matches: (a: string, b: string) => boolean = sameClass,
-): T[] {
-  const roll = courses.filter((c) => c.fromHac);
-  if (roll.length === 0) return courses;
-
-  return courses.filter((c) => {
-    if (c.fromHac) return true;
-    return roll.some(
-      (h) =>
-        h.title.trim().toLowerCase() === c.title.trim().toLowerCase() ||
-        matches(h.title, c.title),
-    );
-  });
+export function onlyEnrolled<T extends { fromHac: boolean }>(items: T[]): T[] {
+  const roll = items.filter((i) => i.fromHac);
+  return roll.length > 0 ? roll : items;
 }
 
 const NOT_A_CLASS = [

@@ -23,6 +23,8 @@
  * is 85% by arithmetic nobody weights.
  */
 
+import { onlyEnrolled } from "./gpa";
+
 export type GradeStatus =
   | "GRADED"
   | "UNGRADED"
@@ -186,32 +188,16 @@ export function gradedSince(rows: GradeRow[], since: Date | null): GradeRow[] {
 /**
  * One card per class, not one per system.
  *
- * A student taking Chemistry saw it twice — once as HAC's
- * `SCI22200A - 6 Chemistry Adv S1` at 83.00% and once as Canvas's
- * `Chemistry Adv YR (Whitt, Austin)` at 80.02% — which is not two classes and
- * not two grades, but the same class read from two places that disagree
- * slightly because they were fetched at different moments.
+ * A student taking Chemistry saw it twice — HAC's `SCI22200A - 6 Chemistry Adv
+ * S1` at 83.00% and Canvas's `Chemistry Adv YR (Whitt, Austin)` at 80.02%.
+ * That is one class read from two places at two different moments, not two
+ * grades, and showing both invites the student to wonder which is real when
+ * the answer is always the same one.
  *
- * **HAC wins, and the whole Canvas row goes.** HAC is what the school posts;
- * Canvas is what a teacher happens to have set up in it. Showing both invites
- * the student to wonder which is real, and the answer is always the same one.
- *
- * Canvas courses with no HAC counterpart go too. Those are the district's own
- * shells — "Frisco ISD 1forAll Student Course 26-27", "Cen10 Titans Info" —
- * which are not classes a student takes, and one of them was sitting at 100%.
- *
- * As everywhere else: **if HAC has said nothing yet, nothing is dropped.** A
- * filter that empties the screen before the first sync is the failure this
- * codebase keeps repeating.
+ * Delegates to `onlyEnrolled` so the grades list and the GPA estimate cannot
+ * answer this question differently — which they did, and which is why the
+ * duplicate survived on one screen after being fixed on the other.
  */
 export function oneCardPerClass(courses: CourseGrades[]): CourseGrades[] {
-  const roll = courses.filter((c) => c.fromHac);
-  if (roll.length === 0) return courses;
-
-  // Once HAC has spoken, it is the whole roll — so every Canvas row is either
-  // a duplicate of a HAC one or a district shell, and both should go. Written
-  // as one rule rather than two because the action is the same and a
-  // `sameClass` comparison here would only be theatre: it cannot change the
-  // outcome, and an unused branch that looks like it might is worse than none.
-  return roll;
+  return onlyEnrolled(courses);
 }

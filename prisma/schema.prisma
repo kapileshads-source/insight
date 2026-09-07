@@ -222,6 +222,16 @@ model User {
   profileCipher String?
   profileIv     String?
 
+  /// The transcript: finished semesters and the district's own GPA.
+  ///
+  /// Encrypted like everything else — it is the most sensitive academic record
+  /// a student has, and the server has no more business reading it than it has
+  /// reading their sleep. Stored rather than fetched on demand because it only
+  /// changes twice a year, and re-reading HAC on every dashboard load would be
+  /// both slow and a good way to find any rate limit HAC has.
+  transcriptCipher String?
+  transcriptIv     String?
+
   onboardingCompletedAt DateTime?
 
   encryptionKey     EncryptionKey?

@@ -5,6 +5,7 @@ import { hacConnectionStatus } from "@/app/actions/hac";
 import { AppNav, PageTitle } from "@/components/chrome";
 import { HacConnect } from "@/components/hac-connect";
 import { HacSync } from "@/components/hac-sync";
+import { TranscriptSync } from "@/components/transcript-sync";
 
 export const metadata = { title: "Home Access Center — Insight" };
 
@@ -46,6 +47,8 @@ export default async function HacPage() {
             username={hac.username}
             disconnected={hac.disconnected}
           />
+
+          {hac.connected && <TranscriptSync />}
         </div>
 
         <section className="mt-10">

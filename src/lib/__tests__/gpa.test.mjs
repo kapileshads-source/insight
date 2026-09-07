@@ -1,7 +1,6 @@
 import {
   estimateGpa,
-  keepEnrolled,
-  sameClass,
+  onlyEnrolled,
   hasUsableGrade,
   levelOf,
   looksNonAcademic,
@@ -104,39 +103,32 @@ console.log("\nHAC is the roll of what you actually take");
 {
   const courses = [
     { title: "SCI22200A - 6 Chemistry Adv S1", fromHac: true },
+    // Same class, from Canvas, at a slightly different figure because the two
+    // were fetched at different moments. A student saw Chemistry twice.
     { title: "Chemistry Adv YR (Whitt, Austin)", fromHac: false },
-    // Canvas shells the district pushes to everyone. One of these was sitting
-    // at 100% and lifting a real student's GPA.
     { title: "Frisco ISD 1forAll Student Course 26-27", fromHac: false },
-    { title: "Cen10 Titans Info", fromHac: false },
   ];
-  const kept = keepEnrolled(courses).map((c) => c.title);
+  const kept = onlyEnrolled(courses).map((c) => c.title);
 
-  ok("the HAC course stays", kept.includes("SCI22200A - 6 Chemistry Adv S1"));
-  ok("its Canvas twin stays", kept.includes("Chemistry Adv YR (Whitt, Austin)"));
-  ok("a district shell is dropped", !kept.includes("Frisco ISD 1forAll Student Course 26-27"));
-  ok("so is the other one", !kept.includes("Cen10 Titans Info"));
+  ok("the HAC class stays", kept.includes("SCI22200A - 6 Chemistry Adv S1"));
+  ok("its Canvas twin goes", !kept.includes("Chemistry Adv YR (Whitt, Austin)"));
+  ok("the district shell goes", !kept.includes("Frisco ISD 1forAll Student Course 26-27"));
+  ok("exactly one left", kept.length === 1);
 
-  // The failure this codebase keeps repeating: a filter that is right in
-  // steady state and wrong on first use. Before any HAC sync, dropping every
-  // Canvas course would blank the GPA entirely.
-  const noHac = keepEnrolled([
-    { title: "Chemistry Adv YR (Whitt, Austin)", fromHac: false },
-    { title: "Frisco ISD 1forAll Student Course 26-27", fromHac: false },
+  // A class HAC matched onto an existing Canvas row is still on the roll — the
+  // sync marks it when it writes the grade. PLTW is this case, and reading it
+  // wrong made a whole class vanish from a GPA.
+  const matched = onlyEnrolled([
+    { title: "PLTW Intro Engr Des (EZZEDINE)", fromHac: true },
+    { title: "Cen10 Titans Info", fromHac: false },
   ]);
-  ok("nothing from HAC keeps everything", noHac.length === 2);
-  ok("an empty list stays empty", keepEnrolled([]).length === 0);
-}
+  ok("a matched Canvas row survives", matched.length === 1);
+  ok("and it is the right one", matched[0].title === "PLTW Intro Engr Des (EZZEDINE)");
 
-console.log("\nthe two systems name one class nothing alike");
-{
-  ok("HAC and Canvas chemistry are the same class", sameClass("SCI22200A - 6 Chemistry Adv S1", "Chemistry Adv YR (Whitt, Austin)"));
-  ok("so are the pre-calculus ones", sameClass("MTH34300A - 8 AP Pre Calculus S1 - C Lunch", "AP Pre Calculus YR (SCHMIDT, AMANDA)"));
-  // An advanced class and an on-level one are different courses, and
-  // conflating them would move a GPA.
-  ok("advanced is not on-level", !sameClass("Chemistry Adv YR", "Chemistry YR"));
-  ok("different subjects do not match", !sameClass("SCI22200A - 6 Chemistry Adv S1", "English 2 Adv YR (BECKMAN, HILLARY)"));
-  ok("a district shell matches nothing", !sameClass("SCI22200A - 6 Chemistry Adv S1", "Frisco ISD 1forAll Student Course 26-27"));
+  // The failure this codebase keeps repeating: a filter correct in steady
+  // state and wrong on first use.
+  ok("nothing from HAC keeps everything", onlyEnrolled([{ title: "x", fromHac: false }]).length === 1);
+  ok("an empty list stays empty", onlyEnrolled([]).length === 0);
 }
 
 console.log("\ndistrict shells are not classes");

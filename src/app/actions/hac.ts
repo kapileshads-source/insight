@@ -6,7 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getOrCreateUser } from "@/lib/user";
 import { decryptToken, encryptToken } from "@/lib/server-crypto";
-import { fetchClasswork } from "@/lib/hac-login";
+import { fetchClasswork, fetchTranscript } from "@/lib/hac-login";
 
 /**
  * Storing what the student's own browser read out of HAC.
@@ -338,4 +338,87 @@ export async function pullHac(): Promise<
   });
 
   return { ok: true, html: result.html, from: result.from };
+}
+
+/* -------------------------------------------------------------------------- */
+/* The transcript                                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Fetch the transcript page for the caller's own browser to parse.
+ *
+ * Same round trip as everything else: the server signs in, gets the HTML, and
+ * hands it back. It cannot read what it fetched, and does not try.
+ */
+export async function pullTranscript(): Promise<
+  { ok: true; html: string } | { ok: false; error: string }
+> {
+  const user = await getOrCreateUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const row = await db.hacConnection.findUnique({ where: { userId: user.id } });
+  if (!row) {
+    return {
+      ok: false,
+      error: "Reading your transcript needs the HAC sign-in above.",
+    };
+  }
+
+  const password = decryptToken(row.password, row.passwordIv);
+  const result = await fetchTranscript(row.username, password);
+
+  if (!result.ok) {
+    if (result.reason === "BAD_CREDENTIALS") {
+      await db.hacConnection.update({
+        where: { userId: user.id },
+        data: { disconnectedAt: new Date() },
+      });
+    }
+    const base = FAILURE_TEXT[result.reason] ?? "Couldn't read your transcript.";
+    const trace = result.tried?.length
+      ? " Tried " +
+        result.tried
+          .map((t) => `${t.url} → ${t.status || "no response"}${t.status === 200 ? `, ${t.kb}KB` : ""}`)
+          .join("; ") +
+        "."
+      : "";
+    return { ok: false, error: base + trace };
+  }
+
+  return { ok: true, html: result.html };
+}
+
+const sealedTranscript = z.object({
+  cipher: z.string().min(1).max(200_000),
+  iv: z.string().min(1).max(200),
+});
+
+/// Store what the browser made of it, already encrypted.
+export async function storeTranscript(input: unknown): Promise<HacConnectResult> {
+  const user = await getOrCreateUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const parsed = sealedTranscript.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "That didn't look right." };
+
+  await db.user.update({
+    where: { id: user.id },
+    data: {
+      transcriptCipher: parsed.data.cipher,
+      transcriptIv: parsed.data.iv,
+    },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/hac");
+  return { ok: true };
+}
+
+/// The stored transcript, still encrypted.
+export async function fetchStoredTranscript(): Promise<
+  { cipher: string; iv: string } | null
+> {
+  const user = await getOrCreateUser();
+  if (!user?.transcriptCipher || !user.transcriptIv) return null;
+  return { cipher: user.transcriptCipher, iv: user.transcriptIv };
 }

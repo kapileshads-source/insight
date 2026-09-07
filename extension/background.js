@@ -164,8 +164,19 @@ async function poll() {
     if (res.status === 401) {
       // Revoked or wrong token. Say so plainly in the popup rather than
       // failing silently and looking like the extension simply stopped.
+      //
+      // The token is also dropped, which it was not before. A 401 here is
+      // definitive — it means the stored token hashes to nothing on the
+      // server — so retrying it cannot ever succeed, and this polls every
+      // fifteen seconds. An unpaired browser left open was filling the
+      // production logs with a rejected request four times a minute,
+      // indefinitely, drowning everything worth reading.
+      //
+      // Clearing it stops the loop at `!token` above until the student pairs
+      // again, which the popup now tells them to do.
       await setState({
         session: null,
+        token: null,
         lastError: "This device was unpaired. Pair it again from Insight.",
       });
       return;

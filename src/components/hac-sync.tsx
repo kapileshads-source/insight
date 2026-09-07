@@ -42,7 +42,20 @@ type Payload = {
 type Outcome =
   | { kind: "idle" }
   | { kind: "working" }
-  | { kind: "done"; created: number; updated: number; unchanged: number; guessed: boolean }
+  | {
+      kind: "done";
+      created: number;
+      updated: number;
+      unchanged: number;
+      guessed: boolean;
+      /// What the page actually contained, reported rather than inferred.
+      /// Four wrong theories about why grades were missing were argued from
+      /// the outside; a sync that says what it saw ends that.
+      coursesSeen: number;
+      gradesSeen: number;
+      gradesWritten: number;
+      via: "extension" | "password";
+    }
   | { kind: "problem"; message: string };
 
 const PROBLEMS: Record<string, string> = {
@@ -76,6 +89,7 @@ export function HacSync() {
     // outside the file that defines it.
     let html: string | null = null;
     let problem = "Couldn't read HAC just now.";
+    let via: "extension" | "password" = "extension";
 
     const fetched = await requestHacPage();
     if (fetched.ok) {
@@ -84,6 +98,7 @@ export function HacSync() {
       const server = await pullHac();
       if (server.ok) {
         html = server.html;
+        via = "password";
       } else {
         // The extension's reason is the more useful one when it is installed
         // but unhappy; otherwise the credential path's message is.
@@ -169,6 +184,7 @@ export function HacSync() {
       // Courses HAC named that we have no row for. A class Canvas doesn't
       // know about is still a class.
       const newCourses: { ref: string; payload: Awaited<ReturnType<typeof conceal>> }[] = [];
+      let newCoursesWithGrades = 0;
       const refByCourse = new Map<string, string>();
 
       // Built before any course is created, not after.
@@ -194,13 +210,11 @@ export function HacSync() {
 
         const ref = `hac-${newCourses.length}`;
         refByCourse.set(name, ref);
+        const grade = gradeByCourse.get(name) ?? null;
+        if (grade) newCoursesWithGrades++;
         newCourses.push({
           ref,
-          payload: await conceal({
-            name,
-            shortName: name,
-            reportedGrade: gradeByCourse.get(name) ?? null,
-          }),
+          payload: await conceal({ name, shortName: name, reportedGrade: grade }),
         });
         return { id: null, ref };
       };
@@ -276,6 +290,10 @@ export function HacSync() {
         created: stored.created,
         updated: stored.updated,
         unchanged: plan.unchanged,
+        coursesSeen: new Set(incoming.map((a) => a.course)).size,
+        gradesSeen: incomingGrades.length,
+        gradesWritten: courseUpdates.length + newCoursesWithGrades,
+        via,
         guessed: usedFallback,
       });
     } catch {
@@ -317,6 +335,25 @@ export function HacSync() {
           <p className="text-[15px] leading-relaxed text-text-muted">
             {outcome.created} new, {outcome.updated} updated,{" "}
             {outcome.unchanged} already up to date.
+          </p>
+
+          {/* What the page contained, not what we hoped it did.
+          
+              Missing grades were argued about from the outside four times, on
+              four wrong theories, because the sync reported only what it wrote
+              and never what it saw. These three numbers separate "HAC gave us
+              nothing" from "we read it and dropped it" in one glance. */}
+          <p className="text-[14px] leading-relaxed text-text-faint">
+            Read {outcome.coursesSeen}{" "}
+            {outcome.coursesSeen === 1 ? "class" : "classes"} and{" "}
+            {outcome.gradesSeen} course{" "}
+            {outcome.gradesSeen === 1 ? "grade" : "grades"} from HAC, via the{" "}
+            {outcome.via === "password" ? "saved password" : "extension"}.{" "}
+            {outcome.gradesWritten > 0
+              ? `${outcome.gradesWritten} saved.`
+              : outcome.gradesSeen === 0
+                ? "HAC printed no overall grade for any class yet."
+                : "All were already stored."}
           </p>
           {outcome.guessed && (
             <p className="text-[14px] leading-relaxed text-butter">

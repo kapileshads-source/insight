@@ -1,4 +1,5 @@
 import {
+  courseScore,
   msUntilNextSync,
   RETRY_AFTER_FAILURE_MS,
   shouldSync,
@@ -81,6 +82,20 @@ console.log("\nthe timer doesn't fire more often than it needs to");
   ok("a newer attempt pushes it out",
      msUntilNextSync(base({ lastSyncedAt: NOW - 86_400_000, lastAttemptAt: NOW }))
        === SYNC_EVERY_MS);
+}
+
+console.log("\nthe course grade Canvas computes, quoted not derived");
+{
+  // Absent until the request asks for include[]=total_scores. Without it every
+  // course had a name and no grade, so the GPA estimate had nothing to average
+  // and rendered nothing at all.
+  ok("reads the student's own score", courseScore({ id: "1", name: "Bio", enrollments: [{ type: "student", computed_current_score: 93 }] }) === 93);
+  ok("no enrolments is null", courseScore({ id: "1", name: "Bio" }) === null);
+  // A teacher hiding totals is legitimate, and a hidden total is not a zero.
+  ok("a hidden total is null, not zero", courseScore({ id: "1", name: "Bio", enrollments: [{ type: "student", computed_current_score: null }] }) === null);
+  ok("a real zero survives", courseScore({ id: "1", name: "Bio", enrollments: [{ type: "student", computed_current_score: 0 }] }) === 0);
+  // A student who is also a TA somewhere has two enrolments.
+  ok("prefers the student enrolment", courseScore({ id: "1", name: "Bio", enrollments: [{ type: "ta", computed_current_score: 100 }, { type: "student", computed_current_score: 78 }] }) === 78);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

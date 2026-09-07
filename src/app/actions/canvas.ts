@@ -10,6 +10,7 @@ import {
   fetchAssignments,
   fetchCourses,
   fetchModules,
+  courseScore,
   submissionState,
   verifyToken,
 } from "@/lib/canvas";
@@ -143,6 +144,9 @@ export type CanvasPull = {
     /// What the class is on now, when Canvas has modules for it. Null is the
     /// common case — plenty of teachers never make any.
     currentModule: CurrentModule | null;
+    /// Canvas's own current percentage for this student. Null when the teacher
+    /// hides totals, which is legitimate and must not become a zero.
+    reportedGrade: number | null;
   }[];
   assignments: {
     canvasId: string;
@@ -226,6 +230,12 @@ export async function pullCanvas(): Promise<
           name: c.name,
           shortName: c.course_code ?? null,
           currentModule: modulesByCourse.get(c.id) ?? null,
+          // Canvas's own figure, quoted rather than derived — the same rule the
+          // HAC gradebook follows, and for the same reason: Canvas applies the
+          // teacher's group weights, so anything averaged here would disagree
+          // with what the student sees in Canvas itself. Null stays null; a
+          // hidden total is not a zero.
+          reportedGrade: courseScore(c),
         })),
         assignments,
       },

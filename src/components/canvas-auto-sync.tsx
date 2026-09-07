@@ -124,6 +124,10 @@ export function CanvasAutoSync() {
             name: c.name,
             shortName: c.shortName,
             currentModule: c.currentModule,
+            // Stored as a string so it matches the HAC path exactly — the
+            // gradebook view and the GPA estimate read one field, not two.
+            reportedGrade:
+              c.reportedGrade === null ? null : String(c.reportedGrade),
           }),
         })),
       );

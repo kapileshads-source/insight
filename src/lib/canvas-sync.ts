@@ -93,3 +93,29 @@ export function msUntilNextSync(c: SyncConditions): number {
   if (newest === 0) return 0;
   return Math.max(0, SYNC_EVERY_MS - (c.now - newest));
 }
+
+/**
+ * The student's own current score in a course, as Canvas computes it.
+ *
+ * Quoted, never derived — the same rule the HAC gradebook follows. Canvas
+ * applies the teacher's group weights, and any average worked out here would
+ * disagree with what the student sees in Canvas itself.
+ *
+ * `enrollments` carries one entry per role. A student who is also a TA
+ * somewhere would have two, so this takes the student one rather than the
+ * first.
+ */
+export function courseScore(course: {
+  enrollments?: {
+    type?: string;
+    role?: string;
+    computed_current_score?: number | null;
+  }[];
+}): number | null {
+  const enrolments = course.enrollments ?? [];
+  const own =
+    enrolments.find((e) => e.type === "student" || e.role === "StudentEnrollment") ??
+    enrolments[0];
+  const score = own?.computed_current_score;
+  return typeof score === "number" && Number.isFinite(score) ? score : null;
+}

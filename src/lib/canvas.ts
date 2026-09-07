@@ -1,5 +1,7 @@
 import "server-only";
 
+export { courseScore } from "./canvas-sync";
+
 /**
  * Canvas REST API client.
  *
@@ -28,6 +30,15 @@ export type CanvasCourse = {
   id: string;
   name: string;
   course_code?: string;
+  /// Attached only when the request asks for `include[]=total_scores`. One
+  /// entry per role the caller holds in the course.
+  enrollments?: {
+    type?: string;
+    role?: string;
+    /// The student's own current percentage, as Canvas computes it with the
+    /// teacher's group weights applied. Null when totals are hidden.
+    computed_current_score?: number | null;
+  }[];
 };
 
 export type CanvasAssignment = {
@@ -118,11 +129,21 @@ export async function verifyToken(opts: FetchOptions): Promise<{ name: string }>
 }
 
 export async function fetchCourses(opts: FetchOptions): Promise<CanvasCourse[]> {
+  // `include[]=total_scores` is what attaches the student's own current score
+  // to each course, in `enrollments[].computed_current_score`. Without it the
+  // course grade is simply absent — which is why the GPA estimate showed
+  // nothing at all for anyone who had connected Canvas but not HAC: every
+  // course had a name and no grade, so there was nothing to average.
+  //
+  // Canvas returns the score only for the caller's own enrolment, and only when
+  // the teacher has not hidden totals — so it is legitimately null sometimes,
+  // and a null must stay a null rather than becoming a zero.
   return getAll<CanvasCourse>(
     opts,
-    "/api/v1/courses?enrollment_state=active&per_page=100",
+    "/api/v1/courses?enrollment_state=active&include[]=total_scores&per_page=100",
   );
 }
+
 
 /// Assignments with the student's own submission attached, so grades and
 /// submission state arrive in the same pass rather than needing a second

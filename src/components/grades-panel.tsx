@@ -169,11 +169,16 @@ export function GradesPanel() {
 
   if (status !== "unlocked" || courses === null) return null;
   if (failed) return <GradesUnreadable />;
-  if (courses.length === 0) return null;
 
+  // The GPA is not gated on the grades list having anything in it. Early in a
+  // term a course can carry a percentage while none of its assignments fall in
+  // the window the list reads, and returning null here hid the estimate
+  // entirely — which is exactly how it looked missing rather than empty.
   return (
     <>
-      <GradesList courses={courses} newCount={fresh.length} />
+      {courses.length > 0 && (
+        <GradesList courses={courses} newCount={fresh.length} />
+      )}
       <GpaCard courses={gpa} />
     </>
   );

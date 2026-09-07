@@ -1,11 +1,9 @@
 import { AppNav, PageTitle } from "@/components/chrome";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getOrCreateUser } from "@/lib/user";
 import { getCanvasStatus } from "@/app/actions/canvas";
-import { hacConnectionStatus } from "@/app/actions/hac";
 import { CanvasConnect } from "@/components/canvas-connect";
-import { HacSync } from "@/components/hac-sync";
-import { HacConnect } from "@/components/hac-connect";
 
 export const metadata = { title: "Canvas — Insight" };
 
@@ -13,10 +11,7 @@ export default async function CanvasPage() {
   const user = await getOrCreateUser();
   if (!user) redirect("/sign-in");
 
-  const [status, hac] = await Promise.all([
-    getCanvasStatus(),
-    hacConnectionStatus(),
-  ]);
+  const status = await getCanvasStatus();
 
   return (
     <>
@@ -31,14 +26,16 @@ export default async function CanvasPage() {
 
         <div className="mt-10">
           <CanvasConnect status={status} />
-
-          <HacSync />
-
-          <HacConnect
-            connected={hac.connected}
-            username={hac.username}
-            disconnected={hac.disconnected}
-          />
+          {/* HAC has its own page. It is a different gradebook from a
+              different vendor, and burying it under a page named after Canvas
+              is why the credential option went unseen. */}
+          <p className="mt-8 text-[15px] leading-relaxed text-text-muted">
+            Your posted grades live in{" "}
+            <Link href="/hac" className="text-sky underline underline-offset-2">
+              Home Access Center
+            </Link>
+            , which Insight reads separately.
+          </p>
       </div>
       </div>
     </>

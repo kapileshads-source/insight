@@ -672,6 +672,43 @@ dependency — see the warning below.
 | Assignment rows | `div.sg-content-grid tr.sg-asp-table-data-row` |
 | Assignment name | the row's `<a>`; a row without one is a totals row |
 
+### Reconnaissance from a second working implementation, 2026-09-06
+
+Kapilesh's cousin built a HAC app ("Orbital") and its source was read. This is
+the most useful HAC information we have, because it is a second implementation
+that works. What it changed here:
+
+1. **The page a browser shows is a wrapper around an iframe.** The tables live
+   at `Content/Student/Assignments.aspx`; `/HomeAccess/Classes/Classwork` is the
+   shell. Fetched server-side the shell returns a valid 200 with no gradebook in
+   it — which is why a working login produced a sync that read zero classes and
+   reported no error. `hasGradebook()` now decides, not the status code.
+2. **The verification token must go in the header *as well as* the body.** It
+   was here, then removed in favour of `Origin` on the assumption it was
+   redundant. It is not.
+3. **A bad password answers 200 with the form re-rendered**, and prints
+   `Invalid User Name or Password`. Now checked explicitly. This is the failure
+   that silently breaks everything downstream.
+4. `?ReturnUrl=%2fHomeAccess%2f` on the login GET is **required** — without it
+   the LogOn page 500s. We already had it.
+5. Transcript year blocks are index-suffixed (`_lblYearValue_0`, `_1`, …) with
+   no count anywhere. Loop until the id is missing.
+6. `Assignments.aspx` does **not** expose category weights, confirming the rule
+   in `gradebook.ts`: quote the course grade, never recompute it.
+
+**On GPA, three things worth not chasing.** Their unweighted cutoffs are plain
+decades, same as ours — so the 3.75 vs 3.778 gap is the *denominator*, not the
+scale: 3.778 is 34/9 against our 30/8, meaning one more course is counted than
+we count. Their app counts every course carrying a number, with no exclusions
+at all. And their level table never fires — every course is hard-coded
+`"Regular"`, so their weighted and unweighted GPAs are identical for real data.
+**Do not reconcile our numbers against theirs.** The transcript's own printed
+figure is the only authoritative one.
+
+**The thing worth measuring before a pilot:** their dashboard performs a full
+HAC login on every page load. Ours logs in only on an explicit sync, which is
+the better shape, but nobody has measured whether HAC rate-limits either.
+
 ### Checked against a real gradebook, 2026-09-05
 
 Kapilesh sent the live Classwork page. It settles most of what was guesswork,

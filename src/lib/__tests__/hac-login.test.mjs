@@ -1,4 +1,5 @@
 import {
+  hasGradebook,
   isStillLoginPage,
   loginErrorText,
   verificationToken,
@@ -56,6 +57,30 @@ console.log("\nHAC's own words on a failed login");
   // Treated as data from a page we do not control, so it cannot run long.
   ok("is capped", (loginErrorText('<div class="validation-summary-errors">' + "x".repeat(900) + "</div>") ?? "").length <= 240);
   ok("an empty block is null", loginErrorText('<div class="validation-summary-errors"></div>') === null);
+}
+
+console.log("\na 200 is not the same as a gradebook");
+{
+  // The wrapper URL a browser shows is a shell around an iframe; the tables
+  // live at the content URL. Fetched server-side it returns a valid page with
+  // no courses in it, and accepting that as success produced a working login,
+  // a sync reporting no error, and zero classes read.
+  const shell = '<html><body><div id="wrap"><iframe src="/HomeAccess/Content/Student/Assignments.aspx"></iframe></div></body></html>';
+  ok("an iframe shell is not a gradebook", hasGradebook(shell) === false);
+  ok("an empty page is not", hasGradebook("") === false);
+
+  ok("the course container counts", hasGradebook('<div class="AssignmentClass">x</div>'));
+  ok("the course heading counts", hasGradebook('<a class="sg-header-heading">CATE03742A</a>'));
+  ok("the grade label counts", hasGradebook("<span>Student Grades 96.50%</span>"));
+}
+
+console.log("\nthe exact string HAC prints on a bad password");
+{
+  // Answers 200 with the form re-rendered, so status says nothing. Reading
+  // this as success is the failure that silently breaks everything after it.
+  ok("invalid user name or password is a rejection", isStillLoginPage("<p>Invalid User Name or Password</p>"));
+  ok("case does not matter", isStillLoginPage("<p>INVALID USER NAME OR PASSWORD</p>"));
+  ok("a real gradebook is not a rejection", !isStillLoginPage('<div class="AssignmentClass">Student Grades 96.50%</div>'));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

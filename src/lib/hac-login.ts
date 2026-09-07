@@ -1,6 +1,7 @@
 import "server-only";
 
 import {
+  hasGradebook,
   isStillLoginPage,
   loginErrorText,
   verificationToken,
@@ -39,11 +40,26 @@ import {
 const ORIGIN = "https://hac.friscoisd.org";
 const LOGIN_URL = `${ORIGIN}/HomeAccess/Account/LogOn?ReturnUrl=%2fHomeAccess%2f`;
 
-/// Confirmed against a real account, 2026-09-05: the classwork page moved, and
-/// the address in the third-party parser we read no longer resolves.
+/**
+ * Where the classwork actually is, in the order worth trying.
+ *
+ * **The content URL comes first now, and that reordering is the point.** What
+ * a browser shows at `/HomeAccess/Classes/Classwork` is a wrapper around an
+ * iframe; the tables live at `Content/Student/Assignments.aspx`. Fetching the
+ * wrapper server-side returns a shell with no gradebook in it — a perfectly
+ * valid 200 containing nothing to parse.
+ *
+ * The previous order took the first 200 it got, which was always the shell. So
+ * a successful login produced an empty sync, and the missing grades looked like
+ * a storage bug for a day.
+ *
+ * Both are still tried, because a campus or a future version may serve the
+ * tables from either, and `hasGradebook` decides which answer was real rather
+ * than the status code.
+ */
 const CLASSWORK_URLS = [
-  `${ORIGIN}/HomeAccess/Classes/Classwork`,
   `${ORIGIN}/HomeAccess/Content/Student/Assignments.aspx`,
+  `${ORIGIN}/HomeAccess/Classes/Classwork`,
 ];
 
 /// A browser string. HAC has been observed to behave differently without one,
@@ -140,6 +156,12 @@ export async function fetchClasswork(
         Cookie: cookieHeader(jar),
         Referer: LOGIN_URL,
         Origin: ORIGIN,
+        // In the header *as well as* the body. Both are required; sending only
+        // the form field fails. This was here, then removed in favour of Origin
+        // on the assumption it was belt-and-braces — it is not, and that
+        // assumption is a strong candidate for why a verified login stopped
+        // returning anything.
+        __RequestVerificationToken: token,
       },
       body,
     });
@@ -170,7 +192,10 @@ export async function fetchClasswork(
       const html = await page.text();
       // Bounced back to the login form means the session did not take.
       if (isStillLoginPage(html)) return { ok: false, reason: "BAD_CREDENTIALS" };
-      if (html.length > 0) return { ok: true, html };
+      // A 200 is not the same as a gradebook. The wrapper URL answers 200 with
+      // an iframe and nothing else, and taking that as success is what produced
+      // a sync that read zero classes without ever reporting an error.
+      if (hasGradebook(html)) return { ok: true, html };
     } catch {
       // Try the other address before giving up.
     }

@@ -179,8 +179,119 @@ export function estimateGpa(courses: GpaCourse[]): GpaEstimate {
  * so where credit is known it should win over any inference, and where it is
  * not, the student gets a toggle.
  */
+/**
+ * Keep only the Canvas courses that HAC also knows about.
+ *
+ * Kapilesh's idea, and it is better than the marker list below because it is
+ * evidence rather than guesswork. HAC lists what a student is actually
+ * enrolled in. Canvas lists that *plus* whatever the district has pushed into
+ * it — "Frisco ISD 1forAll Student Course 26-27", "Cen10 Titans Info", "CHS
+ * Flashing Lights" — which are Canvas shells, not classes, and one of them was
+ * sitting at 100% and lifting a GPA.
+ *
+ * So: if HAC has told us anything, HAC is the roll. A Canvas course with no
+ * counterpart there is not a class the student takes.
+ *
+ * Matching is the same asymmetric matcher the assignments use, because the two
+ * systems name a class nothing alike — `SCI22200A - 6 Chemistry Adv S1` against
+ * `Chemistry Adv YR (Whitt, Austin)`. It refuses rather than guesses, so an
+ * unmatched Canvas course is dropped rather than kept on a maybe.
+ *
+ * **When HAC has said nothing, every course is kept.** Returning an empty list
+ * because a sync has not run yet would silently blank the GPA, which is the
+ * failure this codebase keeps repeating: a filter that is right in steady
+ * state and wrong on first use.
+ */
+/**
+ * The words in a course title that identify the class.
+ *
+ * The two systems name one class nothing alike:
+ *
+ *   HAC     SCI22200A - 6 Chemistry Adv S1
+ *   Canvas  Chemistry Adv YR (Whitt, Austin)
+ *
+ * So the code and section prefix, the teacher in parentheses, and the term
+ * marker all come off, leaving "chemistry adv" on both sides.
+ *
+ * The general assignment matcher cannot be reused here — it vetoes on
+ * disagreeing numbers, and `22200` against nothing is exactly that. That
+ * caution is right when filing a grade against a class and wrong when asking
+ * "are these the same subject", which is all this needs to answer.
+ */
+export function classTokens(title: string): string[] {
+  return title
+    .toLowerCase()
+    // The teacher, which only Canvas carries.
+    .replace(/\([^)]*\)/g, " ")
+    // HAC's course code and section: "SCI22200A - 6 ".
+    .replace(/^[a-z]{2,4}\d{3,6}[a-z]?\s*-\s*\d+\s*/i, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(" ")
+    .filter(
+      (t) =>
+        t.length > 0 &&
+        // Term and semester markers, which the two systems disagree about for
+        // the same class — S1 against YR.
+        !["s1", "s2", "yr", "a", "b", "the", "of", "and"].includes(t) &&
+        // Anything left that is purely a number is a code fragment.
+        !/^\d+$/.test(t),
+    );
+}
+
+/**
+ * Whether two titles name the same class.
+ *
+ * Every significant word of the shorter title must appear in the longer one.
+ * "chemistry adv" matches "chemistry adv"; it does not match "chemistry" alone,
+ * because an on-level class and an advanced one are different courses and
+ * conflating them would move a GPA.
+ */
+export function sameClass(a: string, b: string): boolean {
+  const left = classTokens(a);
+  const right = classTokens(b);
+  if (left.length === 0 || right.length === 0) return false;
+
+  // Level markers must agree on both sides before anything else is compared.
+  //
+  // Subset matching alone said "Chemistry Adv" and "Chemistry" were the same
+  // class, because every word of the shorter appears in the longer. They are
+  // different courses with different GPA maxima, and merging them would move
+  // the number silently.
+  const LEVELS = ["ap", "adv", "advanced", "honors", "hon", "gt", "ib", "dc"];
+  const leftLevel = new Set(left.filter((t) => LEVELS.includes(t)));
+  const rightLevel = new Set(right.filter((t) => LEVELS.includes(t)));
+  if ((leftLevel.size > 0) !== (rightLevel.size > 0)) return false;
+
+  const [short, long] =
+    left.length <= right.length ? [left, right] : [right, left];
+  const bag = new Set(long);
+  return short.every((t) => bag.has(t));
+}
+
+export function keepEnrolled<T extends { title: string; fromHac: boolean }>(
+  courses: T[],
+  matches: (a: string, b: string) => boolean = sameClass,
+): T[] {
+  const roll = courses.filter((c) => c.fromHac);
+  if (roll.length === 0) return courses;
+
+  return courses.filter((c) => {
+    if (c.fromHac) return true;
+    return roll.some(
+      (h) =>
+        h.title.trim().toLowerCase() === c.title.trim().toLowerCase() ||
+        matches(h.title, c.title),
+    );
+  });
+}
+
 const NOT_A_CLASS = [
   "flashing lights",
+  // Canvas shells the district pushes to every student. Seen on a real
+  // account, one of them carrying a 100% that was lifting a GPA.
+  "1forall",
+  "titans info",
+  "student course",
   "advisory",
   "homeroom",
   "tech waiver",

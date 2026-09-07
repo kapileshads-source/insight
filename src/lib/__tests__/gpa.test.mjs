@@ -1,5 +1,7 @@
 import {
   estimateGpa,
+  keepEnrolled,
+  sameClass,
   hasUsableGrade,
   levelOf,
   looksNonAcademic,
@@ -96,6 +98,54 @@ console.log("\nwhat should not count toward a GPA");
   ok("a class with a lunch wave still counts", !looksNonAcademic("AP Pre Calculus S1 - C Lunch"));
   ok("so does the other one", !looksNonAcademic("Computer Science 1 Adv S1 - A Lunch"));
   ok("a normal class counts", !looksNonAcademic("AP Biology"));
+}
+
+console.log("\nHAC is the roll of what you actually take");
+{
+  const courses = [
+    { title: "SCI22200A - 6 Chemistry Adv S1", fromHac: true },
+    { title: "Chemistry Adv YR (Whitt, Austin)", fromHac: false },
+    // Canvas shells the district pushes to everyone. One of these was sitting
+    // at 100% and lifting a real student's GPA.
+    { title: "Frisco ISD 1forAll Student Course 26-27", fromHac: false },
+    { title: "Cen10 Titans Info", fromHac: false },
+  ];
+  const kept = keepEnrolled(courses).map((c) => c.title);
+
+  ok("the HAC course stays", kept.includes("SCI22200A - 6 Chemistry Adv S1"));
+  ok("its Canvas twin stays", kept.includes("Chemistry Adv YR (Whitt, Austin)"));
+  ok("a district shell is dropped", !kept.includes("Frisco ISD 1forAll Student Course 26-27"));
+  ok("so is the other one", !kept.includes("Cen10 Titans Info"));
+
+  // The failure this codebase keeps repeating: a filter that is right in
+  // steady state and wrong on first use. Before any HAC sync, dropping every
+  // Canvas course would blank the GPA entirely.
+  const noHac = keepEnrolled([
+    { title: "Chemistry Adv YR (Whitt, Austin)", fromHac: false },
+    { title: "Frisco ISD 1forAll Student Course 26-27", fromHac: false },
+  ]);
+  ok("nothing from HAC keeps everything", noHac.length === 2);
+  ok("an empty list stays empty", keepEnrolled([]).length === 0);
+}
+
+console.log("\nthe two systems name one class nothing alike");
+{
+  ok("HAC and Canvas chemistry are the same class", sameClass("SCI22200A - 6 Chemistry Adv S1", "Chemistry Adv YR (Whitt, Austin)"));
+  ok("so are the pre-calculus ones", sameClass("MTH34300A - 8 AP Pre Calculus S1 - C Lunch", "AP Pre Calculus YR (SCHMIDT, AMANDA)"));
+  // An advanced class and an on-level one are different courses, and
+  // conflating them would move a GPA.
+  ok("advanced is not on-level", !sameClass("Chemistry Adv YR", "Chemistry YR"));
+  ok("different subjects do not match", !sameClass("SCI22200A - 6 Chemistry Adv S1", "English 2 Adv YR (BECKMAN, HILLARY)"));
+  ok("a district shell matches nothing", !sameClass("SCI22200A - 6 Chemistry Adv S1", "Frisco ISD 1forAll Student Course 26-27"));
+}
+
+console.log("\ndistrict shells are not classes");
+{
+  ok("1forAll is not a class", looksNonAcademic("Frisco ISD 1forAll Student Course 26-27"));
+  ok("Titans Info is not a class", looksNonAcademic("Cen10 Titans Info"));
+  ok("advisory is not a class", looksNonAcademic("10th Grade Advisory (Graham, Justin)"));
+  ok("chemistry is", !looksNonAcademic("Chemistry Adv YR (Whitt, Austin)"));
+  ok("AP Seminar is", !looksNonAcademic("AP Seminar YR (Saunders, Arthur)"));
 }
 
 console.log("\na course reading 0% has not been graded, it has failed nothing");

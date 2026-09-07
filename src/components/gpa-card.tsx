@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   estimateGpa,
   hasUsableGrade,
+  keepEnrolled,
   levelOf,
   looksNonAcademic,
   type CourseLevel,
@@ -37,12 +38,21 @@ const LEVEL_LABEL: Record<CourseLevel, string> = {
 export type GpaInput = {
   id: string;
   title: string;
+  /// True for a course HAC named. HAC lists what a student is actually
+  /// enrolled in; Canvas lists that plus whatever the district pushed into it.
+  fromHac: boolean;
   /// The gradebook's own figure, already parsed to a number. Courses without
   /// one simply do not count yet.
   grade: number | null;
 };
 
-export function GpaCard({ courses }: { courses: GpaInput[] }) {
+export function GpaCard({ courses: all }: { courses: GpaInput[] }) {
+  // HAC is the roll. A Canvas course with no counterpart there is a district
+  // shell rather than a class — "Frisco ISD 1forAll Student Course 26-27" was
+  // sitting at 100% and lifting a real GPA. When HAC has said nothing yet,
+  // everything is kept rather than the estimate silently blanking.
+  const courses = keepEnrolled(all);
+
   // Excluded by default where the title says so, and adjustable by hand.
   // Deliberately a student's decision rather than a model's: a guess about
   // whether a course counts silently moves a GPA, and nobody can see it happen.

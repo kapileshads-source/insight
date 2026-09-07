@@ -48,7 +48,14 @@ export async function fetchGradebook() {
     }),
     db.course.findMany({
       where: { userId: user.id, active: true },
-      select: { id: true, payloadCipher: true, payloadIv: true },
+      select: {
+        id: true,
+        // Null on a course HAC created, which is how the gradebook tells the
+        // student's real roll from the shells Canvas carries.
+        canvasId: true,
+        payloadCipher: true,
+        payloadIv: true,
+      },
     }),
   ]);
 

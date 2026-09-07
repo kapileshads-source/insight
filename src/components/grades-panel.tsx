@@ -103,6 +103,7 @@ export function GradesPanel() {
           gpa.push({
             id: c.id,
             title: label,
+            fromHac: c.canvasId === null,
             grade: Number.isFinite(asNumber) ? asNumber : null,
           });
         }),

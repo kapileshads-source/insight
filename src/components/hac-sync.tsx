@@ -230,16 +230,32 @@ export function HacSync() {
       // already hold. New courses created above get theirs on the next sync
       // rather than complicating the two-phase ref dance for a number that is
       // one pull away.
+      // Resolved through the same matcher that files the assignments, rather
+      // than by comparing names.
+      //
+      // This is the second half of why an account showing 96.50% in HAC was
+      // told it had no grades. `courseIdFor` deliberately matches a HAC course
+      // onto an existing *Canvas* row where it can — "MTH34300A - 8 AP Pre
+      // Calculus S1 - C Lunch" and "AP Pre Calculus YR (SCHMIDT, AMANDA)" are
+      // the same class. That row then keeps its Canvas name, and the grade was
+      // being looked up by the stored name, which never appears in a HAC
+      // heading. Every course that matched lost its grade silently.
+      //
+      // Driven from the grades HAC actually reported, so the lookup is always
+      // in the direction the data came from.
       const courseUpdates = [];
-      for (const c of courses) {
-        const grade = gradeByCourse.get(c.name);
-        if (!grade || grade === c.reportedGrade) continue;
+      for (const g of incomingGrades) {
+        const id = courseIdFor(g.course, courses, coursesMatch);
+        if (!id) continue; // A course we have no row for is created above, with
+        // its grade already in the payload.
+        const existing = courses.find((c) => c.id === id);
+        if (!existing || existing.reportedGrade === g.grade) continue;
         courseUpdates.push({
-          id: c.id,
+          id,
           payload: await conceal({
-            name: c.payloadName,
-            shortName: c.payloadShortName,
-            reportedGrade: grade,
+            name: existing.payloadName,
+            shortName: existing.payloadShortName,
+            reportedGrade: g.grade,
           }),
         });
       }

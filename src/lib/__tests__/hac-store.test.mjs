@@ -115,5 +115,36 @@ console.log("\nwhich course a HAC row belongs to");
   ok("ambiguity is refused, not guessed", courseIdFor("Biology AP", ambiguous, coursesMatch) === null);
 }
 
+console.log("\na HAC course lands on the Canvas row for the same class");
+{
+  // The bug this pins: HAC headings and Canvas names for one class look
+  // nothing alike, so a grade looked up by the *stored* name is never found
+  // and is dropped without a word. It has to be resolved through the matcher,
+  // in the direction the data arrived.
+  const stored = [
+    { id: "canvas-1", name: "AP Pre Calculus YR (SCHMIDT, AMANDA)" },
+    { id: "canvas-2", name: "Chemistry Adv YR (Whitt, Austin)" },
+  ];
+  const id = courseIdFor("MTH34300A - 8 AP Pre Calculus S1 - C Lunch", stored, coursesMatch);
+
+  // It does NOT match, and that is correct rather than a shortcoming: the
+  // course numbers disagree, and the matcher refuses rather than guessing —
+  // filing a grade against the wrong class is the mistake this area exists to
+  // avoid. So HAC gets its own course row, which is why a real account ends up
+  // with twelve classes rather than six.
+  ok("an unmatched HAC course gets its own row", id === null);
+  ok("and certainly not the wrong class", id !== "canvas-2");
+
+  // A HAC course Insight already created matches itself exactly, which is how
+  // an account synced before the grade was stored at creation gets repaired on
+  // the next pull.
+  const withHac = [...stored, { id: "hac-1", name: "MTH34300A - 8 AP Pre Calculus S1 - C Lunch" }];
+  ok("an existing HAC row is found exactly", courseIdFor("MTH34300A - 8 AP Pre Calculus S1 - C Lunch", withHac, coursesMatch) === "hac-1");
+
+  // And the reason the lookup must go through the matcher rather than the
+  // stored name: nothing about the two strings is comparable.
+  ok("a plain name lookup finds nothing", stored.find((c) => c.name === "MTH34300A - 8 AP Pre Calculus S1 - C Lunch") === undefined);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

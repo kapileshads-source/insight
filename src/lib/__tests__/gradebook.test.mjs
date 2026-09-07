@@ -3,6 +3,7 @@ import {
   showsPercent,
   gradedSince,
   hasSomethingToShow,
+  oneCardPerClass,
   isGraded,
   percentOf,
 } from "../gradebook.ts";
@@ -130,6 +131,33 @@ console.log("what is new since you last looked");
   ok("never looked means nothing is new", gradedSince(rows, null).length === 0);
   ok("unmarked rows are never news", gradedSince([row({ status: "UNGRADED", updatedAt: at("2026-09-09T00:00:00Z") })], since).length === 0);
   ok("a row exactly at the mark is not new", gradedSince([row({ updatedAt: since })], since).length === 0);
+}
+
+console.log("\none card per class, not one per system");
+{
+  // A real account showed Chemistry twice: HAC's SCI22200A - 6 Chemistry Adv S1
+  // at 83.00% and Canvas's Chemistry Adv YR (Whitt, Austin) at 80.02%. Not two
+  // classes and not two grades — the same class from two places, fetched at
+  // different moments.
+  const courses = [
+    { course: "SCI22200A - 6 Chemistry Adv S1", fromHac: true, reportedGrade: "83.00", rows: [], gradedCount: 4 },
+    { course: "Chemistry Adv YR (Whitt, Austin)", fromHac: false, reportedGrade: "80.02", rows: [], gradedCount: 0 },
+    { course: "Frisco ISD 1forAll Student Course 26-27", fromHac: false, reportedGrade: "100", rows: [], gradedCount: 0 },
+  ];
+  const kept = oneCardPerClass(courses).map((c) => c.course);
+
+  ok("HAC's chemistry stays", kept.includes("SCI22200A - 6 Chemistry Adv S1"));
+  ok("the Canvas duplicate goes", !kept.includes("Chemistry Adv YR (Whitt, Austin)"));
+  ok("so does the district shell", !kept.includes("Frisco ISD 1forAll Student Course 26-27"));
+  ok("exactly one card left", kept.length === 1);
+
+  // Before any HAC sync, nothing is dropped — the failure this codebase keeps
+  // repeating is a filter that empties the screen on first use.
+  const noHac = oneCardPerClass([
+    { course: "Chemistry Adv YR (Whitt, Austin)", fromHac: false, reportedGrade: "80.02", rows: [], gradedCount: 0 },
+  ]);
+  ok("nothing from HAC keeps everything", noHac.length === 1);
+  ok("an empty list stays empty", oneCardPerClass([]).length === 0);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

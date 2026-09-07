@@ -45,6 +45,9 @@ export type GradeRow = {
 
 export type CourseGrades = {
   course: string;
+  /// True when HAC named this class. HAC is the roll of what a student is
+  /// actually enrolled in; Canvas carries that plus the district's own shells.
+  fromHac: boolean;
   /// Exactly as the gradebook printed it, or null. Never derived. Free text,
   /// because it can be a percentage, a letter, or empty early in a term.
   reportedGrade: string | null;
@@ -103,6 +106,7 @@ export function isGraded(row: { status: GradeStatus }): boolean {
 export function buildGradebook(
   rows: GradeRow[],
   reportedGrades: Map<string, string | null> = new Map(),
+  hacCourses: Set<string> = new Set(),
 ): CourseGrades[] {
   const byCourse = new Map<string, GradeRow[]>();
 
@@ -120,6 +124,7 @@ export function buildGradebook(
     );
     courses.push({
       course,
+      fromHac: hacCourses.has(course),
       reportedGrade: reportedGrades.get(course) ?? null,
       rows: sorted,
       gradedCount: sorted.filter(isGraded).length,
@@ -176,4 +181,37 @@ export function gradedSince(rows: GradeRow[], since: Date | null): GradeRow[] {
   return rows
     .filter((r) => isGraded(r) && r.updatedAt.getTime() > since.getTime())
     .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+}
+
+/**
+ * One card per class, not one per system.
+ *
+ * A student taking Chemistry saw it twice — once as HAC's
+ * `SCI22200A - 6 Chemistry Adv S1` at 83.00% and once as Canvas's
+ * `Chemistry Adv YR (Whitt, Austin)` at 80.02% — which is not two classes and
+ * not two grades, but the same class read from two places that disagree
+ * slightly because they were fetched at different moments.
+ *
+ * **HAC wins, and the whole Canvas row goes.** HAC is what the school posts;
+ * Canvas is what a teacher happens to have set up in it. Showing both invites
+ * the student to wonder which is real, and the answer is always the same one.
+ *
+ * Canvas courses with no HAC counterpart go too. Those are the district's own
+ * shells — "Frisco ISD 1forAll Student Course 26-27", "Cen10 Titans Info" —
+ * which are not classes a student takes, and one of them was sitting at 100%.
+ *
+ * As everywhere else: **if HAC has said nothing yet, nothing is dropped.** A
+ * filter that empties the screen before the first sync is the failure this
+ * codebase keeps repeating.
+ */
+export function oneCardPerClass(courses: CourseGrades[]): CourseGrades[] {
+  const roll = courses.filter((c) => c.fromHac);
+  if (roll.length === 0) return courses;
+
+  // Once HAC has spoken, it is the whole roll — so every Canvas row is either
+  // a duplicate of a HAC one or a district shell, and both should go. Written
+  // as one rule rather than two because the action is the same and a
+  // `sameClass` comparison here would only be theatre: it cannot change the
+  // outcome, and an unused branch that looks like it might is worse than none.
+  return roll;
 }

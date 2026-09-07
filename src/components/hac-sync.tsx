@@ -235,7 +235,12 @@ export function HacSync() {
         if (grade) newCoursesWithGrades++;
         newCourses.push({
           ref,
-          payload: await conceal({ name, shortName: name, reportedGrade: grade }),
+          payload: await conceal({
+            name,
+            shortName: name,
+            reportedGrade: grade,
+            hacNamed: true,
+          }),
         });
         return { id: null, ref };
       };
@@ -291,6 +296,16 @@ export function HacSync() {
             name: existing.payloadName,
             shortName: existing.payloadShortName,
             reportedGrade: g.grade,
+            // Marks the class as one HAC knows about, whichever row it landed
+            // on.
+            //
+            // "Came from HAC" cannot be read off the Canvas id, and assuming it
+            // could made a real class vanish. When a HAC course matches an
+            // existing Canvas row — PLTW did — the grade is written onto that
+            // row, which still has its Canvas id, so the de-duplication read it
+            // as a Canvas duplicate and dropped it along with HAC's grade. The
+            // student lost a whole class from their GPA.
+            hacNamed: true,
           }),
         });
       }

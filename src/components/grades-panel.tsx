@@ -10,6 +10,7 @@ import {
   buildGradebook,
   gradedSince,
   hasSomethingToShow,
+  oneCardPerClass,
   percentOf,
   showsPercent,
   type CourseGrades,
@@ -83,6 +84,7 @@ export function GradesPanel() {
     try {
       const names = new Map<string, string>();
       const reported = new Map<string, string | null>();
+      const fromHac = new Set<string>();
       const gpa: GpaInput[] = [];
       await Promise.all(
         stored.courses.map(async (c) => {
@@ -90,12 +92,18 @@ export function GradesPanel() {
             name?: string;
             shortName?: string;
             reportedGrade?: string | null;
+            hacNamed?: boolean;
           }>({ cipher: c.payloadCipher, iv: c.payloadIv });
           const label = p.shortName || p.name || "Course";
           names.set(c.id, label);
           // Only the gradebook's own figure is ever shown. See `gradebook.ts`
           // for why nothing is computed here.
           if (p.reportedGrade != null) reported.set(label, p.reportedGrade);
+          // Two ways a class is on HAC's roll: HAC created the row, or HAC
+          // matched an existing Canvas row and wrote its grade there. Reading
+          // only the first made PLTW disappear — its HAC grade landed on the
+          // Canvas row, which then looked like a duplicate and was dropped.
+          if (c.canvasId === null || p.hacNamed) fromHac.add(label);
 
           // The same figure, parsed, for the GPA estimate. A course with no
           // grade posted contributes nothing rather than a zero.
@@ -103,7 +111,7 @@ export function GradesPanel() {
           gpa.push({
             id: c.id,
             title: label,
-            fromHac: c.canvasId === null,
+            fromHac: c.canvasId === null || p.hacNamed === true,
             grade: Number.isFinite(asNumber) ? asNumber : null,
           });
         }),
@@ -131,7 +139,7 @@ export function GradesPanel() {
       const seen = readLastSeen();
       return {
         ok: true,
-        courses: buildGradebook(rows, reported),
+        courses: oneCardPerClass(buildGradebook(rows, reported, fromHac)),
         fresh: gradedSince(rows, seen),
         gpa,
       };

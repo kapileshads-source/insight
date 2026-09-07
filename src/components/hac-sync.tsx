@@ -90,6 +90,7 @@ export function HacSync() {
     let html: string | null = null;
     let problem = "Couldn't read HAC just now.";
     let via: "extension" | "password" = "extension";
+    let from = "the extension";
 
     const fetched = await requestHacPage();
     if (fetched.ok) {
@@ -99,6 +100,7 @@ export function HacSync() {
       if (server.ok) {
         html = server.html;
         via = "password";
+        from = server.from;
       } else {
         // The extension's reason is the more useful one when it is installed
         // but unhappy; otherwise the credential path's message is.
@@ -122,10 +124,25 @@ export function HacSync() {
       } = readPage(parseHacHtml(html));
 
       if (incoming.length === 0) {
+        // Describe the page rather than assuming why it was empty.
+        //
+        // This used to say "normal early in a grading period" and stop, which
+        // was a guess dressed as an explanation — and it was wrong: the page
+        // being fetched was an iframe shell with no gradebook in it at all.
+        // Three numbers separate the cases that actually occur: a shell (tiny
+        // page, no courses), selectors that no longer match (large page, no
+        // courses), and a genuinely empty term (courses found, no rows).
+        const courses = parseHacHtml(html).length;
+        const size = Math.round(html.length / 1024);
+
         setOutcome({
           kind: "problem",
           message:
-            "HAC loaded but had no assignments on it — which is normal early in a grading period.",
+            courses > 0
+              ? `HAC gave ${courses} classes but no assignments in any of them — normal early in a grading period. (${size}KB from ${from}.)`
+              : size < 10
+                ? `That page was only ${size}KB and had no classes on it, so it is a wrapper rather than the gradebook. (From ${from}.)`
+                : `Read ${size}KB from ${from} but found no classes on it — HAC's page layout has probably changed, which needs a look at the parser.`,
         });
         return;
       }

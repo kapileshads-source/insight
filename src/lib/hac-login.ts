@@ -69,7 +69,10 @@ const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36";
 
 export type HacLoginResult =
-  | { ok: true; html: string }
+  /// `from` is the address that actually produced a gradebook. Reported
+  /// because "which page did we get" has now been the answer twice, and
+  /// guessing at it cost a day each time.
+  | { ok: true; html: string; from: string }
   | {
       ok: false;
       reason: HacFailure;
@@ -195,7 +198,7 @@ export async function fetchClasswork(
       // A 200 is not the same as a gradebook. The wrapper URL answers 200 with
       // an iframe and nothing else, and taking that as success is what produced
       // a sync that read zero classes without ever reporting an error.
-      if (hasGradebook(html)) return { ok: true, html };
+      if (hasGradebook(html)) return { ok: true, html, from: url };
     } catch {
       // Try the other address before giving up.
     }

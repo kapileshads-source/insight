@@ -295,7 +295,7 @@ export async function hacConnectionStatus(): Promise<{
  * then encrypts the result itself.
  */
 export async function pullHac(): Promise<
-  { ok: true; html: string } | { ok: false; error: string }
+  { ok: true; html: string; from: string } | { ok: false; error: string }
 > {
   const user = await getOrCreateUser();
   if (!user) return { ok: false, error: "Not signed in." };
@@ -326,5 +326,5 @@ export async function pullHac(): Promise<
     data: { lastSyncedAt: new Date(), disconnectedAt: null },
   });
 
-  return { ok: true, html: result.html };
+  return { ok: true, html: result.html, from: result.from };
 }

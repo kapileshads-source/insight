@@ -171,6 +171,20 @@ export function HacSync() {
       const newCourses: { ref: string; payload: Awaited<ReturnType<typeof conceal>> }[] = [];
       const refByCourse = new Map<string, string>();
 
+      // Built before any course is created, not after.
+      //
+      // This was the bug behind "none of your 12 classes has posted a grade
+      // yet" on an account whose HAC plainly showed 96.50% and 97.00%. Courses
+      // HAC named but Insight had never seen were created here with only a
+      // name, and the grade was written in a second pass that ran over
+      // *existing* rows only — so every course got its grade on the sync after
+      // the one that created it. A first sync therefore produced a full set of
+      // classes with no grades at all, which is exactly what a student sees the
+      // first time they connect and the only time they are watching.
+      const gradeByCourse = new Map(
+        incomingGrades.map((g) => [g.course, g.grade]),
+      );
+
       const courseRefFor = async (name: string): Promise<{ id: string | null; ref: string | null }> => {
         const id = courseIdFor(name, courses, coursesMatch);
         if (id) return { id, ref: null };
@@ -180,7 +194,14 @@ export function HacSync() {
 
         const ref = `hac-${newCourses.length}`;
         refByCourse.set(name, ref);
-        newCourses.push({ ref, payload: await conceal({ name, shortName: name }) });
+        newCourses.push({
+          ref,
+          payload: await conceal({
+            name,
+            shortName: name,
+            reportedGrade: gradeByCourse.get(name) ?? null,
+          }),
+        });
         return { id: null, ref };
       };
 
@@ -209,9 +230,6 @@ export function HacSync() {
       // already hold. New courses created above get theirs on the next sync
       // rather than complicating the two-phase ref dance for a number that is
       // one pull away.
-      const gradeByCourse = new Map(
-        incomingGrades.map((g) => [g.course, g.grade]),
-      );
       const courseUpdates = [];
       for (const c of courses) {
         const grade = gradeByCourse.get(c.name);

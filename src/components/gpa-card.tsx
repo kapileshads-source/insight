@@ -87,7 +87,32 @@ export function GpaCard({ courses }: { courses: GpaInput[] }) {
     });
   }
 
-  if (withGrades.length === 0) return null;
+  // Says it is waiting rather than rendering nothing.
+  //
+  // Returning null was defensible — an empty GPA is not a GPA — but in
+  // practice it made the feature look absent rather than pending, and it was
+  // asked about three times. One line costs nothing and answers the question
+  // before it is asked.
+  if (withGrades.length === 0) {
+    if (courses.length === 0) return null;
+    return (
+      <section className="panel mt-6 px-7 py-6">
+        <h2 className="h3 text-[17px]">GPA estimate</h2>
+        <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-text-muted">
+          Waiting on a posted grade. As soon as one of your classes has a
+          percentage, this works out both GPAs from it — weighted on the 6.0
+          scale and unweighted on the 4.0 one.
+        </p>
+        {ungraded.length > 0 && (
+          <p className="mt-3 max-w-lg text-[14px] leading-relaxed text-text-faint">
+            {ungraded.length === 1
+              ? `${ungraded[0].title} reads 0%, which means no assessments have been marked in it yet — so it isn't counted.`
+              : `${ungraded.length} classes read 0%, which means no assessments have been marked in them yet — so they aren't counted.`}
+          </p>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section className="panel mt-6 px-7 py-6">

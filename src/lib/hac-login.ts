@@ -79,6 +79,12 @@ export type HacLoginResult =
       /// HAC's own words, when it gave any. Quoted to the student because the
       /// school's wording names the person to ask; never acted on.
       detail?: string;
+      /// What each address actually returned. Carries no student data — a
+      /// status, a size, and whether the markers the parser needs were
+      /// present. Reported because "which page did we get" has been the answer
+      /// three times running, and every round of guessing it instead cost a
+      /// day.
+      tried?: { url: string; status: number; kb: number; gradebook: boolean }[];
     };
 
 /// Fixed codes rather than messages. Nothing derived from the credentials can
@@ -221,27 +227,46 @@ export async function fetchClasswork(
     };
   }
 
+  const tried: { url: string; status: number; kb: number; gradebook: boolean }[] =
+    [];
+
   for (const url of CLASSWORK_URLS) {
     try {
       const page = await fetch(url, {
-        headers: { "User-Agent": UA, Cookie: cookieHeader(jar) },
+        headers: {
+          "User-Agent": UA,
+          Cookie: cookieHeader(jar),
+          // Some ASP.NET setups serve a different page, or none, without one.
+          Referer: `${ORIGIN}/HomeAccess/Home/WeekView`,
+        },
         // Followed, not manual. ASP.NET redirects freely once a session is
         // live, and treating a 302 as a failure skipped straight past the
         // page we were asking for.
         redirect: "follow",
       });
+
+      const html = page.status === 200 ? await page.text() : "";
+      const gradebook = hasGradebook(html);
+      tried.push({
+        url: url.replace(ORIGIN, ""),
+        status: page.status,
+        kb: Math.round(html.length / 1024),
+        gradebook,
+      });
+
       if (page.status !== 200) continue;
-      const html = await page.text();
       // Bounced back to the login form means the session did not take.
-      if (isStillLoginPage(html)) return { ok: false, reason: "BAD_CREDENTIALS" };
+      if (isStillLoginPage(html)) {
+        return { ok: false, reason: "BAD_CREDENTIALS", tried };
+      }
       // A 200 is not the same as a gradebook. The wrapper URL answers 200 with
       // an iframe and nothing else, and taking that as success is what produced
       // a sync that read zero classes without ever reporting an error.
-      if (hasGradebook(html)) return { ok: true, html, from: url };
+      if (gradebook) return { ok: true, html, from: url };
     } catch {
-      // Try the other address before giving up.
+      tried.push({ url: url.replace(ORIGIN, ""), status: 0, kb: 0, gradebook: false });
     }
   }
 
-  return { ok: false, reason: "NO_CLASSWORK" };
+  return { ok: false, reason: "NO_CLASSWORK", tried };
 }

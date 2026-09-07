@@ -315,10 +315,21 @@ export async function pullHac(): Promise<
         data: { disconnectedAt: new Date() },
       });
     }
-    return {
-      ok: false,
-      error: FAILURE_TEXT[result.reason] ?? "Couldn't read HAC.",
-    };
+    // Append what each address returned. Statuses and sizes only — no student
+    // data — because three rounds of guessing which page we got have each cost
+    // a day, and one line of fact ends it.
+    const base = FAILURE_TEXT[result.reason] ?? "Couldn't read HAC.";
+    const trace = result.tried?.length
+      ? " Tried " +
+        result.tried
+          .map(
+            (t) =>
+              `${t.url} → ${t.status || "no response"}${t.status === 200 ? `, ${t.kb}KB${t.gradebook ? ", has classes" : ", no classes"}` : ""}`,
+          )
+          .join("; ") +
+        "."
+      : "";
+    return { ok: false, error: base + trace };
   }
 
   await db.hacConnection.update({

@@ -104,10 +104,14 @@ export function HacSync() {
       } else {
         // The extension's reason is the more useful one when it is installed
         // but unhappy; otherwise the credential path's message is.
+        // The credential path's message is the informative one whenever it
+        // actually ran, because it now carries what each address returned.
+        // The extension's reason only wins when the extension is installed
+        // and unhappy about something specific.
         problem =
           fetched.reason === "no-extension"
             ? server.error
-            : (PROBLEMS[fetched.reason] ?? server.error);
+            : `${PROBLEMS[fetched.reason] ?? "Couldn't read HAC."} ${server.error}`;
       }
     }
 

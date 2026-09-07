@@ -185,11 +185,50 @@ export async function fetchClasswork(
     }
   }
 
+  // Follow the login through to a real page before asking for anything else.
+  //
+  // Two things were wrong here, both of them invisible. The POST answers 302
+  // and `redirect: "manual"` meant that redirect was never followed, so the
+  // session was left half-established — and every subsequent request was made
+  // with a cookie jar that had not finished being filled. A working
+  // implementation of this same login does exactly this GET, and treats *its*
+  // URL as the proof of success rather than the POST's status.
+  //
+  // That is the better check, too: HAC answers 200 whether the password was
+  // right or wrong, so the only reliable signal is where you end up afterwards.
+  let landed: Response;
+  try {
+    landed = await fetch(`${ORIGIN}/HomeAccess/Content/Student/Classes.aspx`, {
+      headers: { "User-Agent": UA, Cookie: cookieHeader(jar) },
+      redirect: "follow",
+    });
+  } catch {
+    return { ok: false, reason: "UNREACHABLE" };
+  }
+  jarFrom(landed, jar);
+
+  // Bounced back to the sign-in page means the credentials were refused,
+  // whatever the POST appeared to say.
+  if (/logon/i.test(landed.url)) {
+    return { ok: false, reason: "BAD_CREDENTIALS" };
+  }
+  const landedHtml = await landed.text();
+  if (isStillLoginPage(landedHtml)) {
+    return {
+      ok: false,
+      reason: "BAD_CREDENTIALS",
+      detail: loginErrorText(landedHtml) ?? undefined,
+    };
+  }
+
   for (const url of CLASSWORK_URLS) {
     try {
       const page = await fetch(url, {
         headers: { "User-Agent": UA, Cookie: cookieHeader(jar) },
-        redirect: "manual",
+        // Followed, not manual. ASP.NET redirects freely once a session is
+        // live, and treating a 302 as a failure skipped straight past the
+        // page we were asking for.
+        redirect: "follow",
       });
       if (page.status !== 200) continue;
       const html = await page.text();

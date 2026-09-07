@@ -672,6 +672,46 @@ dependency — see the warning below.
 | Assignment rows | `div.sg-content-grid tr.sg-asp-table-data-row` |
 | Assignment name | the row's `<a>`; a row without one is a totals row |
 
+### The full HAC selector map, 2026-09-07
+
+Read out of a second working implementation. **Our selectors were already
+right** — `div.AssignmentClass`, `a.sg-header-heading`,
+`span.sg-header-heading.sg-right`, `div.sg-content-grid`,
+`tr.sg-asp-table-data-row`, name from the row's `<a>`. The parser was never the
+problem, which is worth knowing before anyone rewrites it.
+
+**What was wrong was the session, twice over.** The login POST answers 302, and
+`redirect: "manual"` meant it was never followed, so the cookie jar was left
+half-filled; and the gradebook fetch also refused to follow redirects, which
+ASP.NET issues freely once a session is live. The working implementation
+performs a GET to `Content/Student/Classes.aspx` after the POST and treats
+*that page's URL* as the proof of success — the right check, since HAC answers
+200 whether the password was right or wrong.
+
+**Pages worth knowing about:**
+
+| What | URL |
+|---|---|
+| Assignments | `Content/Student/Assignments.aspx` |
+| Schedule | `Content/Student/Classes.aspx` — `#plnMain_dgSchedule > tr.sg-asp-table-data-row`, cells 1 course, 2 periods, 3 teacher, 4 room |
+| Transcript | `Content/Student/Transcript.aspx` — index-suffixed `plnMain_rpTranscriptGroup_lblYearValue_{i}`, loop until missing; course cells 0 code, 1 description, 2 sem1, 3 sem2, 4 fin, 5 credit |
+| GPA summary | `#plnMain_rpTranscriptGroup_tblCumGPAInfo`, spans matching `lblGPADescr\d+$` / `lblGPACum\d+$` / `lblGPARank\d+$` |
+| Week view | `.sg-homeview-table` — the page that carries *upcoming* work |
+
+**Fragility, in the order it will bite:**
+
+1. **Silent** — every positional `td` index. An inserted column shifts fields
+   with no error and serves wrong data confidently. This is why `hac.ts` binds
+   to header labels and only falls back to positions while saying so.
+2. **Loud** — the `plnMain_*` ids. ASP.NET generates them from the control
+   tree, so they change, but they fail visibly.
+3. **Middling** — the `sg-*` classes. A house convention shared across every
+   page, so one theme change breaks all of it at once.
+
+One trap in the week view: `#staffName` is a repeated DOM id across rows, which
+is invalid HTML. It only works because the lookup is scoped to each cell. Never
+hoist that selector to document scope.
+
 ### Reconnaissance from a second working implementation, 2026-09-06
 
 Kapilesh's cousin built a HAC app ("Orbital") and its source was read. This is

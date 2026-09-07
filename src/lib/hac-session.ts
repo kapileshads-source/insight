@@ -51,10 +51,16 @@ export function isStillLoginPage(html: string): boolean {
  * "the parser can do something with it" cannot drift apart.
  */
 export function hasGradebook(html: string): boolean {
+  // Bound to the containers `hac-dom.ts` actually walks, not to text that
+  // happens to appear near them.
+  //
+  // The first version also accepted any page containing the words "Student
+  // Grades", which is looser than the parser is: a page could pass this check
+  // and still yield zero courses, which is a worse failure than rejecting it,
+  // because it looks like an empty gradebook rather than a wrong page.
   return (
     /class="[^"]*AssignmentClass/i.test(html) ||
-    /class="[^"]*sg-header-heading/i.test(html) ||
-    /Student\s+Grades/i.test(html)
+    /class="[^"]*sg-content-grid/i.test(html)
   );
 }
 

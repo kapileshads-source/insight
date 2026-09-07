@@ -70,8 +70,13 @@ console.log("\na 200 is not the same as a gradebook");
   ok("an empty page is not", hasGradebook("") === false);
 
   ok("the course container counts", hasGradebook('<div class="AssignmentClass">x</div>'));
-  ok("the course heading counts", hasGradebook('<a class="sg-header-heading">CATE03742A</a>'));
-  ok("the grade label counts", hasGradebook("<span>Student Grades 96.50%</span>"));
+  ok("a heading alone is not enough", hasGradebook('<a class="sg-header-heading">CATE03742A</a>') === false);
+  ok("the content grid counts", hasGradebook('<div class="sg-content-grid"><table/></div>'));
+  // Deliberately NOT accepted: the words alone, without the container the
+  // parser walks. A page that passes this check and yields zero courses is a
+  // worse failure than one that is rejected, because it reads as an empty
+  // gradebook rather than as the wrong page.
+  ok("the words alone are not enough", hasGradebook("<span>Student Grades 96.50%</span>") === false);
 }
 
 console.log("\nthe exact string HAC prints on a bad password");

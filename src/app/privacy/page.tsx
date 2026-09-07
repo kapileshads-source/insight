@@ -62,6 +62,14 @@ export default function PrivacyPage() {
           permanently unreadable — including to us. If we could recover it for
           you, this page would be a lie.
         </p>
+        <p>
+          One honest caveat on that, if you sign in to Home Access Center with
+          your password rather than the extension: what we already stored stays
+          unreadable, but we would still be able to fetch a fresh copy of your
+          gradebook, because signing in doesn&rsquo;t need your Insight
+          password. That option is explained below, and disconnecting it ends
+          that.
+        </p>
       </Section>
 
       <Section title="What we can see">
@@ -74,14 +82,54 @@ export default function PrivacyPage() {
             How many entries you have and when you wrote them — not what any of
             them say
           </li>
+          <li>
+            Which assignments you&rsquo;ve ticked off as done, and when — not
+            what they are
+          </li>
         </ul>
-        <p>Two real exceptions, and this is the honest part of the page.</p>
+        <p>
+          That last one is new, and it is there so the evening reminder
+          doesn&rsquo;t tell you three things are due after you&rsquo;ve just
+          finished them.
+        </p>
+        <p>Three real exceptions, and this is the honest part of the page.</p>
         <p>
           <strong className="text-text">Canvas.</strong>{" "}
           If you connect it, we
           hold your Canvas access token in a form our server can read, because
           our server has to call Canvas for you. Disconnect Canvas at any time
           and it&rsquo;s deleted.
+        </p>
+        <p>
+          <strong className="text-text">
+            Home Access Center, if you sign in with your password.
+          </strong>{" "}
+          There are two ways to bring your HAC grades in. The browser extension
+          uses the login you already have in that browser and never sees a
+          password — it is the better option, and it only works on a computer.
+          The other way is to give us your HAC username and password so we can
+          sign in for you, which is what makes this work on a phone.
+        </p>
+        <p className="text-text">
+          If you choose that second way, we store your HAC password in a form
+          our server can read, and that means{" "}
+          <strong>we can open your gradebook.</strong> It is the only part of
+          Insight where that is true, and we are not going to bury it: your
+          study sessions, sleep and everything else stay encrypted with a key we
+          do not have, but your HAC gradebook does not.
+        </p>
+        <p>
+          What we do with it: sign in, fetch the classwork page, and hand it
+          straight to your browser, which reads it and encrypts it before
+          anything is stored. Your password is never put in a web address and
+          never written into a log or an error message, nothing is saved unless
+          the sign-in actually works, and disconnecting deletes it outright
+          rather than leaving an empty row behind.
+        </p>
+        <p>
+          If your HAC password is the same as your school email password —
+          which for a lot of people it is — change one of them before you use
+          this. Or use the extension, which never asks.
         </p>
         <p>
           <strong className="text-text">

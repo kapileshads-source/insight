@@ -28,11 +28,11 @@ export default function ParentsPage() {
           },
           {
             q: "Who can see the data?",
-            a: "Nobody but your child. It's encrypted on their device before it reaches us, using a key made from their password. We hold scrambled data and no way to unscramble it. That includes us, and it would include anyone who broke into our database. The one exception is the question below about what we can read, and it's worth reading.",
+            a: "Nobody but your child. It's encrypted on their device before it reaches us, using a key made from their password. We hold scrambled data and no way to unscramble it. That includes us, and it would include anyone who broke into our database. There are two exceptions, both in the questions below, and they are worth reading — one of them is about their gradebook and it is the biggest single thing on this page.",
           },
           {
             q: "Does the school see it?",
-            a: "No. Frisco ISD isn't involved, doesn't receive anything, and Insight isn't affiliated with the district. Grades come from your child's own Canvas account, only if they choose to connect it.",
+            a: "No. Frisco ISD isn't involved, doesn't receive anything, and Insight isn't affiliated with the district. Grades come from your child's own Canvas or Home Access Center account, and only if they choose to connect one. Nothing flows the other way: the school is never sent anything.",
           },
           {
             q: "Is their location tracked?",
@@ -45,6 +45,14 @@ export default function ParentsPage() {
           {
             q: "Is there anything you can read?",
             a: "Yes, briefly, and we'd rather say so plainly. The extension and the desktop apps can't encrypt anything — that needs your child's password, and we never give it to them, because a program running on a laptop all day is the last place that key should sit. So while a session is running they send us plain site and app names, and those stay readable to us until the next time your child opens Insight, when their browser encrypts them and deletes the readable copy. Anything not collected expires after six hours and is swept away — whenever a device next reports, and once a day regardless. In practice that means we could see that a session on Tuesday included twenty minutes of YouTube — not what was watched, and nothing from outside a study session.",
+          },
+          {
+            q: "Can you read their gradebook?",
+            a: "Only if your child chooses the option that lets us, and we want to be direct about it. There are two ways to bring Home Access Center grades in. The first uses a browser extension and the login they already have in that browser, so we never see a password — it is the better option and it only works on a computer. The second is for phones: your child gives us their HAC username and password so our server can sign in for them. If they choose that, we store that password in a form we can read, which means we can open their gradebook. It is the only part of Insight where that is true. Everything else — sleep, study sessions, the patterns — stays encrypted with a key we do not have.",
+          },
+          {
+            q: "What do you do with that password?",
+            a: "Sign in, fetch the classwork page, and hand it straight to your child's browser, which reads it and encrypts it before anything is stored. It is never put in a web address and never written into a log or an error message. Nothing is saved unless the sign-in actually works, so a typo is never kept. Disconnecting deletes it outright rather than leaving an empty row behind. One thing worth checking with your child: at many schools the HAC password is the same one as the school email. If theirs is, they should change one of them, or use the extension, which never asks for a password at all.",
           },
           {
             q: "Is it sold or advertised against?",

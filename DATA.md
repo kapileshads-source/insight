@@ -47,6 +47,8 @@ the four places where readable data exists, all listed below.
 | Focus Mode on/off, override used | `StudySession.focusModeActive`, `focusModeOverride` | The extension must be told whether to block, and it cannot decrypt | Life of account |
 | Dates on every record | `forDate`, `occurredOn` | De-duplication — a second entry for one night must be catchable | Life of account |
 | Canvas access token | `CanvasConnection.accessToken` | **Encrypted with a server key**, because the server calls Canvas on the student's behalf | Deleted on disconnect; Canvas expires it at 90 days |
+| **HAC password** | `HacConnection.password` | **Encrypted with a server key.** The heaviest item in this table — see below | Row deleted on disconnect |
+| Assignment ticked off | `Assignment.completedAt` | Plaintext timestamp, so the evening reminder can stop counting finished work | Deleted with the assignment |
 | Device site and app names | `PendingDeviceData.payload` | **Plaintext.** See below | Six hours, then deleted |
 | Parent email | `ParentConsent.parentEmail` | Dormant flow, no longer reachable | Life of account |
 
@@ -61,6 +63,51 @@ Each is a `payloadCipher` / `payloadIv` pair. AES-GCM, key wrapped by
 PBKDF2-SHA256 at 600,000 iterations. `src/lib/crypto.ts`.
 
 ---
+
+## The HAC password, which is the heaviest thing here
+
+Added 2026-09-06. **Optional**, and the alternative needs no password at all.
+
+There are two ways to read a student's Home Access Center gradebook. The browser
+extension uses the session already in their browser and never sees a
+credential — strictly better, and desktop Chrome only. The second is to store
+their HAC username and password so the server can sign in for them, which is
+the only thing that works on a phone.
+
+**If a student chooses the second, the server can open their gradebook.** That
+is the single largest carve-out in this document and it should be treated as
+such in any review. A Canvas token is scoped, revocable, and expires in 90 days.
+A HAC password is the student's school identity, and at many districts it is the
+same credential as their school Google account — so the blast radius of a
+database breach is materially larger for this one field than for anything else
+listed here.
+
+Mitigations, all enforced in code rather than by policy:
+
+- Encrypted at rest with the server key (`src/lib/server-crypto.ts`), never at
+  rest in plaintext.
+- Only ever sent in a POST body. Never a URL, query string, or referrer. The
+  public project that does this passes credentials in a query string, where they
+  land in access logs and browser history.
+- Every failure path returns a fixed enum code, so no value derived from the
+  credential can reach a log line, a stack trace, or a serverless function log.
+- Nothing is written until a login succeeds, so a mistyped password is never
+  stored.
+- Disconnecting deletes the row rather than blanking columns.
+- The server still holds **no encryption key**, so the gradebook page it fetches
+  is handed to the student's browser to parse and encrypt. The server cannot
+  store what it just read.
+
+**Both privacy pages describe this** — the student page under "What we can see"
+and the parent page as its own two questions. They say plainly that Insight can
+open the gradebook if this option is used, and both advise changing one password
+if the HAC and school-email passwords match.
+
+**For a reviewer, the questions this raises:** whether storing a minor's school
+credential is defensible at all under Texas HB 18 given a less invasive
+alternative exists; whether consent for it needs to be separate from consent for
+the app; and whether it should be switched off entirely until a district has
+been asked.
 
 ## The one weak point, stated plainly
 

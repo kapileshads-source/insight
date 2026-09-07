@@ -1,4 +1,5 @@
 import {
+  frameSource,
   hasGradebook,
   isStillLoginPage,
   loginErrorText,
@@ -86,6 +87,23 @@ console.log("\nthe exact string HAC prints on a bad password");
   ok("invalid user name or password is a rejection", isStillLoginPage("<p>Invalid User Name or Password</p>"));
   ok("case does not matter", isStillLoginPage("<p>INVALID USER NAME OR PASSWORD</p>"));
   ok("a real gradebook is not a rejection", !isStillLoginPage('<div class="AssignmentClass">Student Grades 96.50%</div>'));
+}
+
+console.log("\nfinding the frame the content actually lives in");
+{
+  // From a real browser's frame tree: the Classwork page is a 30KB shell and
+  // the tables are inside sg-legacy-iframe, one hop further in.
+  const wrapper = '<div><iframe id="sg-legacy-iframe" src="/HomeAccess/Content/Student/Assignments.aspx?x=1"></iframe></div>';
+  ok("finds the legacy frame", frameSource(wrapper) === "/HomeAccess/Content/Student/Assignments.aspx?x=1");
+
+  ok("no frame is null", frameSource("<div>nothing</div>") === null);
+  ok("a frame with no src is null", frameSource("<iframe></iframe>") === null);
+
+  // Vendor and analytics frames sit alongside it. Chasing one would send a
+  // session cookie somewhere it has no business going.
+  const withVendor = '<iframe src="https://web-sdk-us2.aptrinsic.com/x.html"></iframe><iframe id="sg-legacy-iframe" src="/HomeAccess/Content/Student/Assignments.aspx"></iframe>';
+  ok("prefers the one that matches the hint", frameSource(withVendor) === "/HomeAccess/Content/Student/Assignments.aspx");
+  ok("never follows an absolute URL off-origin", frameSource('<iframe src="https://web-sdk-us2.aptrinsic.com/x.html"></iframe>') === null);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

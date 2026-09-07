@@ -1,7 +1,9 @@
 import "server-only";
 
 import {
+  frameSource,
   hasGradebook,
+  hasTranscript,
   isStillLoginPage,
   loginErrorText,
   verificationToken,
@@ -84,7 +86,7 @@ export type HacLoginResult =
       /// present. Reported because "which page did we get" has been the answer
       /// three times running, and every round of guessing it instead cost a
       /// day.
-      tried?: { url: string; status: number; kb: number; gradebook: boolean }[];
+      tried?: Attempt[];
     };
 
 /// Fixed codes rather than messages. Nothing derived from the credentials can
@@ -111,10 +113,101 @@ function jarFrom(response: Response, jar: Map<string, string>) {
 const cookieHeader = (jar: Map<string, string>) =>
   [...jar.entries()].map(([k, v]) => `${k}=${v}`).join("; ");
 
-export async function fetchClasswork(
+/**
+ * Fetch a HAC page, following one frame hop if the content is not on it.
+ *
+ * `looksRight` decides whether a page is the thing being asked for, because a
+ * 200 does not: every content page in HAC is a shell around
+ * `sg-legacy-iframe`, and the wrapper answers 200 with nothing useful in it.
+ */
+async function fetchThrough(
+  url: string,
+  jar: Map<string, string>,
+  looksRight: (html: string) => boolean,
+  hint: string,
+  tried: Attempt[],
+): Promise<string | null> {
+  const page = await fetch(url, {
+    headers: {
+      "User-Agent": UA,
+      Cookie: cookieHeader(jar),
+      Referer: `${ORIGIN}/HomeAccess/Home/WeekView`,
+    },
+    redirect: "follow",
+  });
+
+  const html = page.status === 200 ? await page.text() : "";
+  tried.push({
+    url: url.replace(ORIGIN, ""),
+    status: page.status,
+    kb: Math.round(html.length / 1024),
+    gradebook: looksRight(html),
+  });
+
+  if (page.status !== 200) return null;
+  if (isStillLoginPage(html)) return null;
+  if (looksRight(html)) return html;
+
+  // One hop, never recursive — following frames repeatedly turns a fetch into
+  // a crawler.
+  const frame = frameSource(html, hint);
+  if (!frame) return null;
+
+  const frameUrl = new URL(frame, url).toString();
+  const inner = await fetch(frameUrl, {
+    headers: { "User-Agent": UA, Cookie: cookieHeader(jar), Referer: url },
+    redirect: "follow",
+  });
+  const innerHtml = inner.status === 200 ? await inner.text() : "";
+  tried.push({
+    url: frameUrl.replace(ORIGIN, ""),
+    status: inner.status,
+    kb: Math.round(innerHtml.length / 1024),
+    gradebook: looksRight(innerHtml),
+  });
+
+  return looksRight(innerHtml) ? innerHtml : null;
+}
+
+/**
+ * The transcript, for past semesters.
+ *
+ * Its own function because it answers a different question: the classwork page
+ * carries this term, while the transcript carries every semester already
+ * finished *and the district's own printed GPA*. That figure is authoritative
+ * where ours is an estimate, so it is the one worth showing.
+ */
+export async function fetchTranscript(
   username: string,
   password: string,
 ): Promise<HacLoginResult> {
+  const session = await signIn(username, password);
+  if (!session.ok) return session;
+
+  const tried = session.tried;
+  const url = `${ORIGIN}/HomeAccess/Content/Student/Transcript.aspx`;
+  const html = await fetchThrough(url, session.jar, hasTranscript, "transcript", tried).catch(
+    () => null,
+  );
+
+  return html
+    ? { ok: true, html, from: url }
+    : { ok: false, reason: "NO_CLASSWORK", tried };
+}
+
+type Attempt = { url: string; status: number; kb: number; gradebook: boolean };
+
+type Session =
+  | { ok: true; jar: Map<string, string>; tried: Attempt[] }
+  | { ok: false; reason: HacFailure; detail?: string; tried?: Attempt[] };
+
+/**
+ * Log in, and return a session that has actually been followed through.
+ *
+ * Split out because the transcript needs exactly the same thing, and a second
+ * copy of an ASP.NET login is the last thing this codebase needs.
+ */
+async function signIn(username: string, password: string): Promise<Session> {
   const jar = new Map<string, string>();
 
   let form: Response;
@@ -227,42 +320,22 @@ export async function fetchClasswork(
     };
   }
 
-  const tried: { url: string; status: number; kb: number; gradebook: boolean }[] =
-    [];
+  return { ok: true, jar, tried: [] };
+}
+
+export async function fetchClasswork(
+  username: string,
+  password: string,
+): Promise<HacLoginResult> {
+  const session = await signIn(username, password);
+  if (!session.ok) return session;
+  const jar = session.jar;
+  const tried = session.tried;
 
   for (const url of CLASSWORK_URLS) {
     try {
-      const page = await fetch(url, {
-        headers: {
-          "User-Agent": UA,
-          Cookie: cookieHeader(jar),
-          // Some ASP.NET setups serve a different page, or none, without one.
-          Referer: `${ORIGIN}/HomeAccess/Home/WeekView`,
-        },
-        // Followed, not manual. ASP.NET redirects freely once a session is
-        // live, and treating a 302 as a failure skipped straight past the
-        // page we were asking for.
-        redirect: "follow",
-      });
-
-      const html = page.status === 200 ? await page.text() : "";
-      const gradebook = hasGradebook(html);
-      tried.push({
-        url: url.replace(ORIGIN, ""),
-        status: page.status,
-        kb: Math.round(html.length / 1024),
-        gradebook,
-      });
-
-      if (page.status !== 200) continue;
-      // Bounced back to the login form means the session did not take.
-      if (isStillLoginPage(html)) {
-        return { ok: false, reason: "BAD_CREDENTIALS", tried };
-      }
-      // A 200 is not the same as a gradebook. The wrapper URL answers 200 with
-      // an iframe and nothing else, and taking that as success is what produced
-      // a sync that read zero classes without ever reporting an error.
-      if (gradebook) return { ok: true, html, from: url };
+      const html = await fetchThrough(url, jar, hasGradebook, "assignment", tried);
+      if (html) return { ok: true, html, from: url };
     } catch {
       tried.push({ url: url.replace(ORIGIN, ""), status: 0, kb: 0, gradebook: false });
     }

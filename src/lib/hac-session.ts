@@ -91,3 +91,62 @@ export function loginErrorText(html: string): string | null {
   if (text.length < 8) return null;
   return text.slice(0, 240);
 }
+
+/**
+ * Whether a page is the transcript.
+ *
+ * Bound to the ASP.NET control ids the transcript parser reads, which are the
+ * only thing on that page unique to it. Note the fragility tier this sits in:
+ * `plnMain_*` ids are generated from the control tree and change when the page
+ * is rebuilt — but they fail *loudly*, which is why binding to them is safe
+ * here in a way that positional cell indices never are.
+ */
+export function hasTranscript(html: string): boolean {
+  return (
+    /plnMain_rpTranscriptGroup_lblYearValue_0/i.test(html) ||
+    /plnMain_rpTranscriptGroup_tblCumGPAInfo/i.test(html)
+  );
+}
+
+/**
+ * The address of the frame a HAC page keeps its content in.
+ *
+ * Confirmed from a real browser's frame tree, 2026-09-07:
+ *
+ *     top
+ *       hac.friscoisd.org/HomeAccess/Classes/Classwork   ← 30KB wrapper
+ *         sg-legacy-iframe (Assignments)                 ← the gradebook
+ *
+ * So the page a student looks at is a shell, and the tables are one hop
+ * further in. Fetching the wrapper gives a valid 200 with no courses on it,
+ * and `Content/Student/Assignments.aspx` fetched directly returns a 5KB stub
+ * rather than the content — which is how this looked like four different bugs
+ * in a row.
+ *
+ * Named `sg-legacy-iframe`, but matched loosely: any frame is a candidate, and
+ * one whose name or source mentions the page we want is preferred. A named
+ * guess that silently picks the analytics frame would be worse than no guess.
+ */
+export function frameSource(html: string, hint = "assignment"): string | null {
+  const frames = [...html.matchAll(/<iframe\b[^>]*>/gi)].map((m) => m[0]);
+  if (frames.length === 0) return null;
+
+  const srcOf = (tag: string): string | null => {
+    const m = tag.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+    return m ? m[1] : null;
+  };
+
+  const wanted = hint.toLowerCase();
+  const preferred =
+    frames.find((f) => {
+      const src = (srcOf(f) ?? "").toLowerCase();
+      return src.includes(wanted) || /sg-legacy-iframe/i.test(f);
+    }) ?? frames[0];
+
+  const src = srcOf(preferred);
+  if (!src) return null;
+  // Only same-origin paths are followed. An absolute URL to somewhere else is
+  // an analytics or vendor frame, and this must not go chasing it.
+  if (/^https?:\/\//i.test(src)) return null;
+  return src;
+}

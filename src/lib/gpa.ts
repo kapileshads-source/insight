@@ -271,3 +271,155 @@ export function looksNonAcademic(title: string): boolean {
   const text = title.toLowerCase();
   return NOT_A_CLASS.some((marker) => text.includes(marker));
 }
+
+/**
+ * The level of a course as the *transcript* writes it.
+ *
+ * The transcript abbreviates: `APCSPRIN`, `APHUMGEOW`, `TA3DMA`, `SBLIFE`. The
+ * title-based `levelOf` cannot read these — it matches whole words, so "ap" is
+ * never found inside "APCSPRIN", and every AP course on a transcript would be
+ * scored as on-level and quietly deflate a GPA.
+ *
+ * Two signals, and the second only where the first says nothing:
+ *
+ * 1. **The description prefix.** `AP` followed by more capitals is how the
+ *    transcript writes an AP course. Required to be followed by letters so
+ *    that a course actually named "AP" alone, or one beginning "Applied", is
+ *    not swept in — `APPLIED` is excluded explicitly for that reason.
+ * 2. **The course code.** On a real Frisco transcript the AP courses carry
+ *    codes beginning with a letter (`A3580300`, `A3360100`) where the rest are
+ *    numeric. That is one transcript's worth of evidence, so it is used only to
+ *    confirm, never alone.
+ *
+ * **This is a guess and it is allowed to be wrong**, which is why the card
+ * shows the school's own figure beside it and calls this an estimate. A wrong
+ * level moves a GPA by a tenth; claiming to be the school's number would be
+ * the real error.
+ */
+export function levelOfTranscriptCourse(
+  code: string,
+  description: string,
+): CourseLevel {
+  const desc = description.trim().toUpperCase();
+
+  if (/^AP[A-Z]/.test(desc) && !desc.startsWith("APPLIED")) return "AP";
+
+  // The title rule still catches anything written out in full.
+  const byTitle = levelOf(description);
+  if (byTitle !== "ON_LEVEL") return byTitle;
+
+  // A lettered course code alongside an AP-looking description. Never on its
+  // own: plenty of non-AP courses could carry one.
+  if (/^[A-Z]\d/.test(code.trim().toUpperCase()) && desc.startsWith("AP")) {
+    return "AP";
+  }
+
+  return "ON_LEVEL";
+}
+
+export type CumulativeGpa = {
+  /// Everything: finished semesters plus this one as it currently stands.
+  weighted: number | null;
+  unweighted: number | null;
+  /// How many semester grades went in, and how many of those are still moving.
+  counted: number;
+  inProgress: number;
+};
+
+/**
+ * A GPA as of today, anchored to the school's own figure.
+ *
+ * The number a student actually wants: not "what did I finish with" and not
+ * "how is this term going", but **what is my GPA right now if this semester
+ * ended today**.
+ *
+ * ## Why this does not re-add up the transcript
+ *
+ * The obvious approach — score every finished course and average the lot — was
+ * built first and checked against a real transcript. It produced **4.4211**
+ * where the school prints **4.6940**. The unweighted figure was close (3.7368
+ * against 3.7780) because it needs no level; the weighted one was a quarter of
+ * a point out because it does, and a transcript abbreviates course names to
+ * `COMPMTN` and `TA3DMA`, which say nothing about whether they are Advanced.
+ * Guessing produces a confidently wrong GPA, which is the one number a student
+ * will not forgive being wrong.
+ *
+ * So the finished semesters are not recomputed at all. The school has already
+ * done that arithmetic, with the real course levels and the real exclusion
+ * rules, and printed the answer. That figure is taken as the average of the
+ * grades behind it, and only the current semester is estimated.
+ *
+ * The useful property: **with nothing in progress, this returns the school's
+ * number exactly.** Any error is confined to the term still moving, which is
+ * the only part that is genuinely unknowable.
+ */
+export function presentGpa(
+  official: { weighted: number | null; unweighted: number | null },
+  /// How many finished semester grades the official figure covers.
+  priorCount: number,
+  current: { level: CourseLevel; grade: number }[],
+): CumulativeGpa {
+  const total = priorCount + current.length;
+  if (total === 0) {
+    return { weighted: null, unweighted: null, counted: 0, inProgress: 0 };
+  }
+
+  const blend = (
+    prior: number | null,
+    points: (c: { level: CourseLevel; grade: number }) => number,
+  ): number | null => {
+    // Without the school's figure there is nothing to anchor to, so this falls
+    // back to the current term alone rather than inventing a past.
+    if (prior === null) {
+      if (current.length === 0) return null;
+      const sum = current.reduce((n, c) => n + points(c), 0);
+      return Math.round((sum / current.length) * 10000) / 10000;
+    }
+    const sum = prior * priorCount + current.reduce((n, c) => n + points(c), 0);
+    return Math.round((sum / total) * 10000) / 10000;
+  };
+
+  return {
+    weighted: blend(official.weighted, (c) => weightedPoints(c.grade, c.level)),
+    unweighted: blend(official.unweighted, (c) => unweightedPoints(c.grade)),
+    counted: total,
+    inProgress: current.length,
+  };
+}
+
+/**
+ * A GPA as of today.
+ *
+ * The number a student actually wants: not "what did I finish with" and not
+ * "how is this term going", but **what my GPA is right now if this semester
+ * ended today**. Finished semesters carry their real grades; the current one
+ * contributes whatever the gradebook shows at this moment.
+ *
+ * The two are weighted equally per semester grade, because that is how a
+ * cumulative GPA works — a term in progress counts once it is over, and
+ * counting it early is exactly what makes this an estimate rather than a fact.
+ */
+export function cumulativeGpa(
+  finished: { level: CourseLevel; grade: number }[],
+  current: { level: CourseLevel; grade: number }[],
+): CumulativeGpa {
+  const all = [...finished, ...current];
+  if (all.length === 0) {
+    return { weighted: null, unweighted: null, counted: 0, inProgress: 0 };
+  }
+
+  let weighted = 0;
+  let unweighted = 0;
+  for (const c of all) {
+    weighted += weightedPoints(c.grade, c.level);
+    unweighted += unweightedPoints(c.grade);
+  }
+
+  const round = (n: number) => Math.round((n / all.length) * 10000) / 10000;
+  return {
+    weighted: round(weighted),
+    unweighted: round(unweighted),
+    counted: all.length,
+    inProgress: current.length,
+  };
+}

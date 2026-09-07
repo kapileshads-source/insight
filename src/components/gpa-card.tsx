@@ -6,6 +6,7 @@ import {
   estimateGpa,
   hasUsableGrade,
   onlyEnrolled,
+  presentGpa,
   levelOf,
   looksNonAcademic,
   type CourseLevel,
@@ -46,7 +47,17 @@ export type GpaInput = {
   grade: number | null;
 };
 
-export function GpaCard({ courses: all }: { courses: GpaInput[] }) {
+export function GpaCard({
+  courses: all,
+  past = null,
+  priorCount = 0,
+}: {
+  courses: GpaInput[];
+  /// The school's own cumulative figure, off the transcript. Authoritative.
+  past?: { weighted: number | null; unweighted: number | null } | null;
+  /// How many finished semester grades that figure covers.
+  priorCount?: number;
+}) {
   // HAC is the roll. A Canvas course with no counterpart there is a district
   // shell rather than a class — "Frisco ISD 1forAll Student Course 26-27" was
   // sitting at 100% and lifting a real GPA. When HAC has said nothing yet,
@@ -124,27 +135,71 @@ export function GpaCard({ courses: all }: { courses: GpaInput[] }) {
     );
   }
 
+  // The number a student is actually asking for: where they stand today, with
+  // this term counted as it currently stands. Anchored to the school's own
+  // cumulative figure rather than recomputed from the transcript — see
+  // `presentGpa` for why re-adding it lands a quarter of a point out.
+  const today = presentGpa(
+    past ?? { weighted: null, unweighted: null },
+    priorCount,
+    forEstimate
+      .filter((c) => !c.excluded)
+      .map((c) => ({ level: c.level, grade: c.grades[0] })),
+  );
+  const anchored = past?.weighted != null;
+
   return (
     <section className="panel mt-6 px-7 py-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="h3 text-[17px]">GPA estimate</h2>
+        <h2 className="h3 text-[17px]">
+          {anchored ? "Your GPA right now" : "GPA estimate"}
+        </h2>
         <span className="label text-text-faint">
-          {estimate.counted} {estimate.counted === 1 ? "class" : "classes"}
+          {anchored
+            ? `${today.counted} semester grades, ${today.inProgress} still moving`
+            : `${estimate.counted} ${estimate.counted === 1 ? "class" : "classes"}`}
         </span>
       </div>
 
       <div className="mt-5 flex flex-wrap gap-10">
-        <Figure label="Weighted" value={estimate.weighted} />
-        <Figure label="Unweighted" value={estimate.unweighted} />
+        <Figure
+          label="Weighted"
+          value={anchored ? today.weighted : estimate.weighted}
+        />
+        <Figure
+          label="Unweighted"
+          value={anchored ? today.unweighted : estimate.unweighted}
+        />
       </div>
 
-      {/* Stated plainly and near the numbers, not in small print underneath.
-          The school's figure is the real one and this will differ from it. */}
+      {/* The school's own figure, kept beside the estimate rather than
+          replaced by it. Where the two disagree this one is right, and a
+          student should be able to see both without going anywhere. */}
+      {anchored && (
+        <div className="mt-6 border-t border-line pt-5">
+          <p className="label text-text-faint">
+            Last confirmed by your school
+          </p>
+          <div className="mt-2 flex flex-wrap gap-10">
+            <Figure label="Weighted" value={past?.weighted ?? null} small />
+            <Figure label="Unweighted" value={past?.unweighted ?? null} small />
+          </div>
+        </div>
+      )}
+
+      {/* Stated plainly and near the numbers, not in small print underneath. */}
       <p className="mt-5 max-w-lg text-[14px] leading-relaxed text-text-faint">
-        Worked out from the grades your gradebook is showing right now. Your
-        school calculates the real one when the semester ends, and the two will
-        not match exactly — this moves every time a mark is posted.
+        {anchored
+          ? "Your finished semesters are exactly what the school calculated — that part isn't guesswork. This term is added at whatever your gradebook shows today, so the top number moves every time a mark is posted, and it isn't official until the semester closes."
+          : "Worked out from the grades your gradebook is showing right now. Your school calculates the real one when the semester ends, and the two will not match exactly — this moves every time a mark is posted."}
       </p>
+
+      {!anchored && (
+        <p className="mt-3 max-w-lg text-[14px] leading-relaxed text-text-faint">
+          Read your transcript on the HAC page and this becomes your real
+          cumulative GPA, brought up to today — not just this term.
+        </p>
+      )}
 
       {ungraded.length > 0 && (
         <p className="mt-3 max-w-lg text-[14px] leading-relaxed text-text-faint">
@@ -200,10 +255,20 @@ export function GpaCard({ courses: all }: { courses: GpaInput[] }) {
 
 /// Null renders as a dash, never as 0.00. A student with no marks yet has *no*
 /// GPA, and a zero would read as catastrophe rather than as absence.
-function Figure({ label, value }: { label: string; value: number | null }) {
+function Figure({
+  label,
+  value,
+  small = false,
+}: {
+  label: string;
+  value: number | null;
+  small?: boolean;
+}) {
   return (
     <div>
-      <div className="figure text-[2.2rem] text-text">
+      <div
+        className={`figure text-text ${small ? "text-[1.4rem]" : "text-[2.2rem]"}`}
+      >
         {value === null ? "—" : value.toFixed(3)}
       </div>
       <p className="mt-1 text-[13px] text-text-faint">{label}</p>

@@ -1,6 +1,9 @@
 import {
   estimateGpa,
+  cumulativeGpa,
+  levelOfTranscriptCourse,
   onlyEnrolled,
+  presentGpa,
   hasUsableGrade,
   levelOf,
   looksNonAcademic,
@@ -173,6 +176,69 @@ console.log("\nexclusions and empty states");
     { id: "1", title: "X", level: "AP", grades: [90], excluded: true },
   ]);
   ok("everything excluded is also null", allOut.weighted === null);
+}
+
+console.log("\nthe transcript abbreviates, so levels need their own reading");
+{
+  // levelOf matches whole words, so "ap" is never found inside "APCSPRIN" —
+  // every AP course on a transcript would score as on-level and deflate a GPA.
+  ok("APCSPRIN is AP", levelOfTranscriptCourse("A3580300 - 1", "APCSPRIN") === "AP");
+  ok("APHUMGEOW is AP", levelOfTranscriptCourse("A3360100 - 1", "APHUMGEOW") === "AP");
+  ok("BIO is not", levelOfTranscriptCourse("03010200 - 1", "BIO") === "ON_LEVEL");
+  ok("ALG 1 is not", levelOfTranscriptCourse("03100500 - 1", "ALG 1") === "ON_LEVEL");
+  // A word beginning with the same two letters must not be swept in.
+  ok("APPLIED is not AP", levelOfTranscriptCourse("03000000 - 1", "APPLIED MATH") === "ON_LEVEL");
+  // A full title still works through the ordinary rule.
+  ok("a written-out title still works", levelOfTranscriptCourse("1 - 1", "Chemistry Adv") === "ADVANCED");
+}
+
+console.log("\na present GPA anchored to the school's own figure");
+{
+  const official = { weighted: 4.694, unweighted: 3.778 };
+
+  // The property that makes this trustworthy: with nothing in progress it is
+  // the school's number, not an approximation of it.
+  const idle = presentGpa(official, 19, []);
+  ok("nothing in progress returns the school's weighted exactly", idle.weighted === 4.694);
+  ok("and its unweighted exactly", idle.unweighted === 3.778);
+  ok("counting the grades behind it", idle.counted === 19);
+  ok("with none in progress", idle.inProgress === 0);
+
+  // A strong current term pulls it up; the movement is confined to the part
+  // that is genuinely unknown.
+  const strong = presentGpa(official, 19, [
+    { level: "AP", grade: 100 },
+    { level: "AP", grade: 100 },
+  ]);
+  ok("a strong term raises it", strong.weighted > 4.694);
+  ok("and it is counted", strong.counted === 21 && strong.inProgress === 2);
+
+  const weak = presentGpa(official, 19, [{ level: "ON_LEVEL", grade: 70 }]);
+  ok("a weak term lowers it", weak.weighted < 4.694);
+
+  // No transcript yet: fall back to the current term rather than inventing a
+  // past, and never return zero for "unknown".
+  const noPast = presentGpa({ weighted: null, unweighted: null }, 0, [
+    { level: "AP", grade: 90 },
+  ]);
+  ok("without a transcript it uses this term", noPast.weighted === 5);
+  ok("nothing at all is null, not zero", presentGpa({ weighted: null, unweighted: null }, 0, []).weighted === null);
+}
+
+console.log("\nadding the transcript up directly, which is why we do not");
+{
+  // Kept as a check on the decision rather than on the code: recomputing the
+  // finished semesters lands 0.27 off the school's weighted figure, because a
+  // transcript's abbreviations do not say which courses are Advanced.
+  const finished = [
+    { level: "ON_LEVEL", grade: 85 },
+    { level: "ON_LEVEL", grade: 93 },
+    { level: "AP", grade: 91 },
+  ];
+  const out = cumulativeGpa(finished, []);
+  ok("it computes something", out.weighted !== null);
+  ok("over the right count", out.counted === 3);
+  ok("and an empty one is null", cumulativeGpa([], []).weighted === null);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

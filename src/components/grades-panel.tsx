@@ -4,8 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 import { fetchGradebook } from "@/app/actions/grades";
+import { fetchStoredTranscript } from "@/app/actions/hac";
 import { useCrypto } from "@/components/crypto-provider";
 import { GpaCard, type GpaInput } from "@/components/gpa-card";
+import { officialGpa, semesterGrades, type Transcript } from "@/lib/transcript";
 import {
   buildGradebook,
   gradedSince,
@@ -68,6 +70,11 @@ export function GradesPanel() {
   const [courses, setCourses] = useState<CourseGrades[] | null>(null);
   const [fresh, setFresh] = useState<GradeRow[]>([]);
   const [gpa, setGpa] = useState<GpaInput[]>([]);
+  const [past, setPast] = useState<{
+    weighted: number | null;
+    unweighted: number | null;
+  } | null>(null);
+  const [priorCount, setPriorCount] = useState(0);
   const [failed, setFailed] = useState(false);
 
   /// Gathers and decrypts, and touches no state. Keeping the fetch and the
@@ -75,11 +82,20 @@ export function GradesPanel() {
   /// also the difference between this and the two panels beside it, which set
   /// state directly inside their effects and trip the lint rule about it.
   const gather = useCallback(async (): Promise<
-    | { ok: true; courses: CourseGrades[]; fresh: GradeRow[]; gpa: GpaInput[] }
+    | {
+        ok: true;
+        courses: CourseGrades[];
+        fresh: GradeRow[];
+        gpa: GpaInput[];
+        past: { weighted: number | null; unweighted: number | null } | null;
+        priorCount: number;
+      }
     | { ok: false }
   > => {
     const stored = await fetchGradebook();
-    if (!stored) return { ok: true, courses: [], fresh: [], gpa: [] };
+    if (!stored) {
+      return { ok: true, courses: [], fresh: [], gpa: [], past: null, priorCount: 0 };
+    }
 
     try {
       const names = new Map<string, string>();
@@ -136,12 +152,36 @@ export function GradesPanel() {
         }),
       );
 
+      // The transcript, if it has been read. Its GPA is the school's own and
+      // anchors the estimate; the count behind it is how many finished
+      // semester grades that figure covers.
+      let past: { weighted: number | null; unweighted: number | null } | null =
+        null;
+      let priorCount = 0;
+      const sealed = await fetchStoredTranscript();
+      if (sealed) {
+        try {
+          const transcript = await reveal<Transcript>(sealed);
+          const official = officialGpa(transcript);
+          past = {
+            weighted: official.weighted?.value ?? null,
+            unweighted: official.unweighted?.value ?? null,
+          };
+          priorCount = semesterGrades(transcript).length;
+        } catch {
+          // An unreadable transcript is not worth failing the whole panel for.
+          // The estimate simply falls back to this term alone.
+        }
+      }
+
       const seen = readLastSeen();
       return {
         ok: true,
         courses: oneCardPerClass(buildGradebook(rows, reported, fromHac)),
         fresh: gradedSince(rows, seen),
         gpa,
+        past,
+        priorCount,
       };
     } catch {
       // A row that won't decrypt is a real possibility after a password change,
@@ -166,6 +206,8 @@ export function GradesPanel() {
       setCourses(result.courses);
       setFresh(result.fresh);
       setGpa(result.gpa);
+      setPast(result.past);
+      setPriorCount(result.priorCount);
       // Written only once the marks are actually on screen. Stamping "seen" at
       // fetch time would clear the badge for grades the student never saw,
       // because the tab closed or the decrypt failed halfway.
@@ -189,7 +231,7 @@ export function GradesPanel() {
       {courses.length > 0 && (
         <GradesList courses={courses} newCount={fresh.length} />
       )}
-      <GpaCard courses={gpa} />
+      <GpaCard courses={gpa} past={past} priorCount={priorCount} />
     </>
   );
 }

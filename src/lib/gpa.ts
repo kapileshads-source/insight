@@ -272,51 +272,6 @@ export function looksNonAcademic(title: string): boolean {
   return NOT_A_CLASS.some((marker) => text.includes(marker));
 }
 
-/**
- * The level of a course as the *transcript* writes it.
- *
- * The transcript abbreviates: `APCSPRIN`, `APHUMGEOW`, `TA3DMA`, `SBLIFE`. The
- * title-based `levelOf` cannot read these — it matches whole words, so "ap" is
- * never found inside "APCSPRIN", and every AP course on a transcript would be
- * scored as on-level and quietly deflate a GPA.
- *
- * Two signals, and the second only where the first says nothing:
- *
- * 1. **The description prefix.** `AP` followed by more capitals is how the
- *    transcript writes an AP course. Required to be followed by letters so
- *    that a course actually named "AP" alone, or one beginning "Applied", is
- *    not swept in — `APPLIED` is excluded explicitly for that reason.
- * 2. **The course code.** On a real Frisco transcript the AP courses carry
- *    codes beginning with a letter (`A3580300`, `A3360100`) where the rest are
- *    numeric. That is one transcript's worth of evidence, so it is used only to
- *    confirm, never alone.
- *
- * **This is a guess and it is allowed to be wrong**, which is why the card
- * shows the school's own figure beside it and calls this an estimate. A wrong
- * level moves a GPA by a tenth; claiming to be the school's number would be
- * the real error.
- */
-export function levelOfTranscriptCourse(
-  code: string,
-  description: string,
-): CourseLevel {
-  const desc = description.trim().toUpperCase();
-
-  if (/^AP[A-Z]/.test(desc) && !desc.startsWith("APPLIED")) return "AP";
-
-  // The title rule still catches anything written out in full.
-  const byTitle = levelOf(description);
-  if (byTitle !== "ON_LEVEL") return byTitle;
-
-  // A lettered course code alongside an AP-looking description. Never on its
-  // own: plenty of non-AP courses could carry one.
-  if (/^[A-Z]\d/.test(code.trim().toUpperCase()) && desc.startsWith("AP")) {
-    return "AP";
-  }
-
-  return "ON_LEVEL";
-}
-
 export type CumulativeGpa = {
   /// Everything: finished semesters plus this one as it currently stands.
   weighted: number | null;
@@ -387,39 +342,3 @@ export function presentGpa(
   };
 }
 
-/**
- * A GPA as of today.
- *
- * The number a student actually wants: not "what did I finish with" and not
- * "how is this term going", but **what my GPA is right now if this semester
- * ended today**. Finished semesters carry their real grades; the current one
- * contributes whatever the gradebook shows at this moment.
- *
- * The two are weighted equally per semester grade, because that is how a
- * cumulative GPA works — a term in progress counts once it is over, and
- * counting it early is exactly what makes this an estimate rather than a fact.
- */
-export function cumulativeGpa(
-  finished: { level: CourseLevel; grade: number }[],
-  current: { level: CourseLevel; grade: number }[],
-): CumulativeGpa {
-  const all = [...finished, ...current];
-  if (all.length === 0) {
-    return { weighted: null, unweighted: null, counted: 0, inProgress: 0 };
-  }
-
-  let weighted = 0;
-  let unweighted = 0;
-  for (const c of all) {
-    weighted += weightedPoints(c.grade, c.level);
-    unweighted += unweightedPoints(c.grade);
-  }
-
-  const round = (n: number) => Math.round((n / all.length) * 10000) / 10000;
-  return {
-    weighted: round(weighted),
-    unweighted: round(unweighted),
-    counted: all.length,
-    inProgress: current.length,
-  };
-}

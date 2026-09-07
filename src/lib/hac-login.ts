@@ -1,6 +1,10 @@
 import "server-only";
 
-import { isStillLoginPage, verificationToken } from "./hac-session";
+import {
+  isStillLoginPage,
+  loginErrorText,
+  verificationToken,
+} from "./hac-session";
 
 /**
  * Signing into Home Access Center on a student's behalf.
@@ -50,7 +54,13 @@ const UA =
 
 export type HacLoginResult =
   | { ok: true; html: string }
-  | { ok: false; reason: HacFailure };
+  | {
+      ok: false;
+      reason: HacFailure;
+      /// HAC's own words, when it gave any. Quoted to the student because the
+      /// school's wording names the person to ask; never acted on.
+      detail?: string;
+    };
 
 /// Fixed codes rather than messages. Nothing derived from the credentials can
 /// end up in one of these.
@@ -97,10 +107,18 @@ export async function fetchClasswork(
   const token = verificationToken(loginHtml);
   if (!token) return { ok: false, reason: "BLOCKED" };
 
-  // The two empty decoys are in the real form; sending the shape HAC expects
-  // rather than the minimum it might accept.
+  // Every field the real form posts, in the order it posts them.
+  //
+  // Read off the live page on 2026-09-06 rather than copied from the
+  // third-party parser, which omits `Type`, `LocalLogin` and `SiteCode`. ASP.NET
+  // binds the whole model, and a login built from the fields that *look*
+  // necessary is how this failed the first time it was tried against a real
+  // account. `tempUN` and `tempPW` really are empty decoys, and really are sent.
   const body = new URLSearchParams({
     __RequestVerificationToken: token,
+    Type: "Normal",
+    LocalLogin: "False",
+    SiteCode: "",
     SCKTY00328510CustomEnabled: "False",
     SCKTY00436568CustomEnabled: "False",
     Database: "10",
@@ -121,7 +139,7 @@ export async function fetchClasswork(
         "Content-Type": "application/x-www-form-urlencoded",
         Cookie: cookieHeader(jar),
         Referer: LOGIN_URL,
-        __RequestVerificationToken: token,
+        Origin: ORIGIN,
       },
       body,
     });
@@ -131,8 +149,15 @@ export async function fetchClasswork(
   jarFrom(auth, jar);
 
   // A successful login redirects. A failed one answers 200 with the form again.
-  if (auth.status === 200 && isStillLoginPage(await auth.text())) {
-    return { ok: false, reason: "BAD_CREDENTIALS" };
+  if (auth.status === 200) {
+    const page = await auth.text();
+    if (isStillLoginPage(page)) {
+      return {
+        ok: false,
+        reason: "BAD_CREDENTIALS",
+        detail: loginErrorText(page) ?? undefined,
+      };
+    }
   }
 
   for (const url of CLASSWORK_URLS) {

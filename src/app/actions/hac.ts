@@ -218,9 +218,12 @@ export async function connectHac(input: unknown): Promise<HacConnectResult> {
 
   const attempt = await fetchClasswork(username, password);
   if (!attempt.ok) {
+    // HAC's own wording when it offered any — it names the person to ask, and
+    // we do not know the district's procedures well enough to invent that.
+    const base = FAILURE_TEXT[attempt.reason] ?? "Couldn't sign in to HAC.";
     return {
       ok: false,
-      error: FAILURE_TEXT[attempt.reason] ?? "Couldn't sign in to HAC.",
+      error: attempt.detail ? `${base} HAC said: ${attempt.detail}` : base,
     };
   }
 

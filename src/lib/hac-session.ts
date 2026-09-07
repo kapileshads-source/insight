@@ -31,3 +31,31 @@ export function isStillLoginPage(html: string): boolean {
     /class="[^"]*validation-summary-errors/i.test(html)
   );
 }
+
+/**
+ * HAC's own explanation of a failed login.
+ *
+ * Worth surfacing because it is far more useful than anything we could write:
+ * the real page says "contact your campus DLC to reset your password", which
+ * tells a student exactly who to go to. We do not know their district's
+ * procedures and should not invent them.
+ *
+ * **Treated as data, never as instruction.** It is text from a page we do not
+ * control, so tags are stripped, whitespace collapsed and the result capped —
+ * it is quoted to the student as the school's words, and nothing acts on it.
+ */
+export function loginErrorText(html: string): string | null {
+  const match = html.match(
+    /class="[^"]*validation-summary-errors[^"]*"[^>]*>([\s\S]{0,600}?)<\/div>/i,
+  );
+  if (!match) return null;
+
+  const text = match[1]
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.length < 8) return null;
+  return text.slice(0, 240);
+}

@@ -1,4 +1,8 @@
-import { isStillLoginPage, verificationToken } from "../hac-session.ts";
+import {
+  isStillLoginPage,
+  loginErrorText,
+  verificationToken,
+} from "../hac-session.ts";
 
 let pass = 0;
 let fail = 0;
@@ -36,6 +40,22 @@ console.log("\nthe credentials never appear in a failure");
   // stack trace or a function log. This pins the type rather than the wording.
   const codes = ["BAD_CREDENTIALS", "UNREACHABLE", "BLOCKED", "NO_CLASSWORK"];
   ok("the codes are fixed strings", codes.every((c) => typeof c === "string" && !c.includes(" ")));
+}
+
+console.log("\nHAC's own words on a failed login");
+{
+  // Verbatim from the live page, 2026-09-06. Worth quoting because it names
+  // who to ask, which we could not invent.
+  const real = '<div class="validation-summary-errors"><ul><li>Your attempt to log in was unsuccessful. We are unable to log you into HAC at this time. Students, If you have forgotten your password, please contact your campus DLC.</li></ul></div>';
+  const out = loginErrorText(real);
+  ok("finds the message", out.startsWith("Your attempt to log in was unsuccessful"));
+  ok("strips the markup", !out.includes("<") && !out.includes(">"));
+  ok("keeps who to ask", out.includes("campus DLC"));
+
+  ok("no error block is null", loginErrorText("<html>fine</html>") === null);
+  // Treated as data from a page we do not control, so it cannot run long.
+  ok("is capped", (loginErrorText('<div class="validation-summary-errors">' + "x".repeat(900) + "</div>") ?? "").length <= 240);
+  ok("an empty block is null", loginErrorText('<div class="validation-summary-errors"></div>') === null);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -93,14 +93,25 @@ console.log("a course grade is quoted, never computed");
   ok("no grade is not the string 'null'", buildGradebook([row()])[0].reportedGrade !== "null");
 }
 
-console.log("classes with marks come first");
+console.log("classes with nothing to say are not shown");
 {
   const out = buildGradebook([
     row({ course: "Zoology", status: "UNGRADED", score: null }),
     row({ course: "AP Biology" }),
   ]);
   ok("a class with a mark leads", out[0].course === "AP Biology");
-  ok("the empty class still appears", out.length === 2 && out[1].course === "Zoology");
+  // On a real account, keeping these produced six identical "Nothing marked
+  // yet" cards that buried the marks underneath them.
+  ok("a class with no marks is dropped", out.length === 1);
+
+  // Unless the gradebook has posted a percentage for it, which is something
+  // worth seeing even before any single assignment is marked.
+  const withGrade = buildGradebook(
+    [row({ course: "Zoology", status: "UNGRADED", score: null })],
+    new Map([["Zoology", "88.5"]]),
+  );
+  ok("a posted grade is enough to appear", withGrade.length === 1);
+  ok("and it carries the grade", withGrade[0].reportedGrade === "88.5");
 }
 
 console.log("what is new since you last looked");

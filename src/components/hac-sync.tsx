@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { fetchHacState, storeHacData } from "@/app/actions/hac";
+import { fetchHacState, pullHac, storeHacData } from "@/app/actions/hac";
 import { useCrypto } from "@/components/crypto-provider";
 import { coursesMatch } from "@/lib/assignment-match";
 import { readPage } from "@/lib/hac";
@@ -62,12 +62,40 @@ export function HacSync() {
   async function pull() {
     setOutcome({ kind: "working" });
 
+    // Two ways to get the page, tried in that order.
+    //
+    // The extension first, because it uses the session already in this browser
+    // and no password is involved. If it isn't there — which is every phone,
+    // and any computer without it installed — fall back to the stored
+    // credentials, which is the whole reason they exist.
+    //
+    // This fallback is the bug Kapilesh hit. `pullHac` was written, tested and
+    // never called by anything, so a student could connect their credentials,
+    // see "HAC is connected", and still have nothing ever fetched with them.
+    // The habit in HANDOFF.md exists for exactly this: grep for the new export
+    // outside the file that defines it.
+    let html: string | null = null;
+    let problem = "Couldn't read HAC just now.";
+
     const fetched = await requestHacPage();
-    if (!fetched.ok) {
-      setOutcome({
-        kind: "problem",
-        message: PROBLEMS[fetched.reason] ?? "Couldn't read HAC just now.",
-      });
+    if (fetched.ok) {
+      html = fetched.html;
+    } else {
+      const server = await pullHac();
+      if (server.ok) {
+        html = server.html;
+      } else {
+        // The extension's reason is the more useful one when it is installed
+        // but unhappy; otherwise the credential path's message is.
+        problem =
+          fetched.reason === "no-extension"
+            ? server.error
+            : (PROBLEMS[fetched.reason] ?? server.error);
+      }
+    }
+
+    if (!html) {
+      setOutcome({ kind: "problem", message: problem });
       return;
     }
 
@@ -76,7 +104,7 @@ export function HacSync() {
         assignments: incoming,
         grades: incomingGrades,
         usedFallback,
-      } = readPage(parseHacHtml(fetched.html));
+      } = readPage(parseHacHtml(html));
 
       if (incoming.length === 0) {
         setOutcome({

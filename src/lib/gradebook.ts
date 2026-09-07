@@ -126,15 +126,26 @@ export function buildGradebook(
     });
   }
 
-  // Classes with marks first, then alphabetically. A student opening this wants
-  // the ones that have something to say, and an empty class at the top reads as
-  // a broken sync.
-  return courses.sort((a, b) => {
-    if ((a.gradedCount > 0) !== (b.gradedCount > 0)) {
-      return a.gradedCount > 0 ? -1 : 1;
-    }
-    return a.course.localeCompare(b.course);
-  });
+  // A class with nothing to say is not shown at all.
+  //
+  // The first version sorted these to the bottom instead, on the reasoning that
+  // a missing class looks like a broken sync. On a real account that produced a
+  // screen of six identical cards reading "No grade posted yet / Nothing marked
+  // yet in this class" — including two that are not classes — and the marks
+  // that did exist were buried under them. An empty card is not reassurance,
+  // it is noise, and there are enough of them in September to bury everything
+  // else.
+  //
+  // A course reappears the instant it has either a posted grade or one marked
+  // assignment, which is the only state in which it has anything to show.
+  return courses
+    .filter((c) => c.gradedCount > 0 || c.reportedGrade !== null)
+    .sort((a, b) => {
+      if ((a.gradedCount > 0) !== (b.gradedCount > 0)) {
+        return a.gradedCount > 0 ? -1 : 1;
+      }
+      return a.course.localeCompare(b.course);
+    });
 }
 
 /**

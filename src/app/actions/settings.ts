@@ -30,6 +30,17 @@ const setupSchema = z.object({
   verifierIv: z.string().max(256),
 });
 
+/// The second wrapping, under the recovery code. Same shape as the password
+/// wrapping and equally inert on its own — the code that opens it was made in
+/// the browser and never sent here.
+const recoverySchema = z.object({
+  recoverySalt: z.string().max(256),
+  recoveryWrappedDek: z.string().max(1024),
+  recoveryWrapIv: z.string().max(256),
+  recoveryVerifierCipher: z.string().max(1024),
+  recoveryVerifierIv: z.string().max(256),
+});
+
 /// Replace the wrapped key material after a password change.
 ///
 /// Distinct from the create-once action used at signup. What arrives here is
@@ -51,6 +62,33 @@ export async function updateEncryptionSetup(
   await db.encryptionKey.update({
     where: { userId: user.id },
     data: parsed.data,
+  });
+
+  return { ok: true };
+}
+
+/// Store a freshly issued recovery key, retiring whatever was there before.
+///
+/// Separate from `updateEncryptionSetup` because the two happen independently:
+/// changing a password leaves the recovery key alone (it wraps the data key,
+/// which has not moved), and reissuing a recovery key leaves the password
+/// alone. Recovering from a forgotten password does both, and calls both.
+export async function updateRecoveryKey(
+  recovery: unknown,
+): Promise<SettingsResult> {
+  const user = await requireUser();
+
+  const parsed = recoverySchema.safeParse(recovery);
+  if (!parsed.success) {
+    return { ok: false, error: "That recovery material didn't look right." };
+  }
+  if (!user.encryptionKey) {
+    return { ok: false, error: "There's no encryption set up on this account." };
+  }
+
+  await db.encryptionKey.update({
+    where: { userId: user.id },
+    data: { ...parsed.data, recoveryCreatedAt: new Date() },
   });
 
   return { ok: true };
@@ -173,6 +211,62 @@ export async function deleteAccount(
   }
 
   await db.user.delete({ where: { id: user.id } });
+  return { ok: true };
+}
+
+/**
+ * Start over: throw away the key and everything it encrypted, keep the account.
+ *
+ * This is the honest floor under "I forgot my password and I have no recovery
+ * key". There is no third option. The server cannot read these rows, so it
+ * cannot re-encrypt them under a new password — it can only delete them, and
+ * leaving them in place would mean an account permanently carrying data
+ * nobody can open.
+ *
+ * What actually survives matters, and it is more than it sounds: courses,
+ * assignments, marks and the transcript all come back on the next sync,
+ * because Canvas and HAC still have them. What is gone for good is the part
+ * only Insight held — the study log, the sleep entries, the outcomes typed in
+ * by hand, and every insight computed from them. So the wording in the UI is
+ * "your study history", not "your data": telling a student they will lose
+ * their grades when they will not is its own kind of lie.
+ */
+export async function resetEncryption(
+  confirmation: string,
+): Promise<SettingsResult> {
+  const user = await requireUser();
+
+  if (confirmation.trim().toLowerCase() !== "start over") {
+    return { ok: false, error: "Type the phrase exactly to confirm." };
+  }
+
+  // One transaction. A half-finished reset leaves rows encrypted under a key
+  // that no longer exists, which is the one state with no way out at all.
+  await db.$transaction([
+    db.extensionActivity.deleteMany({ where: { session: { userId: user.id } } }),
+    db.focusBlockEvent.deleteMany({ where: { session: { userId: user.id } } }),
+    db.studySession.deleteMany({ where: { userId: user.id } }),
+    db.sleepEntry.deleteMany({ where: { userId: user.id } }),
+    db.screenTimeEntry.deleteMany({ where: { userId: user.id } }),
+    db.outcome.deleteMany({ where: { userId: user.id } }),
+    db.assignmentLink.deleteMany({ where: { userId: user.id } }),
+    db.assignment.deleteMany({ where: { userId: user.id } }),
+    db.course.deleteMany({ where: { userId: user.id } }),
+    db.insight.deleteMany({ where: { userId: user.id } }),
+    db.recommendation.deleteMany({ where: { userId: user.id } }),
+    db.dataGap.deleteMany({ where: { userId: user.id } }),
+    db.pendingDeviceData.deleteMany({ where: { userId: user.id } }),
+    // The transcript lives on the user row rather than in a table of its own.
+    db.user.update({
+      where: { id: user.id },
+      data: { transcriptCipher: null, transcriptIv: null },
+    }),
+    // Last, so a failure above leaves the key in place and the data readable.
+    db.encryptionKey.deleteMany({ where: { userId: user.id } }),
+  ]);
+
+  revalidatePath("/dashboard");
+  revalidatePath("/settings");
   return { ok: true };
 }
 

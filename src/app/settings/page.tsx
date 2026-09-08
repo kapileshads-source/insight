@@ -9,6 +9,8 @@ import {
 import { getCanvasStatus } from "@/app/actions/canvas";
 import { SettingsPanel } from "@/components/settings-panel";
 import { BlocklistEditor } from "@/components/blocklist-editor";
+import { RecoveryKeyCard } from "@/components/recovery-key-card";
+import { recoveryKeyStatus } from "@/app/actions/crypto";
 
 export const metadata = { title: "Settings — Insight" };
 
@@ -16,10 +18,11 @@ export default async function SettingsPage() {
   const user = await getOrCreateUser();
   if (!user) redirect("/sign-in");
 
-  const [muted, canvas, blocklist] = await Promise.all([
+  const [muted, canvas, blocklist, recovery] = await Promise.all([
     getMutedCategories(),
     getCanvasStatus(),
     getBlocklistPrefs(),
+    recoveryKeyStatus(),
   ]);
 
   return (
@@ -34,6 +37,13 @@ export default async function SettingsPage() {
         />
 
         <div className="mt-10 space-y-6">
+          {/* First on the page when there isn't one. An account with no
+              recovery key is one forgotten password away from losing its whole
+              study log, which outranks every other setting here. */}
+          <RecoveryKeyCard
+            exists={recovery.exists}
+            createdAt={recovery.createdAt?.toISOString() ?? null}
+          />
           <BlocklistEditor prefs={blocklist} />
           <SettingsPanel muted={muted} canvas={canvas} />
       </div>

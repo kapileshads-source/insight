@@ -289,6 +289,26 @@ model EncryptionKey {
   verifierCipher String
   verifierIv     String
 
+  /// A second wrapping of the same data key, under a recovery code held only
+  /// by the student. This is the only reason a forgotten password is
+  /// survivable — and it is still not an escrow, because the code was
+  /// generated in their browser, shown once, and never sent here.
+  ///
+  /// Nullable because accounts created before recovery existed have none, and
+  /// there is no way to make one for them without their password. They are
+  /// prompted in settings; until then, forgetting the password still means
+  /// starting over.
+  recoverySalt           String?
+  recoveryWrappedDek     String?
+  recoveryWrapIv         String?
+  recoveryVerifierCipher String?
+  recoveryVerifierIv     String?
+
+  /// When the current recovery key was issued. Shown in settings so a student
+  /// can tell whether the paper in their drawer is the current one — reissuing
+  /// retires the old code, and nothing else would say so.
+  recoveryCreatedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -475,6 +495,13 @@ model Assignment {
   @@unique([userId, canvasId])
   @@index([userId, dueAt])
   @@index([userId, source])
+  /// Declared late. The migration that added `completedAt` created this index
+  /// directly in SQL and never wrote it into the model, so every subsequent
+  /// `migrate dev` wanted to drop it as drift — which would have quietly
+  /// deleted it inside whatever migration happened to be generated next. It
+  /// is the index behind "what is still open", which is the assignments panel
+  /// on the dashboard.
+  @@index([userId, completedAt])
 }
 
 /// Where to send a nudge, for a browser that agreed to receive one.

@@ -58,9 +58,18 @@ export default function PrivacyPage() {
           to unscramble it.
         </p>
         <p className="text-text">
-          You can test this. Forget your password and your data becomes
-          permanently unreadable — including to us. If we could recover it for
-          you, this page would be a lie.
+          You can test this. Forget your password and your data is unreadable —
+          including to us. If we could recover it for you, this page would be a
+          lie.
+        </p>
+        <p>
+          Which is why you get a recovery key when you set your password: a
+          25-character code, generated in your browser, shown once, and never
+          sent to us. It opens a second copy of the same key. If you forget your
+          password, that code is the way back in — and if you lose the code as
+          well, there is genuinely nothing anyone can do, because we never had
+          either one. You can issue a new key from settings at any time, which
+          retires the old one.
         </p>
         <p>
           One honest caveat on that, if you sign in to Home Access Center with

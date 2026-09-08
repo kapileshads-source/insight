@@ -5,7 +5,12 @@ import {
   seal,
   open,
   checkPassword,
+  createRecoveryKey,
+  recoverWithKey,
+  generateRecoveryCode,
+  normalizeRecoveryCode,
   WrongPasswordError,
+  WrongRecoveryKeyError,
 } from "../crypto.ts";
 
 let pass = 0;
@@ -101,6 +106,128 @@ console.log("\npassword quality");
 ok("rejects short", !checkPassword("hunter2").ok);
 ok("accepts four words as strong", checkPassword("copper lantern drifting harbor").score === 3);
 ok("accepts long single string", checkPassword("Xk9!qzmvb2LPwe4tRn").score >= 2);
+
+console.log("\nrecovery codes");
+const code = generateRecoveryCode();
+ok("five groups of five", /^[0-9A-Z]{5}(-[0-9A-Z]{5}){4}$/.test(code));
+ok(
+  "excludes the letters that get misread as digits",
+  !/[ILOU]/.test(code),
+);
+ok(
+  "two codes in a row differ",
+  generateRecoveryCode() !== generateRecoveryCode(),
+);
+ok(
+  "normalizing is idempotent on its own output",
+  normalizeRecoveryCode(normalizeRecoveryCode(code)) ===
+    normalizeRecoveryCode(code),
+);
+ok(
+  "lower case, spaces and missing dashes all normalize the same",
+  normalizeRecoveryCode(code.toLowerCase().replace(/-/g, " ")) ===
+    normalizeRecoveryCode(code),
+);
+// The four substitutions Crockford defines. A student who writes down an O
+// and types it back must land on the zero that was actually generated.
+ok("O reads as zero", normalizeRecoveryCode("O") === "0");
+ok("I and L read as one", normalizeRecoveryCode("IL") === "11");
+ok("U reads as V", normalizeRecoveryCode("U") === "V");
+
+console.log("\nrecovery round trip");
+// A fresh account, some data sealed under it, then the password is forgotten.
+const fresh = await createEncryptionSetup(PASSWORD);
+const sealedBefore = await seal(fresh.dek, SESSION);
+
+const recovered = await recoverWithKey(
+  fresh.code,
+  "totally different passphrase here",
+  fresh.setup,
+  fresh.recovery,
+);
+
+ok(
+  "the recovered key opens data sealed before recovery",
+  JSON.stringify(await open(recovered.dek, sealedBefore)) ===
+    JSON.stringify(SESSION),
+);
+ok(
+  "the new password unlocks the account",
+  await unlock("totally different passphrase here", recovered.setup)
+    .then(() => true)
+    .catch(() => false),
+);
+ok(
+  "the old password no longer does",
+  await unlock(PASSWORD, recovered.setup)
+    .then(() => false)
+    .catch((e) => e instanceof WrongPasswordError),
+);
+
+// The used code is retired. This is the property that keeps a screenshot of an
+// old key from being a permanent way in.
+let usedAgain = null;
+try {
+  await recoverWithKey(
+    fresh.code,
+    "another passphrase entirely",
+    recovered.setup,
+    recovered.recovery,
+  );
+} catch (e) {
+  usedAgain = e;
+}
+ok("the used code stops working", usedAgain instanceof WrongRecoveryKeyError);
+ok("a fresh code is issued in its place", recovered.code !== fresh.code);
+ok(
+  "and that one works",
+  await recoverWithKey(
+    recovered.code,
+    "third passphrase",
+    recovered.setup,
+    recovered.recovery,
+  )
+    .then((r) => open(r.dek, sealedBefore))
+    .then((v) => JSON.stringify(v) === JSON.stringify(SESSION))
+    .catch(() => false),
+);
+
+let wrongCode = null;
+try {
+  await recoverWithKey(
+    generateRecoveryCode(),
+    "whatever",
+    recovered.setup,
+    recovered.recovery,
+  );
+} catch (e) {
+  wrongCode = e;
+}
+ok("a wrong code is reported as wrong", wrongCode instanceof WrongRecoveryKeyError);
+
+console.log("\nreissuing a recovery key");
+const reissued = await createRecoveryKey(PASSWORD, setup);
+ok(
+  "issued from the password, it opens the same data",
+  await recoverWithKey("x", "y", setup, reissued.recovery)
+    .then(() => false)
+    .catch((e) => e instanceof WrongRecoveryKeyError),
+);
+ok(
+  "and the real code recovers the original key",
+  await recoverWithKey(reissued.code, "brand new passphrase", setup, reissued.recovery)
+    .then((r) => open(r.dek, sealed))
+    .then(() => true)
+    .catch(() => false),
+);
+
+let wrongPw = null;
+try {
+  await createRecoveryKey("not the password", setup);
+} catch (e) {
+  wrongPw = e;
+}
+ok("a wrong password can't mint a key", wrongPw instanceof WrongPasswordError);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

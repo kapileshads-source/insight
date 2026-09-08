@@ -101,11 +101,24 @@ function UnlockScreen() {
         </button>
       </form>
 
-      <p className="mt-8 border-t border-line pt-5 text-[14px] leading-relaxed text-text-faint">
-        Forgotten it? There&rsquo;s no reset — the password never reaches us,
-        so there&rsquo;s nothing on our end to send you. You can start a fresh
-        log from settings, but the old entries stay locked for good.
-      </p>
+      {/* The way out, which used to be a paragraph explaining that there
+          wasn't one. There still is no reset in the ordinary sense — nothing
+          here can be emailed to you — but a recovery key opens the same data,
+          and a student staring at this screen needs the link, not the
+          architecture lesson. */}
+      <div className="mt-8 border-t border-line pt-5">
+        <Link
+          href="/recover"
+          className="text-[15px] text-accent underline underline-offset-4"
+        >
+          Forgotten your password?
+        </Link>
+        <p className="mt-2 text-[14px] leading-relaxed text-text-faint">
+          Your recovery key opens your data and lets you set a new password.
+          There is no reset we can send you — the password never reaches us —
+          so the key is the way back.
+        </p>
+      </div>
     </Shell>
   );
 }

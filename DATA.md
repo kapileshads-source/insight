@@ -20,8 +20,13 @@ codebase but is unreachable.
 
 Study data is encrypted **in the student's browser** with a key derived from a
 password that never reaches the server. The server stores ciphertext it cannot
-read, and no password reset exists — losing the password destroys the data
-permanently, including for us.
+read. There is no password reset in the ordinary sense — nothing on the server
+can decrypt anything — but a **recovery key** issued at signup wraps a second
+copy of the data key under a 25-character code held only by the student. Losing
+both the password and the code destroys the data permanently, including for us.
+An account with neither can be reset: the key and everything it encrypted are
+deleted, and the courses, assignments and marks come back on the next sync
+because Canvas and HAC still hold them.
 
 The rule throughout the schema is **structure is plaintext, content is not**.
 Row existence, foreign keys and the timestamps needed for ordering stay readable

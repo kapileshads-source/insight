@@ -9,6 +9,7 @@ import {
   createEncryptionSetup,
 } from "@/lib/crypto";
 import { ScatterCard } from "@/components/scatter-card";
+import { RecoveryCodeScreen } from "@/components/recovery-code";
 import type { ActionResult } from "@/app/onboarding/actions";
 import {
   requestParentConsent,
@@ -195,6 +196,10 @@ export function PasswordStep() {
   const [acknowledged, setAcknowledged] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  /// Set once the key exists. While it holds a code, this step shows the code
+  /// instead of the form — the account is already made, and the only thing
+  /// left is to get the recovery key onto paper.
+  const [issuedCode, setIssuedCode] = useState<string | null>(null);
 
   const check = value ? checkPassword(value) : null;
   const matches = value.length > 0 && value === confirm;
@@ -208,8 +213,9 @@ export function PasswordStep() {
       try {
         // Key generation happens here, in the browser. The password itself
         // never crosses the network.
-        const { setup, dek } = await createEncryptionSetup(value);
-        const res = await saveEncryptionSetup(setup);
+        const { setup, recovery, code, dek } =
+          await createEncryptionSetup(value);
+        const res = await saveEncryptionSetup(setup, recovery);
         if (!res.ok) {
           setError(res.error);
           return;
@@ -218,7 +224,10 @@ export function PasswordStep() {
         // reaches the dashboard and is immediately asked for the password
         // they set ten seconds ago.
         await adopt(dek, false);
-        router.refresh();
+        // Not `router.refresh()` yet. The recovery code exists only in this
+        // variable — it was never sent anywhere and cannot be fetched back —
+        // so navigating away here would destroy it silently.
+        setIssuedCode(code);
       } catch (e) {
         // An unsupported browser is not a retryable error, and telling a
         // student to "try again" would have them retype a correct password
@@ -230,6 +239,12 @@ export function PasswordStep() {
         );
       }
     });
+  }
+
+  if (issuedCode) {
+    return (
+      <RecoveryCodeScreen code={issuedCode} onDone={() => router.refresh()} />
+    );
   }
 
   return (
@@ -303,14 +318,19 @@ export function PasswordStep() {
           </p>
         )}
 
-        {/* Deliberately blunt and deliberately unskippable. This is the one
-            irreversible thing in the whole product. */}
+        {/* Still blunt, still unskippable, and now accurate.
+        
+            This used to say "if you forget this, your data is gone", full
+            stop, because it was true — there was no recovery key. There is
+            one now, handed over on the next screen, and leaving the old
+            wording would have taught students that the paper they are about
+            to be given does not matter. */}
         <div className="mt-7 rounded-md border border-down/40 bg-down/10 p-4">
           <p className="text-[15px] leading-relaxed">
-            If you forget this, your data is gone. Not &ldquo;email support and
-            we&rsquo;ll sort it out&rdquo; — actually gone. We never receive it,
-            so there is nothing on our end to reset. Write it down somewhere
-            real.
+            We never receive this password, so there is nothing on our end to
+            reset — if you forget it, the only way back in is the recovery key
+            on the next screen. Write the password down somewhere real, and
+            keep that key.
           </p>
           <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-[15px]">
             <input

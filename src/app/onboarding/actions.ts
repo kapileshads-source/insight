@@ -137,6 +137,17 @@ const encryptionSetupSchema = z.object({
   verifierIv: z.string().max(256),
 });
 
+/// The second wrapping, under the recovery code. Same shape as the password
+/// wrapping and equally inert on its own — the code that opens it was made in
+/// the browser and never sent here.
+const recoverySchema = z.object({
+  recoverySalt: z.string().max(256),
+  recoveryWrappedDek: z.string().max(1024),
+  recoveryWrapIv: z.string().max(256),
+  recoveryVerifierCipher: z.string().max(1024),
+  recoveryVerifierIv: z.string().max(256),
+});
+
 /// Stores the wrapped key material produced in the browser.
 ///
 /// Everything arriving here is already encrypted or public. The password is
@@ -144,12 +155,21 @@ const encryptionSetupSchema = z.object({
 /// could recover it.
 export async function saveEncryptionSetup(
   setup: unknown,
+  recovery?: unknown,
 ): Promise<ActionResult> {
   const user = await requireUser();
 
   const parsed = encryptionSetupSchema.safeParse(setup);
   if (!parsed.success) {
     return { ok: false, error: "That key material didn't look right." };
+  }
+
+  // Optional so an older client that does not send it still works, but every
+  // current path does — see `createEncryptionSetup`, which mints the recovery
+  // key in the same call that makes the data key.
+  const parsedRecovery = recovery ? recoverySchema.safeParse(recovery) : null;
+  if (recovery && !parsedRecovery?.success) {
+    return { ok: false, error: "That recovery material didn't look right." };
   }
 
   // Re-running this would orphan every existing encrypted row, so it is
@@ -160,7 +180,13 @@ export async function saveEncryptionSetup(
   }
 
   await db.encryptionKey.create({
-    data: { userId: user.id, ...parsed.data },
+    data: {
+      userId: user.id,
+      ...parsed.data,
+      ...(parsedRecovery?.success
+        ? { ...parsedRecovery.data, recoveryCreatedAt: new Date() }
+        : {}),
+    },
   });
 
   revalidatePath("/onboarding");

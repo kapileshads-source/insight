@@ -259,13 +259,30 @@ export function GpaCard({
           </p>
         )}
 
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="mt-4 text-[14px] font-medium text-on-light underline underline-offset-4"
-        >
-          {open ? "Hide the classes" : "Which classes count, and try a grade"}
-        </button>
+        {/* Discoverability, learned the hard way.
+        
+            This was one link reading "Which classes count, and try a grade",
+            collapsed. The what-if is the most useful thing on the card — it is
+            the question a student actually asks about a grade — and it was the
+            fourth word of a disclosure about something else. It got asked for
+            twice by the person who had already been shown it.
+        
+            So the action leads, it says what it does, and it looks like a
+            control rather than a footnote. */}
+        <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="btn-secondary-on-light px-5 py-2.5 text-[14px] font-medium"
+          >
+            {open ? "Done" : "Try a different grade"}
+          </button>
+          <p className="text-[14px] text-on-light-muted">
+            {open
+              ? "Type a grade next to any class to see where you would land."
+              : "See what your GPA would be if a class ended differently."}
+          </p>
+        </div>
 
         {open && (
           <ul className="border-on-light/15 mt-4 border-t">

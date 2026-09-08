@@ -17,6 +17,14 @@ import "server-only";
  * not a rewrite.
  */
 
+import {
+  buildChatPrompt,
+  checkAnswer,
+  CHAT_SYSTEM,
+  type ChatFacts,
+  type ChatTurn,
+} from "@/lib/chat";
+
 export type InsightSummary = {
   statement: string;
   direction: "POSITIVE" | "NEGATIVE" | "NEUTRAL";
@@ -66,6 +74,8 @@ function buildPrompt(
 
 async function callGroq(
   prompt: string,
+  system: string = SYSTEM,
+  maxTokens = 160,
 ): Promise<RecommendationResult> {
   const key = process.env.GROQ_API_KEY;
   if (!key) return { ok: false, error: "No Groq API key configured." };
@@ -81,9 +91,9 @@ async function callGroq(
     body: JSON.stringify({
       model,
       temperature: 0.4,
-      max_tokens: 160,
+      max_tokens: maxTokens,
       messages: [
-        { role: "system", content: SYSTEM },
+        { role: "system", content: system },
         { role: "user", content: prompt },
       ],
     }),
@@ -177,6 +187,70 @@ export async function getRecommendation(
       ok: false,
       error: "The generated advice claimed causation, so it wasn't shown.",
     };
+  }
+
+  return result;
+}
+
+
+// --- chat -------------------------------------------------------------------
+
+/**
+ * One answer in the stats chat.
+ *
+ * Same boundary as `getRecommendation`: what crosses it is an aggregate the
+ * browser computed, never rows. See `chat.ts` for the scope rules, which are
+ * enforced on both sides of this call rather than trusted to the prompt.
+ *
+ * The history is included so a student can say "what about last week?" without
+ * repeating themselves, but it is capped by the caller and every turn in it has
+ * already been through the same checks.
+ */
+export async function getChatAnswer(
+  facts: ChatFacts,
+  history: ChatTurn[],
+  question: string,
+): Promise<RecommendationResult> {
+  const provider = (process.env.LLM_PROVIDER ?? "none").toLowerCase();
+  if (provider === "none") {
+    return { ok: false, error: "No provider configured." };
+  }
+  // Only Groq for now. The Anthropic path takes a single prompt string and
+  // would silently drop the history, which is worse than saying so.
+  if (provider !== "groq") {
+    return { ok: false, error: "Chat needs the Groq provider." };
+  }
+
+  const transcript = history
+    .map((t) => `${t.role === "user" ? "Student" : "You"}: ${t.content}`)
+    .join("\n");
+
+  const prompt = transcript
+    ? `Earlier in this conversation:\n${transcript}\n\n${buildChatPrompt(facts, question)}`
+    : buildChatPrompt(facts, question);
+
+  let result: RecommendationResult;
+  try {
+    result = await callGroq(prompt, CHAT_SYSTEM, 320);
+  } catch {
+    return { ok: false, error: "Couldn't reach the chat service." };
+  }
+  if (!result.ok) return result;
+
+  // The causation guard applies here too. A model asked "why did my grade
+  // drop" will reach for a cause, and the honest answer is that Insight only
+  // knows what happened alongside what.
+  if (CAUSAL.test(result.text)) {
+    return {
+      ok: false,
+      error:
+        "That answer claimed one thing caused another, which Insight can't actually tell. Try asking what happened alongside what.",
+    };
+  }
+
+  const scoped = checkAnswer(result.text);
+  if (!scoped.allowed) {
+    return { ok: false, error: scoped.reason };
   }
 
   return result;

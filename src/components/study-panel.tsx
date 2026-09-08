@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useCrypto } from "@/components/crypto-provider";
 import { WeekChart } from "@/components/week-chart";
 import { InsightRow } from "@/components/insight-row";
+import { StatsChat } from "@/components/stats-chat";
 import { QuickLog } from "@/components/quick-log";
 import { SessionTimer } from "@/components/session-timer";
 import { fetchEncryptedRecords } from "@/app/actions/logs";
@@ -616,6 +617,18 @@ export function StudyPanel({
           </>
         )}
       </section>
+
+      {/* Mounted here because this is where the decrypted weekly figures
+          already exist. The chat needs an aggregate of the study log and the
+          gradebook both, and the log can only be read in this component. */}
+      <StatsChat
+        weekly={{
+          sessions: stats?.sessionsThisWeek ?? 0,
+          minutes: Math.round(stats?.minutesThisWeek ?? 0),
+          meanSleep: stats?.meanSleep ?? null,
+          patterns: surfaced.map((i) => i.statement),
+        }}
+      />
     </div>
   );
 }

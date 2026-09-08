@@ -7,6 +7,12 @@ import { InsightRow } from "@/components/insight-row";
 import { QuickLog } from "@/components/quick-log";
 import { SessionTimer } from "@/components/session-timer";
 import { fetchEncryptedRecords } from "@/app/actions/logs";
+import { fetchGradebook } from "@/app/actions/grades";
+import {
+  mergeOutcomes,
+  outcomesFromMarkedWork,
+  type MarkedWork,
+} from "@/lib/graded-work";
 import { getBlocklistPrefs } from "@/app/actions/settings";
 import { buildBlocklist, matchesBlocklist, splitActivity } from "@/lib/blocklist";
 import { requestRecommendation } from "@/app/actions/recommendations";
@@ -22,6 +28,7 @@ import {
   wellbeingAlerts,
   type ComputedInsight,
   type InsightInputs,
+  type OutcomeRecord,
   type WeeklyRecap,
   type WellbeingAlert,
 } from "@/lib/insights";
@@ -76,6 +83,11 @@ export function StudyPanel({
   const [subjects, setSubjects] = useState<string[]>([]);
   const [lastDevice, setLastDevice] = useState<DeviceReadout | null>(null);
   const [failed, setFailed] = useState(false);
+  /// How many scores came from the gradebook rather than being typed in, and
+  /// how much small work was left out. Shown, because "based on 11 scores"
+  /// when the gradebook shows 40 rows is a question a student will ask.
+  const [derivedCount, setDerivedCount] = useState(0);
+  const [minorExcluded, setMinorExcluded] = useState(0);
 
   const collectPendingDeviceData = useCallback(async () => {
     const pending = await fetchPendingDeviceData();
@@ -249,7 +261,63 @@ export function StudyPanel({
         }),
       );
 
-      const inputs: InsightInputs = { sessions, sleep, screenTime, outcomes };
+      // Real marked work, which is what the engine was always meant to
+      // compare against and had never once been given. Everything here has
+      // been syncing from Canvas and HAC for weeks with no consumer; see
+      // `graded-work.ts` for why the date has to be `dueAt` and why the
+      // two-point homework is left out.
+      const gradebook = await fetchGradebook();
+      let fromGrades: OutcomeRecord[] = [];
+      let minorCount = 0;
+      if (gradebook) {
+        const courseNames = new Map<string, string>();
+        await Promise.all(
+          gradebook.courses.map(async (c) => {
+            const p = await reveal<{ name?: string; shortName?: string }>({
+              cipher: c.payloadCipher,
+              iv: c.payloadIv,
+            });
+            courseNames.set(c.id, p.shortName || p.name || "Course");
+          }),
+        );
+
+        const marked: MarkedWork[] = await Promise.all(
+          gradebook.assignments.map(async (a) => {
+            const p = await reveal<{
+              name?: string;
+              category?: string | null;
+              score?: number | null;
+              pointsPossible?: number | null;
+            }>({ cipher: a.payloadCipher, iv: a.payloadIv });
+            return {
+              id: a.id,
+              course: courseNames.get(a.courseId) ?? "Course",
+              name: p.name ?? "Untitled",
+              category: p.category ?? null,
+              score: p.score ?? null,
+              pointsPossible: p.pointsPossible ?? null,
+              dueAt: a.dueAt ? new Date(a.dueAt) : null,
+              updatedAt: new Date(a.updatedAt),
+            };
+          }),
+        );
+
+        const summary = outcomesFromMarkedWork(marked);
+        fromGrades = summary.outcomes;
+        minorCount = summary.excludedAsMinor;
+      }
+
+      setMinorExcluded(minorCount);
+      setDerivedCount(fromGrades.length);
+
+      const inputs: InsightInputs = {
+        sessions,
+        sleep,
+        screenTime,
+        // Typed-in scores win on a collision, so a test entered by hand and
+        // later posted to the gradebook is not counted twice.
+        outcomes: mergeOutcomes(outcomes, fromGrades),
+      };
       setInsights(computeInsights(inputs));
       setStats(basicStats(inputs));
       setRecap(weeklyRecap(inputs));
@@ -484,8 +552,20 @@ export function StudyPanel({
 
         {!failed && insights !== null && insights.length === 0 && (
           <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-text-muted">
-            Nothing yet. Log a few sessions and a test score, and patterns start
-            appearing once there&rsquo;s enough of them to mean something.
+            {derivedCount > 0
+              ? `Your gradebook has given us ${derivedCount} score${derivedCount === 1 ? "" : "s"} to work with. What's missing is study sessions — patterns come from comparing the two, so log a few and this fills in.`
+              : "Nothing yet. Log a few sessions and a test score, and patterns start appearing once there's enough of them to mean something."}
+          </p>
+        )}
+
+        {/* Where the scores came from. Left unsaid, "based on 11 scores"
+            against a gradebook showing 40 rows reads as a bug. */}
+        {!failed && derivedCount > 0 && (
+          <p className="mt-4 max-w-xl text-[14px] leading-relaxed text-text-faint">
+            {derivedCount} score{derivedCount === 1 ? "" : "s"} read straight
+            from your gradebook.
+            {minorExcluded > 0 &&
+              ` ${minorExcluded} smaller ${minorExcluded === 1 ? "grade was" : "grades were"} left out — a 2/2 warm-up counts as a 100% and would drown out your real assessments.`}
           </p>
         )}
 

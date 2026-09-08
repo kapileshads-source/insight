@@ -517,11 +517,72 @@ export function computeInsights(inputs: InsightInputs): ComputedInsight[] {
     if (insight) results.push(insight);
   }
 
+  // Correct for having asked seven questions instead of one, then re-sort.
+  const corrected = holmCorrect(results);
+
   // Surfaced first, then by how large the effect is.
-  return results.sort((a, b) => {
+  return corrected.sort((a, b) => {
     if (a.isSurfaced !== b.isSurfaced) return a.isSurfaced ? -1 : 1;
     return Math.abs(b.magnitude) - Math.abs(a.magnitude);
   });
+}
+
+/**
+ * The multiple-comparisons correction the engine has been missing.
+ *
+ * `maxChance: 0.05` means "this gap appears by chance less than one time in
+ * twenty" — which is the right bar for *one* question. Seven factors are
+ * tested against the same set of scores, so the chance that at least one of
+ * them clears 0.05 by luck alone is not 5% but about 30%. Roughly one student
+ * in three would be shown a confident, well-worded, entirely invented finding
+ * about their sleep or their study location.
+ *
+ * That is the "too many variables" criticism, and it was correct. The comment
+ * on `maxChance` even names the problem — "seven factors tested against
+ * twenty-odd scores will throw up a big-looking difference regularly" — and
+ * then nothing was done about it.
+ *
+ * Holm–Bonferroni rather than plain Bonferroni: it is uniformly stricter than
+ * doing nothing and uniformly more powerful than dividing by seven, which
+ * matters a great deal here because a student has twenty scores, not twenty
+ * thousand, and throwing away real findings is a failure too. Sorted by
+ * p-value, the k-th of m tests must clear `maxChance / (m - k)`, and once one
+ * fails every weaker one fails with it.
+ *
+ * `m` is every factor that produced a comparison — not every factor that
+ * passed. The first version of this counted only the survivors, which meant
+ * that in the common case where exactly one factor cleared the other gates,
+ * m was 1 and the correction did nothing at all. It measured identically to
+ * having no correction, which is how it was caught. The number of tests is
+ * the number of questions asked of the data, and asking a question you did
+ * not like the answer to still counts.
+ *
+ * Factors that never produced a comparison — one side of the split empty,
+ * because the student never studied at home, say — are genuinely not tests
+ * and stay out of m.
+ */
+function holmCorrect(results: ComputedInsight[]): ComputedInsight[] {
+  // Every comparison that ran, whether or not it passed.
+  const m = results.length;
+  if (m <= 1) return results;
+
+  const ranked = [...results].sort((a, b) => a.chance - b.chance);
+
+  const rejected = new Set<string>();
+  let failed = false;
+  ranked.forEach((r, k) => {
+    // Once one test fails, every larger p-value fails too — that is the step
+    // in step-down, and skipping it would let a weak result through behind a
+    // strong one.
+    if (failed || r.chance > GATES.maxChance / (m - k)) {
+      failed = true;
+      rejected.add(r.factor);
+    }
+  });
+
+  return results.map((r) =>
+    rejected.has(r.factor) ? { ...r, isSurfaced: false } : r,
+  );
 }
 
 /// Interim numbers for a student who has nothing gated yet, so the dashboard

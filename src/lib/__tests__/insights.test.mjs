@@ -372,5 +372,68 @@ console.log("\nthe sentence agrees with its own sign");
   ok("a good habit gets no advice", home !== undefined && home.suggestion === undefined);
 }
 
+// --- multiple comparisons ---------------------------------------------------
+//
+// The engine asks seven questions of the same set of scores. At maxChance 0.05
+// each, the odds that at least one clears by luck are about 30% — so roughly
+// one student in three would be shown a confident invented finding. These
+// check the Holm correction that fixes it.
+{
+  console.log("\nmultiple comparisons");
+
+  // Pure noise: scores unrelated to anything, but enough sessions and spread
+  // to clear every gate except the statistical one.
+  const rand = (seed) => {
+    let s = seed;
+    return () => ((s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  };
+
+  let anySurfaced = 0;
+  const TRIALS = 40;
+  for (let t = 0; t < TRIALS; t++) {
+    const r = rand(t * 7919 + 13);
+    const sessions = [];
+    const outcomes = [];
+    const sleep = [];
+    for (let i = 0; i < 30; i++) {
+      const day = new Date(2026, 0, 1 + i * 2);
+      sessions.push({
+        id: `s${i}`,
+        startedAt: new Date(day.getTime() + (r() < 0.5 ? 9 : 23) * 3600e3),
+        durationMinutes: r() < 0.5 ? 25 : 95,
+        subject: i % 3 === 0 ? "Chem" : i % 3 === 1 ? "Eng" : "Hist",
+        location: r() < 0.5 ? "HOME" : "LIBRARY",
+        noise: r() < 0.5 ? "SILENT" : "NOISY",
+        distractedMinutes: Math.floor(r() * 30),
+      });
+      sleep.push({ forDate: day, hours: 5 + r() * 5 });
+      if (i % 2 === 0) {
+        outcomes.push({
+          id: `o${i}`,
+          occurredOn: new Date(day.getTime() + 3 * 86400e3),
+          // Scores drawn independently of every factor above.
+          percentage: 60 + Math.floor(r() * 40),
+          subject: i % 3 === 0 ? "Chem" : i % 3 === 1 ? "Eng" : "Hist",
+        });
+      }
+    }
+    const found = computeInsights({
+      sessions,
+      outcomes,
+      sleep,
+      screenTime: [],
+    }).filter((i) => i.isSurfaced);
+    if (found.length > 0) anySurfaced++;
+  }
+
+  // With no correction this sat well above a tenth of the runs. The bar is
+  // deliberately loose — this is a stochastic test and a flaky one helps
+  // nobody — but it is far below where the uncorrected engine landed.
+  ok(
+    `pure noise surfaces a finding in under a fifth of runs (${anySurfaced}/${TRIALS})`,
+    anySurfaced <= TRIALS / 5,
+  );
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

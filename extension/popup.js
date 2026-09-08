@@ -150,35 +150,3 @@ chrome.runtime.sendMessage({ type: "poll-now" }, () => {
 });
 
 render();
-
-
-// Granting a host permission has to come from a click inside the extension —
-// a web page can't ask for it, and neither can a content script. So the button
-// lives here even though the feature it unlocks is used on the Insight site.
-const HAC_ORIGIN = "https://hac.friscoisd.org/*";
-
-const grantButton = document.getElementById("grant-hac");
-const hacNote = document.getElementById("hac-note");
-
-async function paintHacState() {
-  if (!grantButton) return;
-  const granted = await chrome.permissions.contains({ origins: [HAC_ORIGIN] });
-  grantButton.hidden = granted;
-  if (hacNote) {
-    hacNote.textContent = granted
-      ? "Allowed. Read your gradebook from the Insight site."
-      : "";
-  }
-}
-
-grantButton?.addEventListener("click", async () => {
-  const granted = await chrome.permissions.request({ origins: [HAC_ORIGIN] });
-  if (hacNote) {
-    hacNote.textContent = granted
-      ? "Allowed. Read your gradebook from the Insight site."
-      : "Not allowed — nothing changed.";
-  }
-  await paintHacState();
-});
-
-void paintHacState();

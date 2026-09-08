@@ -111,17 +111,17 @@ export default function PrivacyPage() {
         </p>
         <p>
           <strong className="text-text">
-            Home Access Center, if you sign in with your password.
+            Home Access Center, if you connect it.
           </strong>{" "}
-          There are two ways to bring your HAC grades in. The browser extension
-          uses the login you already have in that browser and never sees a
-          password — it is the better option, and it only works on a computer.
-          The other way is to give us your HAC username and password so we can
-          sign in for you, which is what makes this work on a phone.
+          Bringing your real grades in means giving us your HAC username and
+          password so we can sign in for you. There used to be a second way —
+          the browser extension read HAC with the login you already had and
+          never saw a password — and it was better. It only worked on a
+          computer, so it was removed and this is what is left.
         </p>
         <p className="text-text">
-          If you choose that second way, we store your HAC password in a form
-          our server can read, and that means{" "}
+          So if you connect HAC, we store that password in a form our server can
+          read, and that means{" "}
           <strong>we can open your gradebook.</strong> It is the only part of
           Insight where that is true, and we are not going to bury it: your
           study sessions, sleep and everything else stay encrypted with a key we

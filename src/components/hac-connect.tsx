@@ -10,11 +10,11 @@ import {
 /**
  * Signing into HAC with a username and password.
  *
- * **This is the second-choice path and the page says so.** The extension reads
- * the same gradebook using the session a student already has, and never sees a
- * password, which is strictly better. It only exists on desktop Chrome — so a
- * student on a phone had no way to see their real grades at all, which for a
- * Frisco student is most of the point of the app.
+ * **This is now the only path.** The extension used to read the same gradebook
+ * using the session a student already had, without ever seeing a password,
+ * which was strictly better — but it only worked on desktop Chrome, and
+ * keeping two fetch paths meant finding every HAC bug twice. What is left is
+ * the one that works on a phone, at the cost of holding the password.
  *
  * The honesty here is the feature. A student is about to hand over the password
  * that is probably also behind their school email, so this says plainly what is
@@ -80,13 +80,13 @@ export function HacConnect({
   return (
     <section className="panel mt-6 px-7 py-6">
       <h2 className="h3 text-[17px]">
-        {disconnected ? "HAC needs signing in again" : "Sign in to HAC instead"}
+        {disconnected ? "HAC needs signing in again" : "Sign in to HAC"}
       </h2>
 
       <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-text-muted">
         {disconnected
           ? `The saved password for ${username} stopped working — most likely you changed it. Sign in again and grades start updating.`
-          : "The extension above is the better option and never sees your password — but it only works on a computer. This one works on a phone."}
+          : "This is how Insight reads your real grades — the ones your school posts, rather than what Canvas happens to hold."}
       </p>
 
       {/* Said before the fields, not after. A student is about to hand over the

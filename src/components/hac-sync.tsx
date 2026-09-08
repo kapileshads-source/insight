@@ -7,7 +7,6 @@ import { useCrypto } from "@/components/crypto-provider";
 import { coursesMatch } from "@/lib/assignment-match";
 import { readPage } from "@/lib/hac";
 import { parseHacHtml } from "@/lib/hac-dom";
-import { requestHacPage } from "@/lib/hac-bridge-client";
 import {
   courseIdFor,
   planHacSync,
@@ -17,10 +16,9 @@ import {
 /**
  * Pull the student's own HAC gradebook, from their own browser.
  *
- * The whole point of this route is that no password is involved anywhere. They
- * are already signed into HAC; the extension fetches a page they are already
- * allowed to see, and everything after that happens here, on plaintext that
- * never leaves the tab unencrypted.
+ * The server signs in with the stored credentials and hands back the HTML;
+ * everything after that happens here, on plaintext that never leaves the tab
+ * unencrypted. The server sees the page it fetched and nothing it stores.
  *
  * It is a button rather than a background job on purpose. This reads a
  * gradebook, which is the most sensitive thing the app touches, and a student
@@ -54,19 +52,8 @@ type Outcome =
       coursesSeen: number;
       gradesSeen: number;
       gradesWritten: number;
-      via: "extension" | "password";
     }
   | { kind: "problem"; message: string };
-
-const PROBLEMS: Record<string, string> = {
-  "signed-out":
-    "You're not signed into Home Access Center in this browser. Open HAC, log in, and try again.",
-  "needs-permission":
-    "The Insight extension needs permission to read HAC. Click its icon in your toolbar and allow it there — the browser only accepts that from the extension itself.",
-  "no-extension":
-    "This needs the Insight browser extension, which is what reads HAC using the login you already have.",
-  "not-hac": "Something asked for the wrong page. Nothing was read.",
-};
 
 export function HacSync() {
   const { conceal, reveal, status } = useCrypto();
@@ -75,50 +62,24 @@ export function HacSync() {
   async function pull() {
     setOutcome({ kind: "working" });
 
-    // Two ways to get the page, tried in that order.
+    // One way to get the page: the server, signing in with the stored
+    // credentials.
     //
-    // The extension first, because it uses the session already in this browser
-    // and no password is involved. If it isn't there — which is every phone,
-    // and any computer without it installed — fall back to the stored
-    // credentials, which is the whole reason they exist.
-    //
-    // This fallback is the bug Kapilesh hit. `pullHac` was written, tested and
-    // never called by anything, so a student could connect their credentials,
-    // see "HAC is connected", and still have nothing ever fetched with them.
-    // The habit in HANDOFF.md exists for exactly this: grep for the new export
-    // outside the file that defines it.
-    let html: string | null = null;
-    let problem = "Couldn't read HAC just now.";
-    let via: "extension" | "password" = "extension";
-    let from = "the extension";
-
-    const fetched = await requestHacPage();
-    if (fetched.ok) {
-      html = fetched.html;
-    } else {
-      const server = await pullHac();
-      if (server.ok) {
-        html = server.html;
-        via = "password";
-        from = server.from;
-      } else {
-        // The extension's reason is the more useful one when it is installed
-        // but unhappy; otherwise the credential path's message is.
-        // The credential path's message is the informative one whenever it
-        // actually ran, because it now carries what each address returned.
-        // The extension's reason only wins when the extension is installed
-        // and unhappy about something specific.
-        problem =
-          fetched.reason === "no-extension"
-            ? server.error
-            : `${PROBLEMS[fetched.reason] ?? "Couldn't read HAC."} ${server.error}`;
-      }
-    }
-
-    if (!html) {
-      setOutcome({ kind: "problem", message: problem });
+    // There used to be two. The extension read HAC using the session already
+    // in the browser, which involved no password at all and was strictly
+    // better on privacy — but it only ever worked on desktop Chrome, and
+    // maintaining a second fetch path for the smaller half of the users meant
+    // every HAC bug had to be diagnosed twice. It was removed deliberately;
+    // the cost is that using HAC now requires handing over the password, which
+    // `hac-connect.tsx` says plainly before it asks.
+    const server = await pullHac();
+    if (!server.ok) {
+      setOutcome({ kind: "problem", message: server.error });
       return;
     }
+
+    const html = server.html;
+    const from = server.from;
 
     try {
       const {
@@ -329,7 +290,6 @@ export function HacSync() {
         coursesSeen: new Set(incoming.map((a) => a.course)).size,
         gradesSeen: incomingGrades.length,
         gradesWritten: courseUpdates.length + newCoursesWithGrades,
-        via,
         guessed: usedFallback,
       });
     } catch {
@@ -346,9 +306,9 @@ export function HacSync() {
     <section className="rounded-lg border border-line bg-surface p-6">
       <h2 className="h3 text-[17px]">Home Access Center</h2>
       <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
-        Reads your gradebook using the login you already have in this browser.
-        No password is typed, stored, or sent anywhere — the extension fetches
-        the page, and it&rsquo;s encrypted here before it&rsquo;s saved.
+        Signs in with your saved HAC password and reads your gradebook. The
+        page is decrypted and parsed here, in your browser, and encrypted again
+        before anything is stored.
       </p>
 
       <button
@@ -383,8 +343,7 @@ export function HacSync() {
             Read {outcome.coursesSeen}{" "}
             {outcome.coursesSeen === 1 ? "class" : "classes"} and{" "}
             {outcome.gradesSeen} course{" "}
-            {outcome.gradesSeen === 1 ? "grade" : "grades"} from HAC, via the{" "}
-            {outcome.via === "password" ? "saved password" : "extension"}.{" "}
+            {outcome.gradesSeen === 1 ? "grade" : "grades"} from HAC.{" "}
             {outcome.gradesWritten > 0
               ? `${outcome.gradesWritten} saved.`
               : outcome.gradesSeen === 0

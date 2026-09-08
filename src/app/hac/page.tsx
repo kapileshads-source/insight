@@ -17,10 +17,15 @@ export const metadata = { title: "Home Access Center — Insight" };
  * grades had no reason to open a page named after the one they were not
  * looking for. The credential form in particular went unnoticed there.
  *
- * The order on this page is the recommendation. The extension is first because
- * it never sees a password; credentials are second because they are the
- * fallback that makes a phone work. Anyone who reads top to bottom is offered
- * the safer option before the easier one.
+ * There used to be two ways in, and the extension one was better: it read HAC
+ * with the session already in the browser and never saw a password. It was
+ * removed because it only ever worked on desktop Chrome, which meant every HAC
+ * bug had to be found and fixed twice for the smaller half of the users.
+ *
+ * That trade is real and this page does not pretend otherwise. Using HAC now
+ * means storing the password, which is the one place in the app where Insight
+ * can read something of a student's — so the box that asks says so before the
+ * fields rather than after.
  */
 export default async function HacPage() {
   const user = await getOrCreateUser();
@@ -52,21 +57,20 @@ export default async function HacPage() {
         </div>
 
         <section className="mt-10">
-          <h2 className="h3 text-[17px]">Which one should I use?</h2>
+          <h2 className="h3 text-[17px]">What this costs you</h2>
           <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-text-muted">
-            The extension, if you have a computer. It reads HAC with the login
-            already in your browser, so no password is typed, stored or sent —
-            and there is nothing for us to lose if we are ever broken into.
+            Your HAC password is stored, encrypted, so your gradebook can be
+            fetched when you are not looking. That means Insight can open your
+            gradebook — the only part of the app where that is true. Everything
+            else stays encrypted with a key we do not have.
           </p>
           <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-text-muted">
-            Signing in with your password is for phones, where no extension can
-            run. It works everywhere and on its own, and the cost is that
-            Insight can then open your gradebook. That is the only part of the
-            app where that is true, and the box above says so before it asks.
+            It works on a phone, which is the reason it exists. It is never put
+            in a web address or written to a log, and disconnecting deletes it.
           </p>
           <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-text-faint">
-            You can use both. If the extension is there it is what gets used,
-            and the password is only a fallback.
+            If your HAC password is also your school email password, change one
+            of them first.
           </p>
         </section>
       </div>

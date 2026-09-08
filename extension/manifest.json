@@ -17,7 +17,6 @@
     "https://insight-study-sleep.vercel.app/*"
   ],
   "optional_host_permissions": [
-    "https://hac.friscoisd.org/*",
     "https://*/*",
     "http://*/*"
   ],
@@ -42,18 +41,6 @@
       "matches": [
         "<all_urls>"
       ]
-    }
-  ],
-  "content_scripts": [
-    {
-      "matches": [
-        "https://insight-study-sleep.vercel.app/*",
-        "http://localhost:3000/*"
-      ],
-      "js": [
-        "hac-bridge.js"
-      ],
-      "run_at": "document_idle"
     }
   ]
 }

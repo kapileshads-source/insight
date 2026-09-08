@@ -263,56 +263,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse({ ok: true });
       return;
     }
-    // Fetch the student's own HAC gradebook, using the session they already
-    // have. No credentials are involved: this is a page they are already
-    // logged in to, and the extension exists here only because HAC sends no
-    // CORS headers, so a web page can fetch it but cannot read the result.
-    //
-    // The HTML goes straight back to the tab that asked. It is never parsed
-    // here, never stored here, and never posted to our server — the page holds
-    // the encryption key and encrypts it first, like every other record.
-    if (message?.type === "hac-fetch") {
-      const url = String(message.url || "");
-      // Only ever HAC. A bridge that fetched whatever it was handed would be
-      // an open proxy with the student's cookies attached.
-      if (!url.startsWith("https://hac.friscoisd.org/")) {
-        sendResponse({ ok: false, reason: "not-hac" });
-        return;
-      }
-
-      const granted = await chrome.permissions.contains({
-        origins: ["https://hac.friscoisd.org/*"],
-      });
-      if (!granted) {
-        // Asked for from the popup, where a click can carry the request.
-        sendResponse({ ok: false, reason: "needs-permission" });
-        return;
-      }
-
-      try {
-        const response = await fetch(url, {
-          credentials: "include",
-          redirect: "follow",
-        });
-        const html = await response.text();
-
-        // HAC answers a signed-out request with the login page rather than a
-        // 401, so "did we get a gradebook?" has to be asked of the content.
-        const signedOut =
-          response.url.includes("/Account/LogOn") ||
-          html.includes("LogOnDetails.UserName");
-
-        sendResponse(
-          signedOut
-            ? { ok: false, reason: "signed-out" }
-            : { ok: true, html, status: response.status },
-        );
-      } catch (error) {
-        sendResponse({ ok: false, reason: "fetch-failed", detail: String(error) });
-      }
-      return;
-    }
-
     if (message?.type === "poll-now") {
       await poll();
       sendResponse({ ok: true });

@@ -105,14 +105,39 @@ export function SiteNav() {
   );
 }
 
+/// The nav, in the order a student uses them. Settings is not in this list —
+/// it is the gear at the end, because it is the one destination nobody needs
+/// a word for and it was taking the same width as the pages that carry work.
 const APP_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/study", label: "Study" },
   { href: "/gpa", label: "GPA" },
+  { href: "/logs", label: "Log" },
   { href: "/canvas", label: "Canvas" },
   { href: "/hac", label: "HAC" },
   { href: "/devices", label: "Devices" },
-  { href: "/settings", label: "Settings" },
 ];
+
+/// Drawn rather than fetched, so it costs no request and cannot 404, and it
+/// inherits `currentColor` so it dims and brightens with the link beside it.
+function GearIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="3.2" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
 
 /**
  * Signed-in nav.
@@ -130,10 +155,23 @@ export function AppNav({ email }: { email?: string | null }) {
 
         <nav className="hidden items-center gap-6 text-[15px] text-text-muted md:flex">
           {APP_LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="hover:text-text">
+            <Link
+              key={l.href}
+              href={l.href}
+              className="transition-colors duration-150 hover:text-text"
+            >
               {l.label}
             </Link>
           ))}
+          {/* Labelled for a screen reader, which cannot see a gear. */}
+          <Link
+            href="/settings"
+            aria-label="Settings"
+            title="Settings"
+            className="transition-colors duration-150 hover:text-text"
+          >
+            <GearIcon />
+          </Link>
         </nav>
 
         {email && (

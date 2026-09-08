@@ -89,7 +89,7 @@ export function GradesList({
   const waiting = courses.filter((c) => !hasSomethingToShow(c));
 
   return (
-    <section>
+    <section className="enter">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h2 className="h3 text-[17px]">Your grades</h2>
         {newCount > 0 && (

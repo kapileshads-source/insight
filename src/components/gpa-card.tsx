@@ -156,7 +156,7 @@ export function GpaCard({
    * there is exactly one question a student opens Insight to answer, and now
    * exactly one thing on the page is made of different material. */
   return (
-    <section className="overflow-hidden rounded-xl bg-paper text-on-light">
+    <section className="enter overflow-hidden rounded-xl bg-paper text-on-light">
       <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-6 px-7 py-7 sm:px-9 sm:py-8">
         <div>
           <h2 className="label text-on-light-muted">
@@ -320,7 +320,13 @@ export function GpaDetail({
           <p className="label text-text-faint">
             {trying ? "With those grades" : "Your GPA right now"}
           </p>
-          <p className="figure mt-2 text-[2.6rem] text-text">
+          <p
+            // Keyed on the value so React remounts it when the number changes,
+            // which is what re-fires the animation. Without the key it renders
+            // in place and never moves.
+            key={String(trying ? withTryout.weighted : today.weighted)}
+            className="figure figure-live mt-2 text-[2.6rem] text-text"
+          >
             {(trying ? withTryout.weighted : today.weighted)?.toFixed(3) ?? "—"}
           </p>
           <p className="mt-1 text-[13px] text-text-faint">Weighted</p>

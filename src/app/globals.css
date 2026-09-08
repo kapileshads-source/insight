@@ -368,6 +368,78 @@ body {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Motion.
+
+   The rule this follows: motion is for orientation, never for decoration. A
+   panel that fades in tells you it just arrived; a panel that slides, bounces
+   and scales tells you the developer found the easing menu. So there are three
+   things here and no more — content arriving, a card noticing the cursor, and
+   a number changing.
+
+   Durations are 120-260ms. Below 100ms nothing registers as movement; above
+   300ms a screen you open twenty times a day starts feeling slow, and the
+   twentieth time is the one that counts.
+
+   Every one of these is inside a reduced-motion guard. That is not politeness:
+   `prefers-reduced-motion` is set by people who get migraines or motion
+   sickness from interface movement, and this is a study app used at 11pm.
+--------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Content that appears after a decrypt rather than with the page. Without
+     this a dashboard pops into existence a panel at a time as each unwraps,
+     which reads as jank; with it, each arrival is legible as an arrival. */
+  .enter {
+    animation: rise-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* A figure that changes while you watch — the GPA as a try-out grade is
+     typed. Brief and colourless: the point is "this number just moved", not a
+     celebration. */
+  @keyframes tick-up {
+    from {
+      opacity: 0.45;
+      transform: translateY(-3px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .figure-live {
+    animation: tick-up 180ms ease-out;
+  }
+
+  .panel,
+  .btn-secondary,
+  .tick {
+    transition:
+      border-color 160ms ease,
+      background-color 160ms ease,
+      transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* Interactive panels lift slightly. Only the ones that are actually links —
+   a printed card that moves under the cursor is a lie about what it does. */
+.panel-link:hover {
+  border-color: var(--line-hi);
+  transform: translateY(-2px);
+}
+
 /* One visible focus ring for everything reachable by keyboard.
    Removing the outline and recolouring a border instead is the usual
    substitute, and it is not equivalent: a 1px border shift is easy to miss,

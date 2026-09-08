@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 
 import { askAboutMyStats } from "@/app/actions/chat";
 import { useGradebook } from "@/components/gradebook-data";
+import { useStudyData } from "@/components/study-data";
 import { checkQuestion, type ChatFacts, type ChatTurn } from "@/lib/chat";
 import {
   hasUsableGrade,
@@ -60,19 +61,13 @@ export function readableCourse(title: string): string {
   );
 }
 
-export function StatsChat({
-  weekly,
-}: {
-  /// Session counts from the study panel's own decrypt. Passed in rather than
-  /// re-derived, because this component has no business decrypting the log.
-  weekly: {
-    sessions: number;
-    minutes: number;
-    meanSleep: number | null;
-    patterns: string[];
-  };
-}) {
+export function StatsChat() {
+  // Both halves of the aggregate come from providers rather than from props.
+  // The chat needs the gradebook *and* the study log, and neither can be read
+  // anywhere but the browser — so it reads the two decrypts the page has
+  // already done rather than being handed a summary by whoever mounts it.
   const data = useGradebook();
+  const { stats, insights } = useStudyData();
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -103,12 +98,17 @@ export function StatsChat({
       name: readableCourse(c.title),
       percent: c.grade,
     })),
-    sessionsThisWeek: weekly.sessions,
-    minutesThisWeek: weekly.minutes,
-    meanSleepHours: weekly.meanSleep,
+    sessionsThisWeek: stats?.sessionsThisWeek ?? 0,
+    minutesThisWeek: Math.round(stats?.minutesThisWeek ?? 0),
+    meanSleepHours: stats?.meanSleep ?? null,
     openAssignments: 0,
     missingAssignments: 0,
-    patterns: weekly.patterns,
+    // Only the validated ones. An unvalidated pattern is a coincidence, and
+    // handing one to a model to phrase is how it becomes a sentence a student
+    // believes.
+    patterns: (insights ?? [])
+      .filter((i) => i.isSurfaced)
+      .map((i) => i.statement),
   };
 
   function send(e: React.FormEvent) {
@@ -139,7 +139,7 @@ export function StatsChat({
   }
 
   return (
-    <section className="panel px-7 py-6">
+    <section className="enter panel px-7 py-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="h3 text-[17px]">Ask about your numbers</h2>
         <span className="label text-text-faint">Your stats only</span>

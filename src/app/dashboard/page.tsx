@@ -4,12 +4,9 @@ import { GpaPanel, GradesPanel } from "@/components/grades-panel";
 import { GradebookProvider } from "@/components/gradebook-data";
 import { InsightProgress } from "@/components/insight-progress";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
-import { isIOS } from "@/lib/user-agent";
 import { db } from "@/lib/db";
 import { getOrCreateUser, nextOnboardingStep } from "@/lib/user";
 import { getSchoolDayState } from "@/lib/current-period";
-import { getRunningSession } from "@/app/actions/sessions";
 import { getCanvasStatus } from "@/app/actions/canvas";
 import { listDevices } from "@/app/actions/devices";
 import { hasProfile } from "@/app/actions/profile";
@@ -19,7 +16,13 @@ import { AssignmentPairing } from "@/components/assignment-pairing";
 import { GradeOutcomes } from "@/components/grade-outcomes";
 import { GapPrompt } from "@/components/gap-prompt";
 import { RoutinePrompt } from "@/components/routine-prompt";
-import { StudyPanel } from "@/components/study-panel";
+import {
+  SuggestedThisWeek,
+  WeekTrends,
+  WhatWeAreSeeing,
+} from "@/components/study-panel";
+import { StudyDataProvider } from "@/components/study-data";
+import { StatsChat } from "@/components/stats-chat";
 
 export const metadata = { title: "Insight" };
 
@@ -178,45 +181,15 @@ function FinishSetup({
   );
 }
 
-/// Wraps StudyPanel so the two orderings above don't have to repeat the prop
-/// shaping. A Date can't cross into a client component, so it goes as an ISO
-/// string, which is the only reason this exists.
-function StudyTimer({
-  isIOS,
-  running,
-}: {
-  isIOS: boolean;
-  running: { id: string; startedAt: Date; focusModeActive: boolean } | null;
-}) {
-  return (
-    <StudyPanel
-      isIOS={isIOS}
-      running={
-        running
-          ? {
-              id: running.id,
-              startedAt: running.startedAt.toISOString(),
-              focusModeActive: running.focusModeActive,
-            }
-          : null
-      }
-    />
-  );
-}
-
 export default async function Dashboard() {
   const user = await getOrCreateUser();
   if (!user) redirect("/sign-in");
   if (nextOnboardingStep(user) !== "DONE") redirect("/onboarding");
 
   const today = new Date();
-  const running = await getRunningSession();
   const canvas = await getCanvasStatus();
   const devices = await listDevices();
   const hasBaseline = await hasProfile();
-  // The Focus shortcut only exists on Apple's phones, and a button that opens
-  // nothing is worse than no button.
-  const onIPhone = isIOS((await headers()).get("user-agent"));
 
   // Counts, not contents. Row existence is plaintext by the schema rule, so
   // the server can say how many sessions there are without being able to read
@@ -234,6 +207,7 @@ export default async function Dashboard() {
           top and the grades list further down are the same data seen twice, and
           before this each would have unwrapped every assignment row itself. */}
       <GradebookProvider>
+        <StudyDataProvider>
         <div className="mx-auto w-full max-w-5xl flex-1 px-6 pb-32 pt-8">
           {/* The masthead. Where you are, then where you stand.
 
@@ -287,24 +261,22 @@ export default async function Dashboard() {
               things first on a phone. */}
           <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
             <main className="space-y-6">
-              {/* Order within the column still matters. The timer is something
-                  you touch once when you sit down to work, whereas what's due
-                  and what just got marked are what a student opens the app for.
-                  The exception is a session already running: then the timer is
-                  the live thing on the screen and belongs first. */}
-              {running ? (
-                <>
-                  <StudyTimer isIOS={onIPhone} running={running} />
-                  <AssignmentsPanel />
-                  <GradesPanel />
-                </>
-              ) : (
-                <>
-                  <AssignmentsPanel />
-                  <GradesPanel />
-                  <StudyTimer isIOS={onIPhone} running={running} />
-                </>
-              )}
+              {/* What's due and what just got marked: the two things a student
+                  opens the app for several times a day. The timer used to sit
+                  in this column and now lives on /study, because starting a
+                  session is a deliberate act and deserves a screen. */}
+              <AssignmentsPanel />
+              <GradesPanel />
+
+              {/* The trend, which is the dashboard's answer to "how is this
+                  week going" — a chart rather than the paragraph of totals
+                  that used to be here. The full record is on /logs. */}
+              <WeekTrends />
+
+              {/* The findings, and the reason any of the rest exists. */}
+              <SuggestedThisWeek />
+              <WhatWeAreSeeing />
+              <StatsChat />
             </main>
 
             <aside className="space-y-6 lg:sticky lg:top-6">
@@ -331,7 +303,8 @@ export default async function Dashboard() {
               <AssignmentPairing />
             </aside>
           </div>
-        </div>
+          </div>
+        </StudyDataProvider>
       </GradebookProvider>
     </>
   );

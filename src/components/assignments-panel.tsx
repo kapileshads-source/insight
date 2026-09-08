@@ -236,7 +236,7 @@ export function AssignmentsPanel() {
 
   if (failed) {
     return (
-      <section className="panel p-6">
+      <section className="enter panel p-6">
         <h2 className="h3 text-[17px]">What&rsquo;s due</h2>
         <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
           These couldn&rsquo;t be read with your current password. Syncing{" "}

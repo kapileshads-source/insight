@@ -163,6 +163,48 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
+      <Section title="Cookies and what's kept on your device">
+        <p>
+          Insight sets no advertising cookies, no analytics cookies, and no
+          tracking pixels. There is nothing here to consent to, because there
+          is nothing optional — which is also why you are not being shown a
+          banner. A cookie banner over four strictly necessary cookies is
+          theatre, and it trains people to click through the ones that matter.
+        </p>
+        <p>
+          What is actually set, all of it required for the site to work at all:
+        </p>
+        <ul className="mt-2 space-y-3">
+          <li>
+            <strong className="text-text">Sign-in cookies</strong>, set by
+            Clerk, which handles logging in. They are what keep you signed in
+            between pages. Without them there is no way to know who is asking
+            for a page, and every screen would be a login screen.
+          </li>
+          <li>
+            <strong className="text-text">Your encryption key</strong>, if you
+            ticked &ldquo;stay unlocked on this device&rdquo;. It is held in
+            your browser&rsquo;s own database (IndexedDB), never in a cookie,
+            and never sent to us — a cookie is transmitted with every request,
+            which is precisely what this key must never be. Untick that box, or
+            press &ldquo;Lock this device&rdquo; in settings, and it is erased.
+          </li>
+          <li>
+            <strong className="text-text">A few small preferences</strong>, in
+            local storage: when you last looked at your grades, which setup
+            prompts you dismissed, and when Canvas last synced. These stay on
+            the device that wrote them. Checking your grades on a laptop does
+            not clear the badge on your phone, and we could not read them even
+            if we wanted to.
+          </li>
+        </ul>
+        <p>
+          Clearing your browser data removes all of it. You will be signed out
+          and asked for your Insight password again — nothing is lost, because
+          none of it is your data.
+        </p>
+      </Section>
+
       <Section title="What we never collect">
         <ul className="ml-5 list-disc space-y-1.5">
           <li>

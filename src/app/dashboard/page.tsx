@@ -1,17 +1,14 @@
 import Link from "next/link";
 import { AppNav } from "@/components/chrome";
-import { GpaPanel, GradesPanel } from "@/components/grades-panel";
 import { GradebookProvider } from "@/components/gradebook-data";
+import { AssignmentsProvider } from "@/components/assignments-data";
+import { SummaryTiles } from "@/components/summary-tiles";
 import { redirect } from "next/navigation";
 import { getOrCreateUser, nextOnboardingStep } from "@/lib/user";
 import { getSchoolDayState } from "@/lib/current-period";
 import { getCanvasStatus } from "@/app/actions/canvas";
 import { listDevices } from "@/app/actions/devices";
 import { hasProfile } from "@/app/actions/profile";
-import { AssignmentsPanel } from "@/components/assignments-panel";
-import { CanvasAutoSync } from "@/components/canvas-auto-sync";
-import { AssignmentPairing } from "@/components/assignment-pairing";
-import { GradeOutcomes } from "@/components/grade-outcomes";
 import { GapPrompt } from "@/components/gap-prompt";
 import { RoutinePrompt } from "@/components/routine-prompt";
 import { SuggestedThisWeek, WeekTrends } from "@/components/study-panel";
@@ -193,6 +190,7 @@ export default async function Dashboard() {
           before this each would have unwrapped every assignment row itself. */}
       <GradebookProvider>
         <StudyDataProvider>
+        <AssignmentsProvider>
         <div className="mx-auto w-full max-w-5xl flex-1 px-6 pb-32 pt-8">
           {/* The masthead. Where you are, then where you stand.
 
@@ -213,84 +211,51 @@ export default async function Dashboard() {
             </span>
           </header>
 
-          {/* The one number the app exists to answer, in the one material
-              nothing else on the screen is made of. See `gpa-card.tsx`. */}
-          <div className="mt-5">
-            <GpaPanel />
-          </div>
-
           {/* Things that interrupt: a question to answer, a gap to explain.
-              Full width because they are asks, not reading. */}
+              First because they are asks, and an ask below a summary is an ask
+              nobody answers. Both render nothing on an ordinary day. */}
           <div className="mt-6 empty:mt-0 space-y-6">
             <RoutinePrompt />
             <GapPrompt />
           </div>
 
-          {/* Kept high so the ten-minute Canvas pull starts on load rather than
-              after everything below has rendered. It draws nothing. */}
-          <CanvasAutoSync />
+          {/* The hub. One tile per page, each showing that page's headline
+              number and linking to it.
 
-          {/* Two columns, because ten stacked panels of identical width was the
-              actual complaint — no amount of good typography inside a card
-              fixes a page whose every element is the same size and shape.
-
-              The split is by frequency, not importance. The left column is what
-              a student opens the app for several times a day: what's due, what
-              just got marked, and the timer they start when they sit down. The
-              right is everything that is true but not urgent — how close the
-              insight engine is, what setup is left, a score to confirm. Those
-              were interleaved with the daily things before, which is how a
-              dashboard turns into a feed you scroll past.
-
-              One column below `lg`, in source order, which puts the daily
-              things first on a phone. */}
-          <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
-            <main className="space-y-6">
-              {/* What's due and what just got marked: the two things a student
-                  opens the app for several times a day. The timer used to sit
-                  in this column and now lives on /study, because starting a
-                  session is a deliberate act and deserves a screen. */}
-              <AssignmentsPanel />
-              <GradesPanel />
-
-              {/* The trend, which is the dashboard's answer to "how is this
-                  week going" — a chart rather than the paragraph of totals
-                  that used to be here. */}
-              <WeekTrends />
-
-              {/* One line of payoff, when there is one.
-
-                  The findings themselves are on /insights, along with the
-                  "still gathering" list and the chat. Both were here, and both
-                  are long — the gathering list is one row per untested factor
-                  and grows as more are added, and the chat is a whole panel
-                  with a transcript in it. A screen opened twenty times a day
-                  cannot also be the analysis. This stays because when there
-                  IS a validated finding it is the most valuable sentence in
-                  the app, and it renders nothing until then. */}
-              <SuggestedThisWeek />
-            </main>
-
-            <aside className="space-y-6 lg:sticky lg:top-6">
-              {/* Setup, beside the daily things rather than under them. It is
-                  finite and mostly done; a checklist above the content is how a
-                  checklist gets ignored. */}
-              <FinishSetup
-                hasCanvas={canvas.connected}
-                // Any paired device counts. A student on a Mac who never
-                // installs the extension has still done this, and nagging them
-                // for a checkbox they deliberately skipped is how a checklist
-                // gets ignored entirely.
-                hasExtension={devices.length > 0}
-                hasBaseline={hasBaseline}
-              />
-
-              <GradeOutcomes />
-
-              <AssignmentPairing />
-            </aside>
+              This screen used to carry the full grades list, the full
+              assignments list, the week chart, the findings, the gathering
+              list and the chat — everything the app knows, in one column,
+              on the page opened twenty times a day. Now it answers "where am
+              I" at a glance and every follow-up has one obvious destination. */}
+          <div className="mt-6">
+            <SummaryTiles />
           </div>
+
+          {/* The week, because a trend is the one thing a tile cannot say. */}
+          <div className="mt-6">
+            <WeekTrends />
           </div>
+
+          {/* One line of payoff, when there is a validated pattern to phrase.
+              It stays on the dashboard because when it exists it is the most
+              valuable sentence in the app, and it is one sentence. */}
+          <div className="mt-6 empty:mt-0">
+            <SuggestedThisWeek />
+          </div>
+
+          {/* Setup, last. It is finite, mostly done, and disappears when
+              finished — a checklist above the content is how one gets ignored. */}
+          <div className="mt-10">
+            <FinishSetup
+              hasCanvas={canvas.connected}
+              // Any paired device counts. A student on a Mac who never installs
+              // the extension has still done this.
+              hasExtension={devices.length > 0}
+              hasBaseline={hasBaseline}
+            />
+          </div>
+        </div>
+        </AssignmentsProvider>
         </StudyDataProvider>
       </GradebookProvider>
     </>

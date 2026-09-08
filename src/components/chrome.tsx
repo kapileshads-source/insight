@@ -111,6 +111,7 @@ export function SiteNav() {
 const APP_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/study", label: "Study" },
+  { href: "/work", label: "Work" },
   { href: "/gpa", label: "GPA" },
   { href: "/logs", label: "Insights" },
   { href: "/canvas", label: "Canvas" },

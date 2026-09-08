@@ -1,18 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
-import { fetchStoredAssignments } from "@/app/actions/canvas";
 import { setAssignmentDone } from "@/app/actions/grades";
-import { useCrypto } from "@/components/crypto-provider";
+import { useAssignments } from "@/components/assignments-data";
 import {
   assignmentSummary,
-  groupAssignments,
-  submissionStateFromHac,
   type AssignmentGroup,
   type AssignmentRow,
-  type SubmissionState,
 } from "@/lib/assignments";
 
 /**
@@ -26,19 +22,6 @@ import {
  * work leaves it, and missing work is pinned to the top. A list that shows
  * everything Canvas holds is a filing cabinet, and nobody reads those twice.
  */
-
-/// Canvas and HAC store different shapes. Canvas has `state`; HAC has `status`
-/// and carries its own course name. Reading only Canvas's vocabulary is what
-/// put graded HAC rows into "Past due".
-type Payload = {
-  name?: string;
-  course?: string;
-  pointsPossible?: number | null;
-  state?: SubmissionState;
-  status?: string;
-  score?: number | null;
-  assignedOn?: string | null;
-};
 
 function relativeDue(dueAt: Date | null, now: Date): string {
   if (!dueAt) return "";
@@ -149,90 +132,14 @@ function Group({
 }
 
 export function AssignmentsPanel() {
-  const { reveal, status } = useCrypto();
-  const [groups, setGroups] = useState<AssignmentGroup[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const { groups, units, failed, unlocked } = useAssignments();
   const [showAll, setShowAll] = useState(false);
-  const [units, setUnits] = useState<{ course: string; unit: string }[]>([]);
+  // Optimistically hidden rows. The write goes to the server, but the row has
+  // to leave the list now — a checkbox that pauses before responding feels
+  // broken in a way a wrong guess here would not.
+  const [done, setDone] = useState<Set<string>>(new Set());
 
-  const load = useCallback(async () => {
-    const stored = await fetchStoredAssignments();
-    if (!stored) {
-      setGroups([]);
-      return;
-    }
-
-    try {
-      const courseNames = new Map<string, string>();
-      // What each class is on now, and which assignments sit inside it.
-      const units: { course: string; unit: string }[] = [];
-      const currentModuleIds = new Set<string>();
-      const unitByCourse = new Map<string, string>();
-      await Promise.all(
-        stored.courses.map(async (c) => {
-          const p = await reveal<{
-            name?: string;
-            shortName?: string;
-            currentModule?: { name: string; assignmentIds: string[] } | null;
-          }>({
-            cipher: c.payloadCipher,
-            iv: c.payloadIv,
-          });
-          const label = p.shortName || p.name || "Course";
-          courseNames.set(c.id, label);
-          if (p.currentModule?.name) {
-            units.push({ course: label, unit: p.currentModule.name });
-            unitByCourse.set(c.id, p.currentModule.name);
-            for (const id of p.currentModule.assignmentIds ?? []) {
-              currentModuleIds.add(id);
-            }
-          }
-        }),
-      );
-
-      const rows: AssignmentRow[] = await Promise.all(
-        stored.assignments.map(async (a) => {
-          const p = await reveal<Payload>({
-            cipher: a.payloadCipher,
-            iv: a.payloadIv,
-          });
-          return {
-            id: a.id,
-            name: p.name || "Untitled assignment",
-            course: courseNames.get(a.courseId) || p.course || "Course",
-            dueAt: a.dueAt ? new Date(a.dueAt) : null,
-            completedAt: a.completedAt ? new Date(a.completedAt) : null,
-            pointsPossible: p.pointsPossible ?? null,
-            score: p.score ?? null,
-            state:
-              p.state ??
-              (p.status ? submissionStateFromHac(p.status) : "UNSUBMITTED"),
-            assignedOn: p.assignedOn ?? null,
-            inCurrentModule: a.canvasId
-              ? currentModuleIds.has(a.canvasId)
-              : false,
-            moduleName:
-              a.canvasId && currentModuleIds.has(a.canvasId)
-                ? (unitByCourse.get(a.courseId) ?? null)
-                : null,
-          };
-        }),
-      );
-
-      setGroups(groupAssignments(rows));
-      setUnits(units);
-    } catch {
-      // A row that won't decrypt is a real possibility after a password
-      // change, and it must not take the dashboard down with it.
-      setFailed(true);
-    }
-  }, [reveal]);
-
-  useEffect(() => {
-    if (status === "unlocked") void load();
-  }, [status, load]);
-
-  if (status !== "unlocked" || groups === null) return null;
+  if (!unlocked || groups === null) return null;
 
   if (failed) {
     return (
@@ -249,31 +156,20 @@ export function AssignmentsPanel() {
     );
   }
 
-  // Nothing due is worth saying plainly rather than showing an empty card, and
-  // a student with no Canvas connection should be told that instead.
-  if (groups.length === 0) return null;
+  const visible = groups
+    .map((g) => ({ ...g, rows: g.rows.filter((r) => !done.has(r.id)) }))
+    .filter((g) => g.rows.length > 0);
 
-  /// Ticking an item off.
-  ///
-  /// The row disappears immediately rather than after a round trip. It is the
-  /// student's own click, so the outcome is not in doubt, and a checkbox that
-  /// pauses before responding feels broken in a way that a wrong guess here
-  /// would not — and if the write does fail, the next load simply shows the
-  /// item again.
+  if (visible.length === 0) return null;
+
   function markDone(id: string) {
-    setGroups((prev) =>
-      prev === null
-        ? prev
-        : prev
-            .map((g) => ({ ...g, rows: g.rows.filter((r) => r.id !== id) }))
-            .filter((g) => g.rows.length > 0),
-    );
+    setDone((prev) => new Set(prev).add(id));
     void setAssignmentDone(id, true);
   }
 
   return (
     <AssignmentList
-      groups={groups}
+      groups={visible}
       units={units}
       showAll={showAll}
       onShowAll={() => setShowAll(true)}

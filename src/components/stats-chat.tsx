@@ -5,7 +5,12 @@ import { useState, useTransition } from "react";
 import { askAboutMyStats } from "@/app/actions/chat";
 import { useGradebook } from "@/components/gradebook-data";
 import { checkQuestion, type ChatFacts, type ChatTurn } from "@/lib/chat";
-import { estimateGpa, levelOf, onlyEnrolled, hasUsableGrade } from "@/lib/gpa";
+import {
+  hasUsableGrade,
+  levelOf,
+  onlyEnrolled,
+  presentGpa,
+} from "@/lib/gpa";
 
 /**
  * Asking Insight about your own numbers.
@@ -31,6 +36,30 @@ import { estimateGpa, levelOf, onlyEnrolled, hasUsableGrade } from "@/lib/gpa";
 /// made of.
 const MAX_HISTORY = 8;
 
+/**
+ * The course name a person would use.
+ *
+ * HAC titles arrive as `MTH34300A - 8 AP Pre-Calculus S1 - C Lunch`, and the
+ * model repeats them verbatim, so an answer about three classes read like a
+ * registrar's export. The district code, the period number, the semester
+ * marker and the lunch wave are all real information and none of it belongs in
+ * a sentence answering "which class should I worry about".
+ */
+export function readableCourse(title: string): string {
+  return (
+    title
+      // Leading district code and period: "MTH34300A - 8 ".
+      .replace(/^[A-Z]{2,4}\d{3,6}[A-Z]?\s*[-–]\s*\d+\s*/i, "")
+      // Trailing lunch wave.
+      .replace(/\s*[-–]\s*[ABC]\s*Lunch\s*$/i, "")
+      // Trailing semester marker.
+      .replace(/\s*\bS[12]\b\s*$/i, "")
+      // A teacher's surname in parentheses.
+      .replace(/\s*\([^)]*\)\s*$/, "")
+      .trim() || title
+  );
+}
+
 export function StatsChat({
   weekly,
 }: {
@@ -52,22 +81,28 @@ export function StatsChat({
   if (data.status !== "ready") return null;
 
   const courses = onlyEnrolled(data.gpa).filter((c) => hasUsableGrade(c.grade));
-  const estimate = estimateGpa(
+
+  // The number the dashboard headlines, which is the one a student means by
+  // "my GPA". The first version sent `past` — the school's last *confirmed*
+  // figure — so asked "what's my GPA right now", the chat answered 4.694 while
+  // the band at the top of the same screen said 4.733. Being wrong about this
+  // one number is worse than not having the feature.
+  const today = presentGpa(
+    data.past ?? { weighted: null, unweighted: null },
+    data.priorCount,
     courses.map((c) => ({
-      id: c.id,
-      title: c.title,
       level: levelOf(c.title),
-      grades: [c.grade as number],
-      excluded: false,
+      grade: c.grade as number,
     })),
   );
 
   const facts: ChatFacts = {
-    // The anchored figure where there is one, since that is the number shown
-    // at the top of the page and the one a student means by "my GPA".
-    gpaWeighted: data.past?.weighted ?? estimate.weighted,
-    gpaUnweighted: data.past?.unweighted ?? estimate.unweighted,
-    courses: courses.map((c) => ({ name: c.title, percent: c.grade })),
+    gpaWeighted: today.weighted,
+    gpaUnweighted: today.unweighted,
+    courses: courses.map((c) => ({
+      name: readableCourse(c.title),
+      percent: c.grade,
+    })),
     sessionsThisWeek: weekly.sessions,
     minutesThisWeek: weekly.minutes,
     meanSleepHours: weekly.meanSleep,

@@ -342,3 +342,52 @@ export function presentGpa(
   };
 }
 
+
+
+// --- what if ----------------------------------------------------------------
+
+/**
+ * "What would my GPA be if I got a 90 in Chemistry?"
+ *
+ * The single most useful question a student asks about their grades, and the
+ * one the app could not answer. It was asked of the chat, which correctly said
+ * it lacked the credit weightings — an honest refusal, and a bad experience.
+ *
+ * **This is deliberately not something the model does.** A language model doing
+ * arithmetic on a GPA will produce a number that looks right and sometimes is
+ * not, presented with exactly the same confidence either way. This is the
+ * figure a student will act on — decide whether to keep pushing in a class,
+ * decide whether they can afford an off period — so it is computed here,
+ * deterministically, from the same `presentGpa` the dashboard headlines. The
+ * chat's job is to point at this, not to attempt it.
+ *
+ * Everything not overridden keeps the grade it has, so the answer is always
+ * "your real GPA, with these changes" rather than a hypothetical built from
+ * scratch.
+ */
+export function gpaIf(
+  official: { weighted: number | null; unweighted: number | null },
+  priorCount: number,
+  current: { id: string; level: CourseLevel; grade: number }[],
+  /// Course id to the grade to pretend it has.
+  overrides: Map<string, number>,
+): CumulativeGpa {
+  return presentGpa(
+    official,
+    priorCount,
+    current.map((c) => ({
+      level: c.level,
+      grade: overrides.get(c.id) ?? c.grade,
+    })),
+  );
+}
+
+/// The move from one GPA to another, as a signed delta. Null whenever either
+/// side is unknown — a change of "—" is not a change of zero.
+export function gpaDelta(
+  from: number | null,
+  to: number | null,
+): number | null {
+  if (from === null || to === null) return null;
+  return Math.round((to - from) * 10000) / 10000;
+}

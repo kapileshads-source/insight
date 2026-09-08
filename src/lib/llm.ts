@@ -111,10 +111,19 @@ async function callGroq(
   }
 
   const data = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
+    choices?: { message?: { content?: string }; finish_reason?: string }[];
   };
-  const text = data.choices?.[0]?.message?.content?.trim();
+  const choice = data.choices?.[0];
+  const text = choice?.message?.content?.trim();
   if (!text) return { ok: false, error: "Groq returned nothing usable." };
+
+  // A model that ran out of tokens stops mid-word, and the half-sentence was
+  // being shown as if it were the answer — "Your current weighted GPA is 4.694
+  // and your". Reported rather than displayed: a visibly cut-off reply reads
+  // as a broken app, and a silently cut-off one is worse.
+  if (choice?.finish_reason === "length") {
+    return { ok: false, error: "TRUNCATED" };
+  }
 
   return { ok: true, text, provider: "groq", model };
 }
@@ -238,7 +247,9 @@ export async function getChatAnswer(
 
   let result: RecommendationResult;
   try {
-    result = await callGroq(prompt, CHAT_SYSTEM, 320);
+    // Room for a real answer. 320 cut off a reply listing six courses
+    // mid-name, which is the shape of question this feature exists for.
+    result = await callGroq(prompt, CHAT_SYSTEM, 700);
   } catch {
     return { ok: false, error: "Couldn't reach the chat service." };
   }

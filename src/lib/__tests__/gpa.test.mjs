@@ -1,4 +1,6 @@
 import {
+  gpaIf,
+  gpaDelta,
   estimateGpa,
   onlyEnrolled,
   presentGpa,
@@ -210,4 +212,41 @@ console.log("\na present GPA anchored to the school's own figure");
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
+
+console.log("\nwhat-if");
+{
+  const official = { weighted: 4.694, unweighted: 3.778 };
+  const prior = 16;
+  const current = [
+    { id: "chem", level: "ADVANCED", grade: 83 },
+    { id: "apsem", level: "AP", grade: 95 },
+    { id: "pltw", level: "ON_LEVEL", grade: 96.5 },
+  ];
+
+  const now = gpaIf(official, prior, current, new Map());
+  const base = presentGpa(official, prior, current.map((c) => ({ level: c.level, grade: c.grade })));
+  ok("no overrides equals the present GPA exactly", now.weighted === base.weighted);
+
+  const better = gpaIf(official, prior, current, new Map([["chem", 90]]));
+  ok("raising a grade raises the GPA", better.weighted > now.weighted);
+  ok("and the unweighted moves too", better.unweighted > now.unweighted);
+
+  const worse = gpaIf(official, prior, current, new Map([["chem", 70]]));
+  ok("lowering a grade lowers it", worse.weighted < now.weighted);
+
+  ok("an override for an unknown id changes nothing",
+    gpaIf(official, prior, current, new Map([["nope", 100]])).weighted === now.weighted);
+
+  ok("several at once compound",
+    gpaIf(official, prior, current, new Map([["chem", 100], ["apsem", 100]])).weighted >
+      gpaIf(official, prior, current, new Map([["chem", 100]])).weighted);
+
+  // The property that makes this safe to show: only the current term moves.
+  ok("finished semesters are untouched",
+    gpaIf(official, prior, [], new Map([["chem", 100]])).weighted === official.weighted);
+
+  ok("delta is signed", gpaDelta(4.694, 4.733) > 0 && gpaDelta(4.733, 4.694) < 0);
+  ok("delta of an unknown is unknown", gpaDelta(null, 4.7) === null);
+}
+
 if (fail > 0) process.exit(1);

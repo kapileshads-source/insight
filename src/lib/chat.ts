@@ -90,6 +90,26 @@ const OFF_TOPIC =
 export const CHAT_CAUSAL =
   /\b(causes?|caused|causing|leads? to|led to|results? in|resulted in|due to|thanks to)\b|\bbecause of (your|the)\b/i;
 
+/**
+ * "What would my GPA be if I got a 90 in Chemistry?"
+ *
+ * Caught before the model sees it, and answered by pointing at the calculator
+ * on the GPA card rather than by attempting the arithmetic.
+ *
+ * The model's own answer to this was honest — it said it lacked the credit
+ * weightings and could not compute a new GPA — which is the correct refusal
+ * and a bad experience, since this is the most useful question a student asks
+ * about their grades. Giving it the weightings would not fix it: a language
+ * model doing arithmetic produces a number that looks right and sometimes is
+ * not, with identical confidence either way, and this is the figure a student
+ * decides things on.
+ *
+ * So it is computed by `gpaIf`, deterministically, from the same function the
+ * headline number uses. This check is what routes the question there.
+ */
+const WHAT_IF =
+  /\bwhat (would|will|if)\b[^.?!]{0,80}\b(gpa|grade|average)\b|\bgpa\b[^.?!]{0,40}\bif i\b|\bif i (get|got|make|made|raise[d]?|bring|brought|drop|dropped)\b[^.?!]{0,60}\b(gpa|to a|up to|\d{2,3})\b/i;
+
 export type ScopeVerdict =
   | { allowed: true }
   | { allowed: false; reason: string };
@@ -121,6 +141,13 @@ export function checkQuestion(text: string): ScopeVerdict {
       allowed: false,
       reason:
         "I won't do your schoolwork. I can tell you how you've done on similar work before, and when you studied for it.",
+    };
+  }
+  if (WHAT_IF.test(trimmed)) {
+    return {
+      allowed: false,
+      reason:
+        "I won't guess at that — open “Which classes count, and try a grade” on your GPA card and type the grade in. It works the number out exactly, using your real transcript.",
     };
   }
   if (OFF_TOPIC.test(trimmed)) {

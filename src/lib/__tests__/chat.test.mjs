@@ -60,6 +60,20 @@ ok("a normal answer passes", checkAnswer("Your GPA is 4.73, up slightly from las
 ok("an essay coming back is caught", !checkAnswer("Here is your essay. I will write the paper about Gatsby now.").allowed);
 ok("a very long answer is held back", !checkAnswer("x".repeat(1000)).allowed);
 
+console.log("\nwhat-if questions go to the calculator");
+for (const q of [
+  "what would my gpa be after i increase my chemistry to a 90",
+  "What will my GPA be if I get a 95 in chem?",
+  "if i raise chemistry to 90 what happens to my gpa",
+  "what if I got a 100 in every class",
+]) ok(`routes: ${q.slice(0, 40)}…`, !allowed(q));
+// And must not swallow the ordinary questions.
+for (const q of [
+  "what's my gpa",
+  "how is my chemistry grade",
+  "which class should I worry about",
+]) ok(`still allows: ${q}`, allowed(q));
+
 console.log("\nthe causation guard, chat flavour");
 // Real answers the model produced against real-shaped data. The broad guard
 // used for one-line recommendations refused both of these, on "because" and

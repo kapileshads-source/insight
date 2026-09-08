@@ -9,6 +9,8 @@ import {
   presentGpa,
   levelOf,
   looksNonAcademic,
+  gpaIf,
+  gpaDelta,
   type CourseLevel,
   type GpaCourse,
 } from "@/lib/gpa";
@@ -71,6 +73,9 @@ export function GpaCard({
     () => new Set(courses.filter((c) => looksNonAcademic(c.title)).map((c) => c.id)),
   );
   const [open, setOpen] = useState(false);
+  /// Hypothetical grades, by course id. Empty is the normal state, and an
+  /// empty map returns the real GPA exactly — see `gpaIf`.
+  const [tryout, setTryout] = useState<Map<string, number>>(new Map());
 
   // A course reading 0.00 has not been graded — it has not failed.
   //
@@ -147,6 +152,30 @@ export function GpaCard({
       .map((c) => ({ level: c.level, grade: c.grades[0] })),
   );
   const anchored = past?.weighted != null;
+
+  // What the GPA would be with the tried-out grades. Computed here rather than
+  // asked of anything — this is the number a student decides things on.
+  const withTryout = gpaIf(
+    past ?? { weighted: null, unweighted: null },
+    priorCount,
+    forEstimate
+      .filter((c) => !c.excluded)
+      .map((c) => ({ id: c.id, level: c.level, grade: c.grades[0] })),
+    tryout,
+  );
+  const trying = tryout.size > 0;
+  const shift = gpaDelta(today.weighted, withTryout.weighted);
+
+  function tryGrade(id: string, raw: string) {
+    setTryout((prev) => {
+      const next = new Map(prev);
+      const value = Number(raw);
+      // An empty box means "back to the real grade", not "a zero".
+      if (raw.trim() === "" || !Number.isFinite(value)) next.delete(id);
+      else next.set(id, Math.max(0, Math.min(120, value)));
+      return next;
+    });
+  }
 
   /* Starlight, not another Midnight panel.
    *
@@ -235,7 +264,7 @@ export function GpaCard({
           onClick={() => setOpen((v) => !v)}
           className="mt-4 text-[14px] font-medium text-on-light underline underline-offset-4"
         >
-          {open ? "Hide the classes" : "Which classes count"}
+          {open ? "Hide the classes" : "Which classes count, and try a grade"}
         </button>
 
         {open && (
@@ -264,13 +293,67 @@ export function GpaCard({
                       {c.title}
                     </span>
                   </label>
-                  <span className="shrink-0 text-[13px] text-on-light-muted">
-                    {LEVEL_LABEL[levelOf(c.title)]} · {c.grade}
+                  <span className="flex shrink-0 items-center gap-3 text-[13px] text-on-light-muted">
+                    {LEVEL_LABEL[levelOf(c.title)]}
+                    {/* The real grade, struck through once a hypothetical is
+                        standing in for it, so it is never unclear which of the
+                        two numbers on this row is true. */}
+                    <span
+                      className={
+                        tryout.has(c.id) ? "line-through opacity-60" : ""
+                      }
+                    >
+                      {c.grade}
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={120}
+                      value={tryout.get(c.id) ?? ""}
+                      onChange={(e) => tryGrade(c.id, e.target.value)}
+                      disabled={out}
+                      aria-label={`Try a different grade for ${c.title}`}
+                      placeholder="try"
+                      className="border-on-light/25 w-16 rounded border bg-transparent px-2 py-1 text-[13px] text-on-light placeholder:text-on-light-muted disabled:opacity-40"
+                    />
                   </span>
                 </li>
               );
             })}
           </ul>
+        )}
+
+        {/* The answer, right under the boxes that produced it. Deterministic —
+            the same `presentGpa` the big number at the top uses, with the
+            typed grades swapped in. Nothing is asked of a model, because this
+            is the figure a student decides things on. */}
+        {open && trying && (
+          <div className="border-on-light/15 mt-5 flex flex-wrap items-end gap-x-8 gap-y-3 border-t pt-5">
+            <div>
+              <p className="label text-on-light-muted">With those grades</p>
+              <p className="figure mt-1.5 text-[1.8rem] text-on-light">
+                {withTryout.weighted === null
+                  ? "—"
+                  : withTryout.weighted.toFixed(3)}
+              </p>
+            </div>
+            {shift !== null && (
+              <p className="figure pb-1 text-[1.1rem] text-on-light">
+                {shift > 0 ? "+" : shift < 0 ? "\u2212" : ""}
+                {Math.abs(shift).toFixed(3)}
+                <span className="ml-2 font-sans text-[13px] text-on-light-muted">
+                  {shift === 0 ? "no change" : "vs. now"}
+                </span>
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => setTryout(new Map())}
+              className="ml-auto pb-1 text-[13px] text-on-light underline underline-offset-4"
+            >
+              Clear
+            </button>
+          </div>
         )}
       </div>
     </section>

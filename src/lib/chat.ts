@@ -66,6 +66,30 @@ const JAILBREAK =
 const OFF_TOPIC =
   /\b(recipe|weather|stock|crypto|bitcoin|movie|lyrics|translate|dating|medical advice|diagnos\w+|suicide|self.harm)\b/i;
 
+/**
+ * Causal claims, judged for a conversation rather than for one sentence.
+ *
+ * `getRecommendation` uses a much broader list — it includes "because",
+ * "improves", "hurts", "boosts" — and that is right there, because it produces
+ * a single declarative sentence of advice where any of those words is almost
+ * certainly a claim about cause.
+ *
+ * In a chat it is wrong, and measurably so. Asked "is my sleep affecting my
+ * grades", the model answered: sleep "went along with" the pattern, the two
+ * "might be linked", and it "could be worth trying to finish earlier to see if
+ * your grades improve." That is a careful, correct, hedged answer — and the
+ * broad list refused it, on the word "improve" inside a hypothetical. "Which
+ * class should I worry about" was refused on an ordinary explanatory
+ * "because". A guard that blocks the two questions the feature exists to
+ * answer is not protecting anyone.
+ *
+ * So this keeps only the assertions that are unambiguously causal. Hedged
+ * language survives, which is the language the system prompt asks for; a flat
+ * "your sleep is hurting your grades" still does not.
+ */
+export const CHAT_CAUSAL =
+  /\b(causes?|caused|causing|leads? to|led to|results? in|resulted in|due to|thanks to)\b|\bbecause of (your|the)\b/i;
+
 export type ScopeVerdict =
   | { allowed: true }
   | { allowed: false; reason: string };

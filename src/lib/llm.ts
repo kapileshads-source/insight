@@ -20,6 +20,7 @@ import "server-only";
 import {
   buildChatPrompt,
   checkAnswer,
+  CHAT_CAUSAL,
   CHAT_SYSTEM,
   type ChatFacts,
   type ChatTurn,
@@ -80,7 +81,13 @@ async function callGroq(
   const key = process.env.GROQ_API_KEY;
   if (!key) return { ok: false, error: "No Groq API key configured." };
 
-  const model = process.env.GROQ_MODEL ?? "llama-3.1-8b-instant";
+  // Groq retired every Llama model, and the old default here — the
+  // `llama-3.1-8b-instant` this shipped with — now 404s. That failed closed,
+  // so "Suggested this week" simply never appeared and looked like a feature
+  // nobody had got round to rather than a broken one. Pinned to a model that
+  // is actually on the account, and overridable so the next retirement is an
+  // env var rather than a deploy.
+  const model = process.env.GROQ_MODEL ?? "openai/gpt-oss-20b";
 
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -240,7 +247,7 @@ export async function getChatAnswer(
   // The causation guard applies here too. A model asked "why did my grade
   // drop" will reach for a cause, and the honest answer is that Insight only
   // knows what happened alongside what.
-  if (CAUSAL.test(result.text)) {
+  if (CHAT_CAUSAL.test(result.text)) {
     return {
       ok: false,
       error:

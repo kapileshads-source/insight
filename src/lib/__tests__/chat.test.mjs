@@ -1,4 +1,4 @@
-import { checkQuestion, checkAnswer } from "../chat.ts";
+import { checkQuestion, checkAnswer, CHAT_CAUSAL } from "../chat.ts";
 
 let pass = 0, fail = 0;
 const ok = (name, cond) => {
@@ -59,6 +59,26 @@ console.log("\nthe outbound check");
 ok("a normal answer passes", checkAnswer("Your GPA is 4.73, up slightly from last term.").allowed);
 ok("an essay coming back is caught", !checkAnswer("Here is your essay. I will write the paper about Gatsby now.").allowed);
 ok("a very long answer is held back", !checkAnswer("x".repeat(1000)).allowed);
+
+console.log("\nthe causation guard, chat flavour");
+// Real answers the model produced against real-shaped data. The broad guard
+// used for one-line recommendations refused both of these, on "because" and
+// on "improve" inside a hypothetical — which meant the two questions this
+// feature exists to answer were the two it could not answer.
+for (const good of [
+  "Your lowest grade is in Advanced Chemistry, at 78%, so that's the class you might want to focus on.",
+  "It could be worth trying to finish studying earlier and getting a bit more sleep to see if your grades improve.",
+  "Study sessions that began after 11 PM were followed by lower scores, which went along with less sleep.",
+  "The two might be linked, though Insight can't tell which way round.",
+]) ok(`allows hedged: "${good.slice(0, 40)}…"`, !CHAT_CAUSAL.test(good));
+
+for (const bad of [
+  "Your late nights are causing your chemistry grade to fall.",
+  "Studying after 11 PM leads to lower scores.",
+  "Your grade dropped due to poor sleep.",
+  "That happened because of your sleep schedule.",
+  "Less sleep results in worse marks.",
+]) ok(`refuses causal: "${bad.slice(0, 40)}…"`, CHAT_CAUSAL.test(bad));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { AppNav } from "@/components/chrome";
 import { GpaPanel, GradesPanel } from "@/components/grades-panel";
 import { GradebookProvider } from "@/components/gradebook-data";
-import { InsightProgress } from "@/components/insight-progress";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getOrCreateUser, nextOnboardingStep } from "@/lib/user";
@@ -16,13 +15,8 @@ import { AssignmentPairing } from "@/components/assignment-pairing";
 import { GradeOutcomes } from "@/components/grade-outcomes";
 import { GapPrompt } from "@/components/gap-prompt";
 import { RoutinePrompt } from "@/components/routine-prompt";
-import {
-  SuggestedThisWeek,
-  WeekTrends,
-  WhatWeAreSeeing,
-} from "@/components/study-panel";
+import { SuggestedThisWeek, WeekTrends } from "@/components/study-panel";
 import { StudyDataProvider } from "@/components/study-data";
-import { StatsChat } from "@/components/stats-chat";
 
 export const metadata = { title: "Insight" };
 
@@ -191,14 +185,6 @@ export default async function Dashboard() {
   const devices = await listDevices();
   const hasBaseline = await hasProfile();
 
-  // Counts, not contents. Row existence is plaintext by the schema rule, so
-  // the server can say how many sessions there are without being able to read
-  // one — which is what lets the wait be shown before the student unlocks.
-  const [sessionCount, outcomeCount] = await Promise.all([
-    db.studySession.count({ where: { userId: user.id, endedAt: { not: null } } }),
-    db.outcome.count({ where: { userId: user.id } }),
-  ]);
-
   return (
     <>
       <AppNav email={user.email} />
@@ -270,21 +256,23 @@ export default async function Dashboard() {
 
               {/* The trend, which is the dashboard's answer to "how is this
                   week going" — a chart rather than the paragraph of totals
-                  that used to be here. The full record is on /logs. */}
+                  that used to be here. */}
               <WeekTrends />
 
-              {/* The findings, and the reason any of the rest exists. */}
+              {/* One line of payoff, when there is one.
+
+                  The findings themselves are on /insights, along with the
+                  "still gathering" list and the chat. Both were here, and both
+                  are long — the gathering list is one row per untested factor
+                  and grows as more are added, and the chat is a whole panel
+                  with a transcript in it. A screen opened twenty times a day
+                  cannot also be the analysis. This stays because when there
+                  IS a validated finding it is the most valuable sentence in
+                  the app, and it renders nothing until then. */}
               <SuggestedThisWeek />
-              <WhatWeAreSeeing />
-              <StatsChat />
             </main>
 
             <aside className="space-y-6 lg:sticky lg:top-6">
-              <InsightProgress
-                sessions={sessionCount}
-                outcomes={outcomeCount}
-              />
-
               {/* Setup, beside the daily things rather than under them. It is
                   finite and mostly done; a checklist above the content is how a
                   checklist gets ignored. */}

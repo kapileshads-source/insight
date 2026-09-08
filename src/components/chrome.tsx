@@ -112,7 +112,7 @@ const APP_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/study", label: "Study" },
   { href: "/gpa", label: "GPA" },
-  { href: "/logs", label: "Log" },
+  { href: "/logs", label: "Insights" },
   { href: "/canvas", label: "Canvas" },
   { href: "/hac", label: "HAC" },
   { href: "/devices", label: "Devices" },

@@ -42,7 +42,7 @@ export function OnboardingShell({
             <div
               key={s}
               className={`h-1 flex-1 rounded-full ${
-                i <= index ? "bg-sky" : "bg-surface-hi"
+                i <= index ? "bg-accent" : "bg-surface-hi"
               }`}
             />
           ))}
@@ -70,7 +70,7 @@ function ErrorNote({ result }: { result: ActionResult | null }) {
 }
 
 const FIELD =
-  "w-full rounded-md border border-line-hi bg-surface px-4 py-3 text-[16px] text-text focus:border-sky";
+  "w-full rounded-md border border-line-hi bg-surface px-4 py-3 text-[16px] text-text focus:border-accent";
 
 // --- 1. birthdate -----------------------------------------------------------
 
@@ -134,7 +134,7 @@ export function TooYoungStep({ minimumAge }: { minimumAge: number }) {
           Come back when you turn {minimumAge}. If the date was a typo, write to{" "}
           <a
             href="mailto:kapilesh.rajaravi@gmail.com"
-            className="text-sky underline underline-offset-2"
+            className="text-accent underline underline-offset-2"
           >
             kapilesh.rajaravi@gmail.com
           </a>{" "}
@@ -317,7 +317,7 @@ export function PasswordStep() {
               type="checkbox"
               checked={acknowledged}
               onChange={(e) => setAcknowledged(e.target.checked)}
-              className="mt-1 h-4 w-4 accent-[color:var(--sky)]"
+              className="tick mt-0.5"
             />
             <span>I&rsquo;ve saved it somewhere I won&rsquo;t lose it.</span>
           </label>
@@ -408,7 +408,7 @@ export function SchoolStep({ schools }: { schools: SchoolOption[] }) {
                     required
                     className="peer sr-only"
                   />
-                  <span className="block rounded-md border border-line-hi px-5 py-2.5 text-[15px] peer-checked:border-sky peer-checked:bg-sky peer-checked:text-on-light">
+                  <span className="block rounded-md border border-line-hi px-5 py-2.5 text-[15px] peer-checked:border-accent peer-checked:bg-accent peer-checked:text-on-light">
                     {g}
                   </span>
                 </label>
@@ -496,7 +496,7 @@ function ChoiceGroup({
               required
               className="peer sr-only"
             />
-            <span className="block rounded-md border border-line-hi px-5 py-2.5 text-[15px] peer-checked:border-sky peer-checked:bg-sky peer-checked:text-on-light">
+            <span className="block rounded-md border border-line-hi px-5 py-2.5 text-[15px] peer-checked:border-accent peer-checked:bg-accent peer-checked:text-on-light">
               {o.label}
             </span>
           </label>

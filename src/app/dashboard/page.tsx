@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AppNav } from "@/components/chrome";
-import { GradesPanel } from "@/components/grades-panel";
+import { GpaPanel, GradesPanel } from "@/components/grades-panel";
+import { GradebookProvider } from "@/components/gradebook-data";
 import { InsightProgress } from "@/components/insight-progress";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -66,38 +67,38 @@ async function RightNow({ schoolId }: { schoolId: string }) {
   // other two are a line of text, because that is what they are worth.
   if (state.kind === "NO_SCHOOL") {
     return (
-      <p className="mt-8 text-[15px] text-text-faint">
+      <span className="text-text-faint">
         No school today
         {state.nextSchoolDay
           ? ` · next is ${formatCalendarDate(state.nextSchoolDay)}`
           : ""}
-      </p>
+      </span>
     );
   }
 
   if (state.kind === "BEFORE_OR_AFTER") {
     return (
-      <p className="mt-8 text-[15px] text-text-faint">
-        {state.dayLabel ? `${state.dayLabel} · ` : ""}Outside class hours —
-        nothing you log now counts against a period.
-      </p>
+      <span className="text-text-faint">
+        {state.dayLabel ? `${state.dayLabel} · ` : ""}Outside class hours
+      </span>
     );
   }
 
+  // In class, which is the one state worth a colour. It sits inline in the
+  // masthead rather than in a panel of its own: it is one short fact, and a
+  // full-width slab for it was pushing the work that is actually due below
+  // the fold.
   return (
-    <section className="panel mt-8 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 px-7 py-5">
-      <div>
-        <span className="label text-text-faint">
-          {state.dayLabel || "Today"}
-        </span>
-        <h2 className="h3 mt-1 text-[19px]">{state.description}</h2>
-      </div>
-      <span className="text-[15px] text-sky">
+    <span className="text-text-muted">
+      {state.dayLabel ? `${state.dayLabel} · ` : ""}
+      <span className="text-text">{state.description}</span>
+      <span className="text-accent">
+        {" · "}
         {state.rounded
           ? `starts in ${state.minutesRemaining} min`
           : `ends in ${state.minutesRemaining} min`}
       </span>
-    </section>
+    </span>
   );
 }
 
@@ -142,7 +143,7 @@ function FinishSetup({
   if (remaining === 0) return null;
 
   return (
-    <section className="mt-6 panel px-7 py-6">
+    <section className="panel px-7 py-6">
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="h3 text-[17px]">Finish setting up</h2>
         <span className="label text-text-faint">{remaining} left</span>
@@ -166,7 +167,7 @@ function FinishSetup({
               </div>
             </div>
             {!item.done && item.href && (
-              <Link href={item.href} className="shrink-0 text-[14px] text-sky">
+              <Link href={item.href} className="shrink-0 text-[14px] text-accent">
                 Set up
               </Link>
             )}
@@ -229,67 +230,109 @@ export default async function Dashboard() {
     <>
       <AppNav email={user.email} />
 
-      <div className="mx-auto w-full max-w-3xl flex-1 px-6 pb-32 pt-8">
+      {/* One decrypt of the gradebook for the whole screen. The GPA band at the
+          top and the grades list further down are the same data seen twice, and
+          before this each would have unwrapped every assignment row itself. */}
+      <GradebookProvider>
+        <div className="mx-auto w-full max-w-5xl flex-1 px-6 pb-32 pt-8">
+          {/* The masthead. Where you are, then where you stand.
 
-        {user.schoolId && <RightNow schoolId={user.schoolId} />}
+              Both halves of this used to be somewhere else: the date and school
+              were a grey footnote at the very bottom of the page, and "which
+              class am I in" was a full-bleed slab at the top. Neither placement
+              matched what the information is worth — one is orientation, which
+              belongs at the top and belongs small. */}
+          <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[14px]">
+            <span className="text-text">
+              {formatToday(today, user.school?.timezone ?? "America/Chicago")}
+            </span>
+            {user.schoolId && <RightNow schoolId={user.schoolId} />}
+            <span className="ml-auto text-text-faint">
+              {user.gradeLevel ? `Grade ${user.gradeLevel}` : ""}
+              {user.gradeLevel && user.school?.name ? " · " : ""}
+              {user.school?.name ?? ""}
+            </span>
+          </header>
 
-        <RoutinePrompt />
+          {/* The one number the app exists to answer, in the one material
+              nothing else on the screen is made of. See `gpa-card.tsx`. */}
+          <div className="mt-5">
+            <GpaPanel />
+          </div>
 
-        <GapPrompt />
+          {/* Things that interrupt: a question to answer, a gap to explain.
+              Full width because they are asks, not reading. */}
+          <div className="mt-6 empty:mt-0 space-y-6">
+            <RoutinePrompt />
+            <GapPrompt />
+          </div>
 
-        {/* Kept high so the ten-minute Canvas pull starts on load rather than
-            after everything below has rendered. It draws nothing. */}
-        <CanvasAutoSync />
+          {/* Kept high so the ten-minute Canvas pull starts on load rather than
+              after everything below has rendered. It draws nothing. */}
+          <CanvasAutoSync />
 
-        {/* Order is the whole argument of this screen.
+          {/* Two columns, because ten stacked panels of identical width was the
+              actual complaint — no amount of good typography inside a card
+              fixes a page whose every element is the same size and shape.
 
-            It used to open with a setup checklist and a 550-line timer, and
-            put grades and deadlines below both. But the timer is something you
-            touch once when you sit down to work, whereas what's due and what
-            just got marked are what a student opens the app *for*, several
-            times a day. An app that buries them is one you stop opening, and
-            the insight engine says nothing for the first few weeks — so
-            without a reason to come back, nobody is still here when it does.
+              The split is by frequency, not importance. The left column is what
+              a student opens the app for several times a day: what's due, what
+              just got marked, and the timer they start when they sit down. The
+              right is everything that is true but not urgent — how close the
+              insight engine is, what setup is left, a score to confirm. Those
+              were interleaved with the daily things before, which is how a
+              dashboard turns into a feed you scroll past.
 
-            The exception is a session already running: then the timer is the
-            live thing on the screen and belongs at the top. */}
-        {running ? (
-          <>
-            <StudyTimer isIOS={onIPhone} running={running} />
-            <AssignmentsPanel />
-            <GradesPanel />
-          </>
-        ) : (
-          <>
-            <AssignmentsPanel />
-            <GradesPanel />
-            <StudyTimer isIOS={onIPhone} running={running} />
-          </>
-        )}
+              One column below `lg`, in source order, which puts the daily
+              things first on a phone. */}
+          <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
+            <main className="space-y-6">
+              {/* Order within the column still matters. The timer is something
+                  you touch once when you sit down to work, whereas what's due
+                  and what just got marked are what a student opens the app for.
+                  The exception is a session already running: then the timer is
+                  the live thing on the screen and belongs first. */}
+              {running ? (
+                <>
+                  <StudyTimer isIOS={onIPhone} running={running} />
+                  <AssignmentsPanel />
+                  <GradesPanel />
+                </>
+              ) : (
+                <>
+                  <AssignmentsPanel />
+                  <GradesPanel />
+                  <StudyTimer isIOS={onIPhone} running={running} />
+                </>
+              )}
+            </main>
 
-        <InsightProgress sessions={sessionCount} outcomes={outcomeCount} />
+            <aside className="space-y-6 lg:sticky lg:top-6">
+              <InsightProgress
+                sessions={sessionCount}
+                outcomes={outcomeCount}
+              />
 
-        {/* Setup, below the daily things. It is finite and mostly done; a
-            checklist above the content is how a checklist gets ignored. */}
-        <FinishSetup
-          hasCanvas={canvas.connected}
-          // Any paired device counts. A student on a Mac who never installs the
-          // extension has still done this, and nagging them for a checkbox they
-          // deliberately skipped is how a checklist gets ignored entirely.
-          hasExtension={devices.length > 0}
-          hasBaseline={hasBaseline}
-        />
+              {/* Setup, beside the daily things rather than under them. It is
+                  finite and mostly done; a checklist above the content is how a
+                  checklist gets ignored. */}
+              <FinishSetup
+                hasCanvas={canvas.connected}
+                // Any paired device counts. A student on a Mac who never
+                // installs the extension has still done this, and nagging them
+                // for a checkbox they deliberately skipped is how a checklist
+                // gets ignored entirely.
+                hasExtension={devices.length > 0}
+                hasBaseline={hasBaseline}
+              />
 
-        <GradeOutcomes />
+              <GradeOutcomes />
 
-        <AssignmentPairing />
-
-        <p className="mt-12 text-[13px] text-text-faint">
-          {formatToday(today, user.school?.timezone ?? "America/Chicago")}
-          {user.gradeLevel ? ` · Grade ${user.gradeLevel}` : ""}
-          {user.school?.name ? ` · ${user.school.name}` : ""}
-        </p>
-      </div>
+              <AssignmentPairing />
+            </aside>
+          </div>
+        </div>
+      </GradebookProvider>
     </>
   );
 }

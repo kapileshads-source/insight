@@ -299,8 +299,8 @@ export function StudyPanel({
   const pending = insights?.filter((i) => !i.isSurfaced) ?? [];
 
   return (
-    <>
-      <section className="mt-6">
+    <div className="space-y-6">
+      <section>
         <SessionTimer
           running={running}
           recentSubjects={subjects}
@@ -308,12 +308,12 @@ export function StudyPanel({
         />
       </section>
 
-      <section className="mt-6">
+      <section>
         <QuickLog recentSubjects={subjects} />
       </section>
 
       {stats && (
-        <section className="mt-16 grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
+        <section className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
           <Stat value={String(stats.sessionsThisWeek)} label="Sessions this week" />
           <Stat value={formatDuration(stats.minutesThisWeek)} label="Time logged" />
           <Stat
@@ -332,7 +332,7 @@ export function StudyPanel({
       )}
 
       {recap && recap.sessions > 0 && (
-        <section className="mt-14 panel p-6">
+        <section className="panel p-6">
           <div className="flex items-baseline justify-between gap-4">
             <h2 className="h3 text-[17px]">Your week</h2>
             <span className="label text-text-faint">Last 7 days</span>
@@ -373,7 +373,7 @@ export function StudyPanel({
       )}
 
       {lastDevice && lastDevice.entries.length > 0 && (
-        <section className="mt-14 panel p-6">
+        <section className="panel p-6">
           <div className="flex items-baseline justify-between gap-4">
             <h2 className="h3 text-[17px]">What your devices saw</h2>
             <span className="label text-text-faint">
@@ -403,7 +403,7 @@ export function StudyPanel({
                 <span className="min-w-0 truncate text-[15px]">
                   {e.name}
                   {e.distracted && (
-                    <span className="ml-2 text-[13px] text-butter">
+                    <span className="ml-2 text-[13px] text-alert">
                       on your blocklist
                     </span>
                   )}
@@ -433,7 +433,7 @@ export function StudyPanel({
       )}
 
       {alerts.length > 0 && (
-        <section className="mt-14 rounded-lg border border-butter/30 bg-butter/8 p-6">
+        <section className="rounded-lg border border-alert/30 bg-alert/8 p-6">
           <h2 className="h3 text-[17px]">Worth noticing</h2>
           <div className="mt-4 space-y-4">
             {alerts.map((a) => (
@@ -455,8 +455,8 @@ export function StudyPanel({
       )}
 
       {advice && (
-        <section className="mt-6 rounded-lg border border-sky/30 bg-sky-soft p-6">
-          <h2 className="label text-sky">Suggested this week</h2>
+        <section className="rounded-lg border border-accent/30 bg-accent-soft p-6">
+          <h2 className="label text-accent">Suggested this week</h2>
           <p className="mt-3 text-[17px] leading-relaxed">{advice}</p>
           <p className="mt-4 text-[13px] leading-relaxed text-text-faint">
             Written from the patterns above, which were worked out here on your
@@ -466,7 +466,7 @@ export function StudyPanel({
         </section>
       )}
 
-      <section className="mt-16">
+      <section className="pt-6">
         <h2 className="h2 text-[clamp(1.6rem,4vw,2.125rem)]">
           What we&rsquo;re seeing
         </h2>
@@ -536,7 +536,7 @@ export function StudyPanel({
           </>
         )}
       </section>
-    </>
+    </div>
   );
 }
 

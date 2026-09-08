@@ -19,7 +19,7 @@ import {
 import type { CanvasStatus } from "@/app/actions/canvas";
 
 const FIELD =
-  "w-full rounded-md border border-line-hi bg-bg px-4 py-3 text-[16px] text-text focus:border-sky";
+  "w-full rounded-md border border-line-hi bg-bg px-4 py-3 text-[16px] text-text focus:border-accent";
 
 const CATEGORIES = [
   { id: "SLEEP", label: "Sleep" },
@@ -273,7 +273,7 @@ export function SettingsPanel({
             {canvas.daysUntilExpiry !== null &&
               canvas.daysUntilExpiry <= 14 &&
               !canvas.disconnected && (
-                <p className="text-[15px] text-butter">
+                <p className="text-[15px] text-alert">
                   Your token expires in {canvas.daysUntilExpiry} days. Canvas
                   caps them at 90.
                 </p>
@@ -321,7 +321,7 @@ export function SettingsPanel({
                 className={`rounded-md border px-4 py-2 text-[15px] ${
                   isMuted
                     ? "border-line-hi text-text-faint line-through"
-                    : "border-sky bg-sky text-on-light"
+                    : "border-accent bg-accent text-on-light"
                 }`}
               >
                 {c.label}

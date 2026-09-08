@@ -153,8 +153,8 @@ export function RoutineCard({
 
   return (
     <section
-      className={`mt-10 rounded-lg border p-6 ${
-        task.overdue ? "border-butter/40 bg-surface" : "border-line bg-surface"
+      className={`rounded-lg border p-6 ${
+        task.overdue ? "border-alert/40 bg-surface" : "border-line bg-surface"
       }`}
     >
       <h2 className="h3 text-[17px]">{title}</h2>
@@ -189,7 +189,7 @@ export function RoutineCard({
           type="button"
           onClick={onSave}
           disabled={saving || value.trim() === ""}
-          className="rounded bg-sky px-4 py-2 text-[15px] text-on-light disabled:opacity-40"
+          className="rounded bg-accent px-4 py-2 text-[15px] text-on-light disabled:opacity-40"
         >
           {saving ? "Saving…" : "Log it"}
         </button>

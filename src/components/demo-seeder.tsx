@@ -95,7 +95,7 @@ export function DemoSeeder() {
         type="button"
         onClick={() => void run()}
         disabled={working}
-        className="rounded bg-sky px-4 py-2 text-[15px] text-on-light disabled:opacity-40"
+        className="rounded bg-accent px-4 py-2 text-[15px] text-on-light disabled:opacity-40"
       >
         {working ? "Making a term…" : "Fill this account with sample data"}
       </button>
@@ -108,7 +108,7 @@ export function DemoSeeder() {
         <p className="mt-4 text-[15px] leading-relaxed text-text-muted">
           Done — {result.sessions} sessions, {result.outcomes} scores,{" "}
           {result.sleep} nights.{" "}
-          <a href="/dashboard" className="text-sky underline underline-offset-2">
+          <a href="/dashboard" className="text-accent underline underline-offset-2">
             Open the dashboard
           </a>{" "}
           and the engine will have something to say.

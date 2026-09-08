@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { updateCalendarDayAction, updatePeriodAction } from "@/app/admin/schedules/client-actions";
 
 const FIELD =
-  "rounded-md border border-line-hi bg-bg px-3 py-2 text-[15px] text-text focus:border-sky";
+  "rounded-md border border-line-hi bg-bg px-3 py-2 text-[15px] text-text focus:border-accent";
 
 export type EditablePeriod = {
   id: string;

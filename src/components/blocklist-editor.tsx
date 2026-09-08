@@ -9,7 +9,7 @@ import {
 } from "@/app/actions/settings";
 
 const FIELD =
-  "w-full rounded-md border border-line-hi bg-bg px-4 py-3 text-[16px] text-text focus:border-sky";
+  "w-full rounded-md border border-line-hi bg-bg px-4 py-3 text-[16px] text-text focus:border-accent";
 
 export function BlocklistEditor({ prefs }: { prefs: BlocklistPrefs }) {
   const router = useRouter();
@@ -122,7 +122,7 @@ export function BlocklistEditor({ prefs }: { prefs: BlocklistPrefs }) {
                 checked={on}
                 disabled={pending}
                 onChange={() => toggleCategory(id)}
-                className="mt-1 h-4 w-4 accent-[color:var(--sky)]"
+                className="tick mt-0.5"
               />
               <span className="min-w-0">
                 <span className="text-[15px]">{cat.label}</span>

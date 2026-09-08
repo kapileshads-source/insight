@@ -12,7 +12,7 @@ import type {
 } from "@/lib/records";
 
 const FIELD =
-  "w-full rounded-md border border-line-hi bg-bg px-4 py-3 text-[16px] text-text focus:border-sky";
+  "w-full rounded-md border border-line-hi bg-bg px-4 py-3 text-[16px] text-text focus:border-accent";
 
 function today(): string {
   const d = new Date();
@@ -127,7 +127,7 @@ export function QuickLog({ recentSubjects }: { recentSubjects: string[] }) {
             }}
             className={`rounded-md border px-4 py-2 text-[15px] ${
               tab === t.id
-                ? "border-sky bg-sky text-on-light"
+                ? "border-accent bg-accent text-on-light"
                 : "border-line-hi text-text-muted"
             }`}
           >

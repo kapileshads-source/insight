@@ -26,7 +26,7 @@ export default function DemoPage() {
 
       <div className="mx-auto w-full max-w-3xl px-6 py-16">
 
-      <section className="mt-10 rounded-lg border border-butter/40 bg-surface p-6">
+      <section className="mt-10 rounded-lg border border-alert/40 bg-surface p-6">
         <h2 className="h3 text-[17px]">This is not real data</h2>
         <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
           It is invented, and it must never be described as anyone&rsquo;s

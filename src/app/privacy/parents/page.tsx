@@ -85,7 +85,7 @@ export default function ParentsPage() {
           Questions before you decide? Write to{" "}
           <a
             href="mailto:kapilesh.rajaravi@gmail.com"
-            className="text-sky underline underline-offset-2"
+            className="text-accent underline underline-offset-2"
           >
             kapilesh.rajaravi@gmail.com
           </a>{" "}
@@ -95,7 +95,7 @@ export default function ParentsPage() {
           The full detail is on the{" "}
           <Link
             href="/privacy"
-            className="text-sky underline underline-offset-2"
+            className="text-accent underline underline-offset-2"
           >
             main privacy page
           </Link>

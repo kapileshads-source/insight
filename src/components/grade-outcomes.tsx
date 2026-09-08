@@ -205,7 +205,7 @@ export function ConflictCard({
   onResolve: (conflict: OutcomeConflict, useGradebook: boolean) => void;
 }) {
   return (
-    <section className="mt-14 rounded-lg border border-butter/40 bg-surface p-6">
+    <section className="rounded-lg border border-alert/40 bg-surface p-6">
       <h2 className="h3 text-[17px]">Two different scores</h2>
       <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
         You logged one number and the gradebook says another. Insight
@@ -226,7 +226,7 @@ export function ConflictCard({
                 type="button"
                 disabled={busy === c.outcomeId}
                 onClick={() => onResolve(c, true)}
-                className="rounded bg-sky px-3 py-1.5 text-[14px] text-on-light disabled:opacity-40"
+                className="rounded bg-accent px-3 py-1.5 text-[14px] text-on-light disabled:opacity-40"
               >
                 Use {Math.round(c.gradebook)}%
               </button>

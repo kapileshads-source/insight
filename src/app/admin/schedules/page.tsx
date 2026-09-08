@@ -84,7 +84,7 @@ export default async function AdminSchedulesPage(
           <select
             name="school"
             defaultValue={selectedId}
-            className="w-full rounded-md border border-line-hi bg-surface px-4 py-3 text-[16px] text-text focus:border-sky"
+            className="w-full rounded-md border border-line-hi bg-surface px-4 py-3 text-[16px] text-text focus:border-accent"
           >
             {schools.map((s) => (
               <option key={s.id} value={s.id}>

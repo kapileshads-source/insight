@@ -108,7 +108,7 @@ export function TranscriptSync() {
       )}
 
       {state.kind === "problem" && (
-        <p className="mt-4 max-w-lg text-[14px] leading-relaxed text-butter">
+        <p className="mt-4 max-w-lg text-[14px] leading-relaxed text-alert">
           {state.message}
         </p>
       )}

@@ -355,7 +355,7 @@ export function HacSync() {
         type="button"
         onClick={() => void pull()}
         disabled={outcome.kind === "working"}
-        className="mt-5 rounded bg-sky px-4 py-2 text-[15px] text-on-light disabled:opacity-40"
+        className="mt-5 rounded bg-accent px-4 py-2 text-[15px] text-on-light disabled:opacity-40"
       >
         {outcome.kind === "working" ? "Reading…" : "Read my gradebook"}
       </button>
@@ -392,7 +392,7 @@ export function HacSync() {
                 : "All were already stored."}
           </p>
           {outcome.guessed && (
-            <p className="text-[14px] leading-relaxed text-butter">
+            <p className="text-[14px] leading-relaxed text-alert">
               HAC&rsquo;s table had no column headings, so the columns were read
               by position. If any scores look wrong, that&rsquo;s why — tell us
               rather than trusting them.

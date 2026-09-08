@@ -3,15 +3,47 @@
 /* ---------------------------------------------------------------------------
    Insight design tokens
 
-   The palette is drawn entirely from Apple's aluminium and glass finishes.
-   Midnight and Sky Blue anchor it, and every color added alongside them comes
-   from the same source, which is what keeps the set coherent: Starlight,
-   Alpine Green, the warm gold of the older iPhone finishes, and a pale butter
-   yellow. They are all low-chroma and slightly dusty, because they were mixed
-   to look like anodized metal rather than to look bright on a screen. That is
-   precisely why none of them read as generated — the saturated indigo, the
-   neon mint, and the violet-to-pink gradient are the tells, and nothing here
-   is within reach of them.
+   REDESIGNED, September 2026, and the history is kept below because it is the
+   argument for what replaced it.
+
+   The old palette was Apple's aluminium finishes: Midnight blue, Sky Blue,
+   Starlight. It was coherent, it was also every developer tool ever built, and
+   after a year of looking at it the app read as generic. Notably the design
+   database consulted for this pass recommended slate, indigo and Inter —
+   which is the same thing again. Confirmation, not a recommendation.
+
+   The replacement rotates off blue entirely and gives up the old set's central
+   rule, which was that everything stays low-chroma and dusty. That rule was
+   written to avoid looking generated, and it worked, but the cost was a screen
+   with no colour in it at all.
+
+   The distinction that replaces it is *saturated, not luminous*. A colour can
+   carry real chroma and still sit at a middle lightness; what makes an
+   interface read as a gaming peripheral is a fluorescent accent glowing off a
+   pure-black void. So the ground is a soft near-black rather than #000, and
+   every accent is mixed at a mid lightness — vivid in the way a printed ink is
+   vivid, not in the way an LED is.
+
+     --accent  emerald. The action to take now, and links. One per screen.
+     --alert   vermilion. Attention — missing work, a mark that needs a look.
+               Never a button, so it cannot be confused with the emerald.
+     --ember   cobalt. The second temperature, marketing surfaces only.
+
+   The three are far enough apart on the wheel to be told apart instantly, and
+   none of them is the violet-to-pink mesh, the neon indigo or the electric
+   mint that give a generated interface away.
+
+   TYPE. Three faces where there was one, each with a job:
+
+     Space Grotesk — headings. Modern, geometric, with enough drawing in it
+                 (the flat-topped a, the cut terminals) to be recognisable.
+     Manrope   — body and UI. Rounder and quieter than the headings, and it is
+                 deliberately the least interesting face here, because it is
+                 the one carrying the sentences.
+     JetBrains Mono — every figure. A GPA, a percentage, a score out of fifty.
+                 Numbers in this app are measurements, and a mono face says so
+                 in a way a proportional one cannot. It also means a column of
+                 them aligns without `tabular-nums` being remembered.
 
    Scale and rhythm: apple.com. Large type, short lines, a lot of air, one idea
    per band, and alternating light and dark sections to carry the eye.
@@ -21,64 +53,61 @@
    without being a scoreboard. Not taken: their palette, their shapes, their
    mascot, or anything rewarding a student for reporting "good" data.
 
-   REVISED, September 2026. This block used to end "no gradients and no glows,
-   contrast comes from scale alone" — and that rule, applied honestly, produced
-   a marketing page so bare it read as a template rather than as a decision.
-   Restraint is not the same thing as being designed. The tell of a generated
-   interface is the *specific* violet-to-pink mesh and the neon indigo, not
-   depth as such.
+   The marketing/app split, kept from the previous system: marketing surfaces
+   get atmosphere because there is nothing else on them to look at yet. Those
+   utilities are prefixed `mk-`, and the split is enforced by name — if `mk-`
+   appears anywhere under /dashboard, the line has been crossed.
 
-   So: the marketing surfaces get atmosphere — layered warm light over midnight,
-   drawn from Apple's gold and Alpine finishes rather than from a purple
-   everyone has seen. Those utilities are prefixed `mk-`, and the split is
-   enforced by name: if `mk-` appears anywhere under /dashboard, the line has
-   been crossed.
-
-   AMENDED again, later the same month. This block used to say the app's
-   interior "stays flat", and that was too strong — it was read as a ban on
-   depth rather than as a ban on ornament, and it produced a dashboard of
-   identical flat rectangles on a flat ground with nothing for the eye to
-   catch. The distinction that actually matters is between *decoration*, which
-   a screen you open daily should not have, and *separation*, which it needs
-   more than a marketing page does. Hence `.panel` below: a lift you would not
-   notice if you were looking for it, and would miss if it were gone.
+   And the amendment that is still load-bearing: the app's interior is not
+   flat. The distinction that matters is between *decoration*, which a screen
+   you open daily should not have, and *separation*, which it needs more than a
+   marketing page does. Hence `.panel`: a lift you would not notice if you were
+   looking for it, and would miss if it were gone.
 --------------------------------------------------------------------------- */
 
 :root {
-  --bg: #171b26; /* Midnight */
-  --surface: #1f2432;
-  --surface-hi: #262c3c;
-  --line: rgba(255, 255, 255, 0.1);
-  --line-hi: rgba(255, 255, 255, 0.2);
+  /* Soft near-black. Not #000 — a pure-black ground is what makes a saturated
+     accent glow, and glow is the gaming tell. Not tinted either: any cast at
+     all pulls the whole set back towards the slate it just left. */
+  --bg: #131316;
+  --surface: #1b1b20;
+  --surface-hi: #232329;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-hi: rgba(255, 255, 255, 0.18);
 
-  --text: #e9ecf2;
-  --text-muted: #98a1b5;
-  --text-faint: #828ba0;
+  --text: #ededf0;
+  --text-muted: #9c9ca8;
+  --text-faint: #7a7a87;
 
-  --sky: #a8c8e0; /* Sky Blue */
-  --sky-deep: #6d92ae; /* the underside of a pressable control */
-  --sky-soft: rgba(168, 200, 224, 0.1);
+  /* The action to take now, and links. Emerald at a middle lightness: enough
+     chroma to be unmistakably a colour, not enough to glow. 5.6:1 on --bg. */
+  --accent: #1fa97a;
+  --accent-deep: #157a58; /* the underside of a pressable control */
+  --accent-soft: rgba(31, 169, 122, 0.14);
 
-  --starlight: #efe5d6; /* warm off-white — the inverted sections */
-  --starlight-dim: #ded2c0;
+  --paper: #f3f1ec; /* the inverted sections */
+  --paper-dim: #e3dfd6;
 
-  /* Ink for use on Starlight and Sky panels. */
-  --on-light: #1b1f2a;
-  --on-light-muted: #585044;
+  /* Ink for use on Paper and Accent panels. */
+  --on-light: #1b1b20;
+  --on-light-muted: #625f58;
 
-  /* Direction of a measured change. Alpine Green and the warm gold, both from
-     the same finish family. Deliberately not the default green and red. */
-  --up: #86a98c; /* Alpine Green */
-  --down: #d3a081; /* Gold */
-  --flat: #98a1b5;
+  /* Direction of a measured change. Up borrows the accent's hue on purpose —
+     good is good — while down is the vermilion, so the two are told apart by
+     hue rather than by remembering which green meant what. */
+  --up: #3fbf8f;
+  --down: #e2563f;
+  --flat: #9c9ca8;
 
-  --butter: #e5c77e; /* attention: due soon, needs a look */
+  /* Attention: due soon, needs a look. The same vermilion as --down, because
+     they mean the same thing to a student. Never a button — that is what
+     keeps it distinguishable from the emerald. */
+  --alert: #e2563f;
 
-  /* Marketing-only. Warm, slightly earthy, and deliberately not in the violet
-     family — the ember is close to a terracotta anodize, and it is the one
-     saturated colour in the whole set. */
-  --ember: #d08258;
-  --ember-deep: #a75f3c;
+  /* Marketing-only. The second temperature the landing page needs to build a
+     composition from, and the one cool colour in the set. */
+  --ember: #4361ee;
+  --ember-deep: #2b3fb8;
 }
 
 @theme inline {
@@ -92,12 +121,12 @@
   --color-text-muted: var(--text-muted);
   --color-text-faint: var(--text-faint);
 
-  --color-sky: var(--sky);
-  --color-sky-deep: var(--sky-deep);
-  --color-sky-soft: var(--sky-soft);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-soft: var(--accent-soft);
 
-  --color-starlight: var(--starlight);
-  --color-starlight-dim: var(--starlight-dim);
+  --color-paper: var(--paper);
+  --color-paper-dim: var(--paper-dim);
 
   --color-on-light: var(--on-light);
   --color-on-light-muted: var(--on-light-muted);
@@ -105,14 +134,13 @@
   --color-up: var(--up);
   --color-down: var(--down);
   --color-flat: var(--flat);
-  --color-butter: var(--butter);
+  --color-alert: var(--alert);
   --color-ember: var(--ember);
   --color-ember-deep: var(--ember-deep);
 
-  /* Familjen Grotesk. Chosen for its digits — the 1 has a real foot, the 2 and
-     4 have drawn joints. A column of figures reads as set rather than as the
-     default grotesque every generated interface arrives in. */
-  --font-sans: var(--font-familjen), system-ui, sans-serif;
+  --font-sans: var(--font-sans-ui), system-ui, sans-serif;
+  --font-display: var(--font-display), system-ui, sans-serif;
+  --font-mono: var(--font-mono-figure), ui-monospace, monospace;
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -130,53 +158,61 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
-  font-variant-numeric: tabular-nums;
 }
 
-/* Display type. Tracking tightens as size grows, the way it does on a well-set
-   Apple page — a 64px headline needs it, a 20px subhead doesn't. */
+/* Headings are Space Grotesk. Tracking tightens as size grows, the way it does
+   on a well-set page — a 64px headline needs it, a 20px subhead doesn't. */
 .h1 {
+  font-family: var(--font-display), system-ui, sans-serif;
   font-weight: 600;
-  letter-spacing: -0.033em;
-  line-height: 1.04;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
 }
 
 .h2 {
+  font-family: var(--font-display), system-ui, sans-serif;
   font-weight: 600;
-  letter-spacing: -0.022em;
-  line-height: 1.1;
+  letter-spacing: -0.014em;
+  line-height: 1.12;
 }
 
 .h3 {
+  font-family: var(--font-display), system-ui, sans-serif;
   font-weight: 600;
-  letter-spacing: -0.014em;
-  line-height: 1.2;
+  letter-spacing: -0.006em;
+  line-height: 1.25;
 }
 
-/* Figures that carry meaning. Lighter and looser than the headings, so a
-   number reads as a measurement rather than as a headline. */
+/* Figures that carry meaning: a GPA, a percentage, a score out of fifty.
+   The mono face is the whole point — a number in this app is a measurement,
+   and a proportional one reads as a headline instead. Light, because
+   JetBrains Mono at 500 and 60px is a slab. */
 .figure {
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 400;
+  letter-spacing: -0.03em;
   line-height: 1;
 }
 
+/* Small caps-ish section labels, also mono. This is the third voice: not a
+   heading, not body, just a tag saying what the thing under it is. */
 .label {
-  font-size: 0.8125rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
   font-weight: 500;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* The one action on a screen that the student should take right now. The solid
    underside and the press displacement are the Duolingo idea: a control that
    reads as a physical thing you push. One per screen, never two. */
 .btn-primary {
-  background: var(--sky);
+  background: var(--accent);
   color: var(--on-light);
   font-weight: 600;
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 0 var(--sky-deep);
+  box-shadow: 0 4px 0 var(--accent-deep);
   transition:
     transform 70ms ease,
     box-shadow 70ms ease;
@@ -186,7 +222,7 @@ body {
    Inverts to Midnight and keeps the pressable underside. */
 .btn-primary-inverted {
   background: var(--on-light);
-  color: var(--starlight);
+  color: var(--paper);
   font-weight: 600;
   border-radius: var(--radius-md);
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
@@ -198,7 +234,7 @@ body {
 .btn-primary:active,
 .btn-primary-inverted:active {
   transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--sky-deep);
+  box-shadow: 0 1px 0 var(--accent-deep);
 }
 
 .btn-secondary {
@@ -209,12 +245,12 @@ body {
 }
 
 .btn-secondary:hover {
-  border-color: var(--sky-deep);
+  border-color: var(--accent-deep);
 }
 
 /* Secondary action on a Sky or Starlight panel. */
 .btn-secondary-on-light {
-  border: 1px solid rgba(27, 31, 42, 0.28);
+  border: 1px solid rgba(27, 27, 32, 0.28);
   border-radius: var(--radius-md);
   color: var(--on-light);
   font-weight: 500;
@@ -246,13 +282,99 @@ body {
   );
 }
 
+/* ---------------------------------------------------------------------------
+   The tick.
+
+   Ticking a piece of work off is the only thing in this app a student does
+   purely for the satisfaction of it — every other control reports a fact.
+   It was `accent-color: accent` on a native checkbox, which meant the OS drew it:
+   a blue-grey box on macOS, something else on Windows, and on none of them did
+   it feel like anything.
+
+   So it is drawn here. The input keeps its own semantics — it is still a real
+   checkbox, still keyboard-reachable, still announced — and only its painting
+   is taken over. The check is a rotated box-shadow-free pseudo-element rather
+   than an SVG mask so it costs nothing and scales with the control.
+
+   The press is the Duolingo idea again, at a smaller scale: the box dips 1px
+   and the ring warms before the state changes, so the click lands physically
+   even though the row disappears a frame later.
+--------------------------------------------------------------------------- */
+.tick {
+  appearance: none;
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 1.5px solid var(--line-hi);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    transform 70ms ease;
+}
+
+.tick:hover {
+  border-color: var(--accent);
+}
+
+.tick:active {
+  transform: translateY(1px) scale(0.94);
+}
+
+.tick:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* The check itself: two sides of a box, rotated. Drawn only when checked, so
+   an unchecked control has nothing inside it to catch the eye. */
+.tick:checked::after {
+  content: "";
+  position: absolute;
+  left: 0.3rem;
+  top: 0.11rem;
+  width: 0.3rem;
+  height: 0.58rem;
+  border: solid var(--on-light);
+  border-width: 0 2px 2px 0;
+  transform: rotate(42deg);
+}
+
+/* On a Paper panel the unchecked ring would be a pale line on a pale ground.
+   Same control, ink instead of light. */
+.tick-on-light {
+  border-color: rgba(26, 23, 18, 0.3);
+}
+
+.tick-on-light:hover {
+  border-color: var(--on-light);
+}
+
+.tick-on-light:checked {
+  background: var(--on-light);
+  border-color: var(--on-light);
+}
+
+.tick-on-light:checked::after {
+  border-color: var(--paper);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tick {
+    transition: none;
+  }
+}
+
 /* One visible focus ring for everything reachable by keyboard.
    Removing the outline and recolouring a border instead is the usual
    substitute, and it is not equivalent: a 1px border shift is easy to miss,
    sits at the element's edge rather than outside it, and disappears entirely
    against a same-coloured background. */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--sky);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
@@ -290,17 +412,17 @@ body {
   background:
     radial-gradient(
       58vmax 34vmax at 12% 2%,
-      rgba(208, 130, 88, 0.5),
+      rgba(67, 97, 238, 0.42),
       transparent 60%
     ),
     radial-gradient(
       46vmax 30vmax at 84% 10%,
-      rgba(168, 200, 224, 0.3),
+      rgba(31, 169, 122, 0.28),
       transparent 58%
     ),
     radial-gradient(
       64vmax 34vmax at 50% 34%,
-      rgba(229, 199, 126, 0.16),
+      rgba(226, 86, 63, 0.14),
       transparent 62%
     );
 }
@@ -327,7 +449,7 @@ body {
    background image, and one that fades looks like a sheet lying on a page. */
 .mk-dotgrid {
   background-image: radial-gradient(
-    rgba(27, 31, 42, 0.16) 1px,
+    rgba(27, 27, 32, 0.16) 1px,
     transparent 1px
   );
   background-size: 24px 24px;
@@ -340,15 +462,15 @@ body {
   background:
     radial-gradient(
       50vmax 34vmax at 8% 0%,
-      rgba(255, 252, 246, 0.95),
+      rgba(255, 255, 252, 0.95),
       transparent 60%
     ),
     radial-gradient(
       44vmax 30vmax at 96% 12%,
-      rgba(208, 130, 88, 0.14),
+      rgba(67, 97, 238, 0.12),
       transparent 62%
     ),
-    var(--starlight);
+    var(--paper);
 }
 
 /* Hairline that fades at both ends, so a section break doesn't terminate in
@@ -396,7 +518,7 @@ body {
 
 .mk-card:hover {
   transform: translateY(-3px);
-  border-color: rgba(208, 130, 88, 0.45);
+  border-color: rgba(31, 169, 122, 0.5);
 }
 
 /* Scroll reveal with no JavaScript. Note the direction of the @supports: the

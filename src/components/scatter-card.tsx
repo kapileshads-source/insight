@@ -125,7 +125,7 @@ export function ScatterCard() {
               cx={px(x)}
               cy={py(y)}
               r="4.5"
-              fill={x < mean ? "var(--ember)" : "var(--sky)"}
+              fill={x < mean ? "var(--ember)" : "var(--accent)"}
               fillOpacity="0.9"
             />
           ))}
@@ -145,7 +145,7 @@ export function ScatterCard() {
             Below your average ({below.length})
           </span>
           <span className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-sky" aria-hidden />
+            <span className="h-2.5 w-2.5 rounded-full bg-accent" aria-hidden />
             Above it ({points.length - below.length})
           </span>
           <span className="ml-auto text-down">

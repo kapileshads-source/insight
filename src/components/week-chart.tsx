@@ -127,7 +127,7 @@ export function WeekChart({ days }: { days: DayBar[] }) {
                       width={barWidth}
                       height={height}
                       rx={1.5}
-                      fill="var(--sky)"
+                      fill="var(--accent)"
                       opacity={hovered === null || isHovered ? 1 : 0.45}
                     />
                     {distracted > 0 && (
@@ -137,7 +137,7 @@ export function WeekChart({ days }: { days: DayBar[] }) {
                         width={barWidth}
                         height={distracted}
                         rx={1.5}
-                        fill="var(--sky-deep)"
+                        fill="var(--accent-deep)"
                         opacity={hovered === null || isHovered ? 1 : 0.45}
                       />
                     )}
@@ -169,7 +169,7 @@ export function WeekChart({ days }: { days: DayBar[] }) {
         <p className="mt-3 text-[13px] leading-relaxed text-text-faint">
           <span
             className="mr-1.5 inline-block h-2 w-2 rounded-[1px] align-middle"
-            style={{ background: "var(--sky-deep)" }}
+            style={{ background: "var(--accent-deep)" }}
           />
           The darker part is time the extension saw on sites you block.
         </p>

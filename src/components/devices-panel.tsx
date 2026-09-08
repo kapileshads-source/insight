@@ -111,7 +111,7 @@ export function DevicesPanel({
         )}
 
         {shown && (
-          <div className="mt-5 rounded-md border border-sky/30 bg-sky-soft p-4">
+          <div className="mt-5 rounded-md border border-accent/30 bg-accent-soft p-4">
             <p className="text-[15px] text-text">
               Copy this now. It is shown once and never again.
             </p>
@@ -187,7 +187,7 @@ export function DevicesPanel({
         <ol className="mt-5 space-y-3 text-[15px] leading-relaxed text-text-muted">
           <li>
             <span className="text-text">1.</span>{" "}
-            <a href="/download" className="text-sky underline underline-offset-2">
+            <a href="/download" className="text-accent underline underline-offset-2">
               Download Insight.exe
             </a>{" "}
             and put it somewhere you won&rsquo;t delete by accident. There is no
@@ -230,7 +230,7 @@ export function DevicesPanel({
         <ol className="mt-5 space-y-3 text-[15px] leading-relaxed text-text-muted">
           <li>
             <span className="text-text">1.</span>{" "}
-            <a href="/download" className="text-sky underline underline-offset-2">
+            <a href="/download" className="text-accent underline underline-offset-2">
               Download Insight.app
             </a>{" "}
             and drag it to your Applications folder.
@@ -291,7 +291,7 @@ export function DevicesPanel({
         <ol className="mt-5 space-y-3 text-[15px] leading-relaxed text-text-muted">
           <li>
             <span className="text-text">1.</span>{" "}
-            <a href="/download" className="text-sky underline underline-offset-2">
+            <a href="/download" className="text-accent underline underline-offset-2">
               Download Insight.apk
             </a>{" "}
             and tap it. Android blocks installing from unknown sources until you
@@ -347,7 +347,7 @@ export function DevicesPanel({
           )}
 
           {minted?.kind === "PHONE" && (
-            <div className="mt-5 rounded-md border border-sky/30 bg-sky-soft p-4">
+            <div className="mt-5 rounded-md border border-accent/30 bg-accent-soft p-4">
               <p className="text-[15px] text-text">
                 Copy all of it. It&rsquo;s long, and it&rsquo;s shown once.
               </p>
@@ -401,7 +401,7 @@ export function DevicesPanel({
                       stops reporting leaves a gap, and a gap read as "no
                       distraction" would skew the insights. */}
                   {d.silent && (
-                    <div className="mt-1 text-[14px] text-butter">
+                    <div className="mt-1 text-[14px] text-alert">
                       Quiet for a few days. If you removed it, revoke it here so
                       the missing time is marked as missing rather than counted
                       as focused.

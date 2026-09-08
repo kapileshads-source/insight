@@ -78,14 +78,14 @@ export function DownloadPanel({
           <section
             key={card.id}
             className={`rounded-lg border bg-surface p-6 ${
-              primary ? "border-sky/40" : "border-line"
+              primary ? "border-accent/40" : "border-line"
             }`}
           >
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <h2 className="h3 text-[17px]">
                 {card.title}
                 {primary && (
-                  <span className="ml-3 label text-sky">Looks like yours</span>
+                  <span className="ml-3 label text-accent">Looks like yours</span>
                 )}
               </h2>
               <span className="label text-text-faint">

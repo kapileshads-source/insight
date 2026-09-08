@@ -11,7 +11,7 @@ import {
 } from "@/app/actions/canvas";
 
 const FIELD =
-  "w-full rounded-md border border-line-hi bg-bg px-4 py-3 text-[16px] text-text focus:border-sky";
+  "w-full rounded-md border border-line-hi bg-bg px-4 py-3 text-[16px] text-text focus:border-accent";
 
 export function CanvasConnect({ status }: { status: CanvasStatus }) {
   const router = useRouter();
@@ -96,7 +96,7 @@ export function CanvasConnect({ status }: { status: CanvasStatus }) {
           {!status.disconnected &&
             status.daysUntilExpiry !== null &&
             status.daysUntilExpiry <= 14 && (
-              <p className="mt-3 text-[15px] text-butter">
+              <p className="mt-3 text-[15px] text-alert">
                 Expires in {status.daysUntilExpiry} days. Worth replacing it
                 now rather than during exam week.
               </p>

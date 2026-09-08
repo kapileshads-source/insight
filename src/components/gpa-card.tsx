@@ -117,7 +117,7 @@ export function GpaCard({
   if (withGrades.length === 0) {
     if (courses.length === 0) return null;
     return (
-      <section className="panel mt-6 px-7 py-6">
+      <section className="panel px-7 py-6">
         <h2 className="h3 text-[17px]">GPA estimate</h2>
         <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-text-muted">
           Waiting on a posted grade. As soon as one of your classes has a
@@ -148,107 +148,131 @@ export function GpaCard({
   );
   const anchored = past?.weighted != null;
 
+  /* Starlight, not another Midnight panel.
+   *
+   * The dashboard's problem was never that any one card was ugly — it was that
+   * ten cards cut from the same dark cloth, at the same width, gave the eye
+   * nothing to land on, so the screen read as one grey wall. The palette has
+   * carried `--paper` and `--on-light` since the beginning for "the
+   * inverted sections", and nothing inside the app had ever used them.
+   *
+   * Inverting *this* card and nothing else on the screen is the whole point:
+   * there is exactly one question a student opens Insight to answer, and now
+   * exactly one thing on the page is made of different material. */
   return (
-    <section className="panel mt-6 px-7 py-6">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="h3 text-[17px]">
-          {anchored ? "Your GPA right now" : "GPA estimate"}
-        </h2>
-        <span className="label text-text-faint">
-          {anchored
-            ? `${today.counted} semester grades, ${today.inProgress} still moving`
-            : `${estimate.counted} ${estimate.counted === 1 ? "class" : "classes"}`}
-        </span>
-      </div>
+    <section className="overflow-hidden rounded-xl bg-paper text-on-light">
+      <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-6 px-7 py-7 sm:px-9 sm:py-8">
+        <div>
+          <h2 className="label text-on-light-muted">
+            {anchored ? "Your GPA right now" : "GPA estimate"}
+          </h2>
 
-      <div className="mt-5 flex flex-wrap gap-10">
-        <Figure
-          label="Weighted"
-          value={anchored ? today.weighted : estimate.weighted}
-        />
-        <Figure
-          label="Unweighted"
-          value={anchored ? today.unweighted : estimate.unweighted}
-        />
-      </div>
-
-      {/* The school's own figure, kept beside the estimate rather than
-          replaced by it. Where the two disagree this one is right, and a
-          student should be able to see both without going anywhere. */}
-      {anchored && (
-        <div className="mt-6 border-t border-line pt-5">
-          <p className="label text-text-faint">
-            Last confirmed by your school
-          </p>
-          <div className="mt-2 flex flex-wrap gap-10">
-            <Figure label="Weighted" value={past?.weighted ?? null} small />
-            <Figure label="Unweighted" value={past?.unweighted ?? null} small />
+          <div className="mt-4 flex flex-wrap items-end gap-x-9 gap-y-4">
+            <Figure
+              label="Weighted"
+              value={anchored ? today.weighted : estimate.weighted}
+              hero
+            />
+            <Figure
+              label="Unweighted"
+              value={anchored ? today.unweighted : estimate.unweighted}
+            />
           </div>
+
+          <p className="mt-4 text-[13px] text-on-light-muted">
+            {anchored
+              ? `${today.counted} semester grades · ${today.inProgress} still moving`
+              : `${estimate.counted} ${estimate.counted === 1 ? "class" : "classes"} counted`}
+          </p>
         </div>
-      )}
 
-      {/* Stated plainly and near the numbers, not in small print underneath. */}
-      <p className="mt-5 max-w-lg text-[14px] leading-relaxed text-text-faint">
-        {anchored
-          ? "Your finished semesters are exactly what the school calculated — that part isn't guesswork. This term is added at whatever your gradebook shows today, so the top number moves every time a mark is posted, and it isn't official until the semester closes."
-          : "Worked out from the grades your gradebook is showing right now. Your school calculates the real one when the semester ends, and the two will not match exactly — this moves every time a mark is posted."}
-      </p>
+        {/* The school's own figure, kept beside the estimate rather than
+            replaced by it. Where the two disagree this one is right, and a
+            student should be able to see both without going anywhere. */}
+        {anchored && (
+          <div className="border-on-light/15 sm:border-l sm:pl-8">
+            <p className="label text-on-light-muted">
+              Last confirmed by your school
+            </p>
+            <div className="mt-3 flex gap-8">
+              <Figure label="Weighted" value={past?.weighted ?? null} small />
+              <Figure
+                label="Unweighted"
+                value={past?.unweighted ?? null}
+                small
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
-      {!anchored && (
-        <p className="mt-3 max-w-lg text-[14px] leading-relaxed text-text-faint">
-          Read your transcript on the HAC page and this becomes your real
-          cumulative GPA, brought up to today — not just this term.
+      {/* The caveats, on a slightly darker shelf so the numbers above keep the
+          light. Stated plainly and near the figures, not in small print. */}
+      <div className="border-on-light/10 bg-paper-dim/60 border-t px-7 py-5 sm:px-9">
+        <p className="max-w-2xl text-[14px] leading-relaxed text-on-light-muted">
+          {anchored
+            ? "Your finished semesters are exactly what the school calculated — that part isn't guesswork. This term is added at whatever your gradebook shows today, so the top number moves every time a mark is posted, and it isn't official until the semester closes."
+            : "Worked out from the grades your gradebook is showing right now. Your school calculates the real one when the semester ends, and the two will not match exactly — this moves every time a mark is posted."}
         </p>
-      )}
 
-      {ungraded.length > 0 && (
-        <p className="mt-3 max-w-lg text-[14px] leading-relaxed text-text-faint">
-          {ungraded.length === 1
-            ? `${ungraded[0].title} isn't counted yet — it still reads 0%, which means no assessments have been marked in it.`
-            : `${ungraded.length} classes aren't counted yet — they still read 0%, which means no assessments have been marked in them.`}
-        </p>
-      )}
+        {!anchored && (
+          <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-on-light-muted">
+            Read your transcript on the HAC page and this becomes your real
+            cumulative GPA, brought up to today — not just this term.
+          </p>
+        )}
 
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="mt-4 text-[14px] text-sky hover:underline"
-      >
-        {open ? "Hide the classes" : "Which classes count"}
-      </button>
+        {ungraded.length > 0 && (
+          <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-on-light-muted">
+            {ungraded.length === 1
+              ? `${ungraded[0].title} isn't counted yet — it still reads 0%, which means no assessments have been marked in it.`
+              : `${ungraded.length} classes aren't counted yet — they still read 0%, which means no assessments have been marked in them.`}
+          </p>
+        )}
 
-      {open && (
-        <ul className="mt-4 border-t border-line">
-          {withGrades.map((c) => {
-            const out = excluded.has(c.id);
-            return (
-              <li
-                key={c.id}
-                className="flex items-center justify-between gap-4 border-b border-line py-2.5"
-              >
-                <label className="flex min-w-0 items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={!out}
-                    onChange={() => toggle(c.id)}
-                    className="h-4 w-4 shrink-0 accent-sky"
-                  />
-                  <span
-                    className={`truncate text-[15px] ${
-                      out ? "text-text-faint line-through" : "text-text-muted"
-                    }`}
-                  >
-                    {c.title}
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="mt-4 text-[14px] font-medium text-on-light underline underline-offset-4"
+        >
+          {open ? "Hide the classes" : "Which classes count"}
+        </button>
+
+        {open && (
+          <ul className="border-on-light/15 mt-4 border-t">
+            {withGrades.map((c) => {
+              const out = excluded.has(c.id);
+              return (
+                <li
+                  key={c.id}
+                  className="border-on-light/10 flex items-center justify-between gap-4 border-b py-2.5"
+                >
+                  <label className="flex min-w-0 items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={!out}
+                      onChange={() => toggle(c.id)}
+                      className="tick tick-on-light"
+                    />
+                    <span
+                      className={`truncate text-[15px] ${
+                        out
+                          ? "text-on-light-muted line-through"
+                          : "text-on-light"
+                      }`}
+                    >
+                      {c.title}
+                    </span>
+                  </label>
+                  <span className="shrink-0 text-[13px] text-on-light-muted">
+                    {LEVEL_LABEL[levelOf(c.title)]} · {c.grade}
                   </span>
-                </label>
-                <span className="shrink-0 text-[13px] text-text-faint">
-                  {LEVEL_LABEL[levelOf(c.title)]} · {c.grade}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </section>
   );
 }
@@ -259,19 +283,25 @@ function Figure({
   label,
   value,
   small = false,
+  hero = false,
 }: {
   label: string;
   value: number | null;
   small?: boolean;
+  hero?: boolean;
 }) {
+  const size = hero
+    ? "text-[3.4rem] sm:text-[4rem]"
+    : small
+      ? "text-[1.35rem]"
+      : "text-[2rem]";
+
   return (
     <div>
-      <div
-        className={`figure text-text ${small ? "text-[1.4rem]" : "text-[2.2rem]"}`}
-      >
+      <div className={`figure text-on-light ${size}`}>
         {value === null ? "—" : value.toFixed(3)}
       </div>
-      <p className="mt-1 text-[13px] text-text-faint">{label}</p>
+      <p className="mt-1.5 text-[13px] text-on-light-muted">{label}</p>
     </div>
   );
 }

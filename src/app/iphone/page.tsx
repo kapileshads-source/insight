@@ -67,7 +67,7 @@ export default function IPhonePage() {
           quiet itself while you work, and interrupt you when you reach for the
           thing you were avoiding. Phone screen time still gets in the same way
           it always has — the screenshot on{" "}
-          <Link href="/dashboard" className="text-sky underline underline-offset-2">
+          <Link href="/dashboard" className="text-accent underline underline-offset-2">
             your dashboard
           </Link>
           .
@@ -165,7 +165,7 @@ export default function IPhonePage() {
               you add to your own blocklist in{" "}
               <Link
                 href="/settings"
-                className="text-sky underline underline-offset-2"
+                className="text-accent underline underline-offset-2"
               >
                 Settings
               </Link>{" "}
@@ -212,7 +212,7 @@ export default function IPhonePage() {
         </ul>
         <p className="mt-4 text-[13px] leading-relaxed text-text-faint">
           Got an Android phone as well?{" "}
-          <Link href="/download" className="text-sky underline underline-offset-2">
+          <Link href="/download" className="text-accent underline underline-offset-2">
             That one measures and blocks properly
           </Link>
           , with no setup beyond two permissions.

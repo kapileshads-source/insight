@@ -22,7 +22,7 @@ export default function SignUpPage() {
       <p className="mt-8 text-[13px] leading-relaxed text-text-faint">
         By making an account you agree to how we handle your data, which is
         written out in plain language on the{" "}
-        <Link href="/privacy" className="text-sky underline underline-offset-2">
+        <Link href="/privacy" className="text-accent underline underline-offset-2">
           privacy page
         </Link>
         .

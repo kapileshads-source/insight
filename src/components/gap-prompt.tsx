@@ -44,7 +44,7 @@ export function GapPrompt() {
   const postTerm = state.kind === "POST_TERM";
 
   return (
-    <section className="mt-6 rounded-lg border border-line-hi bg-surface p-6">
+    <section className="rounded-lg border border-line-hi bg-surface p-6">
       <h2 className="h3 text-[17px]">
         {postTerm ? "That's the term done." : "Anything Canvas missed?"}
       </h2>

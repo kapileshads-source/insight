@@ -35,7 +35,7 @@ function clock(seconds: number): string {
 
 const CHIP =
   "rounded-md border border-line-hi px-4 py-2 text-[15px] transition-colors";
-const CHIP_ON = "border-sky bg-sky text-on-light";
+const CHIP_ON = "border-accent bg-accent text-on-light";
 
 export function SessionTimer({
   running,
@@ -198,7 +198,7 @@ export function SessionTimer({
                 });
               }
             }}
-            className="mt-1 h-4 w-4 accent-[color:var(--sky)]"
+            className="tick mt-0.5"
           />
           <span className="text-[15px]">
             Focus Mode
@@ -224,7 +224,7 @@ export function SessionTimer({
             onChange={(e) => setSubject(e.target.value)}
             list="recent-subjects"
             placeholder="Chemistry"
-            className="mt-2 w-full rounded-md border border-line-hi bg-bg px-4 py-3 text-[16px] text-text focus:border-sky"
+            className="mt-2 w-full rounded-md border border-line-hi bg-bg px-4 py-3 text-[16px] text-text focus:border-accent"
           />
           <datalist id="recent-subjects">
             {recentSubjects.map((s) => (
@@ -288,7 +288,7 @@ export function SessionTimer({
             type="checkbox"
             checked={wasCram}
             onChange={(e) => setWasCram(e.target.checked)}
-            className="h-4 w-4 accent-[color:var(--sky)]"
+            className="tick"
           />
           This is a cram session
         </label>

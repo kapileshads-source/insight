@@ -34,7 +34,7 @@ export function InsightProgress({
   if (state.ready) return null;
 
   return (
-    <section className="mt-14 panel px-7 py-6">
+    <section className="panel px-7 py-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="h3 text-[17px]">{state.headline}</h2>
         <span className="label text-text-faint">Before any pattern shows</span>
@@ -51,7 +51,7 @@ export function InsightProgress({
         aria-label="Progress towards enough data for an insight"
       >
         <div
-          className="h-full rounded-full bg-sky transition-[width] duration-500"
+          className="h-full rounded-full bg-accent transition-[width] duration-500"
           style={{ width: `${Math.max(2, fraction * 100)}%` }}
         />
       </div>

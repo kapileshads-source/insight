@@ -31,7 +31,7 @@ export default async function CanvasPage() {
               is why the credential option went unseen. */}
           <p className="mt-8 text-[15px] leading-relaxed text-text-muted">
             Your posted grades live in{" "}
-            <Link href="/hac" className="text-sky underline underline-offset-2">
+            <Link href="/hac" className="text-accent underline underline-offset-2">
               Home Access Center
             </Link>
             , which Insight reads separately.

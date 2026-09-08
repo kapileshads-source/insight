@@ -222,7 +222,7 @@ export function NudgeCard({
               type="checkbox"
               checked={prefs.sleepNudge}
               onChange={() => onToggle?.("sleepNudge")}
-              className="h-4 w-4 accent-sky"
+              className="tick"
             />
             Mornings — how did you sleep?
           </label>
@@ -231,7 +231,7 @@ export function NudgeCard({
               type="checkbox"
               checked={prefs.screenTimeNudge}
               onChange={() => onToggle?.("screenTimeNudge")}
-              className="h-4 w-4 accent-sky"
+              className="tick"
             />
             Evenings — phone time today?
           </label>
@@ -240,7 +240,7 @@ export function NudgeCard({
               type="checkbox"
               checked={prefs.dueWorkNudge}
               onChange={() => onToggle?.("dueWorkNudge")}
-              className="h-4 w-4 accent-sky"
+              className="tick"
             />
             After school — what&rsquo;s due tomorrow
           </label>
@@ -274,7 +274,7 @@ export function NudgeCard({
         type="button"
         onClick={onTurnOn}
         disabled={state.kind === "working"}
-        className="mt-4 rounded bg-sky px-4 py-2 text-[15px] text-on-light disabled:opacity-40"
+        className="mt-4 rounded bg-accent px-4 py-2 text-[15px] text-on-light disabled:opacity-40"
       >
         {state.kind === "working" ? "Just a second…" : "Turn on reminders"}
       </button>

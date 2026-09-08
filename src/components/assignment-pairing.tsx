@@ -207,7 +207,7 @@ export function PairingCard({
   onUndo?: (pair: LinkedPair) => void;
 }) {
   return (
-    <section className="mt-14 rounded-lg border border-line bg-surface p-6">
+    <section className="rounded-lg border border-line bg-surface p-6">
       <h2 className="h3 text-[17px]">
         {choices.length > 0 ? "Same assignment?" : "Linked assignments"}
       </h2>
@@ -242,7 +242,7 @@ export function PairingCard({
                   type="button"
                   disabled={busy === id}
                   onClick={() => onAnswer(c, true)}
-                  className="rounded bg-sky px-3 py-1.5 text-[14px] text-on-light disabled:opacity-40"
+                  className="rounded bg-accent px-3 py-1.5 text-[14px] text-on-light disabled:opacity-40"
                 >
                   Same thing
                 </button>

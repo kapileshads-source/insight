@@ -26,14 +26,14 @@ export default async function DownloadPage() {
       <p className="mt-4 text-[15px] text-text-faint">
         On an iPhone there&rsquo;s nothing to download — Apple doesn&rsquo;t
         allow it. There is{" "}
-        <Link href="/iphone" className="text-sky underline underline-offset-2">
+        <Link href="/iphone" className="text-accent underline underline-offset-2">
           a setup worth ten minutes
         </Link>{" "}
         instead.
       </p>
       <p className="mt-4 text-[15px] text-text-faint">
         The browser extension is separate, and you&rsquo;ll find it on your{" "}
-        <Link href="/devices" className="text-sky underline underline-offset-2">
+        <Link href="/devices" className="text-accent underline underline-offset-2">
           Devices page
         </Link>{" "}
         along with the pairing code both of these need.

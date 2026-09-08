@@ -19,7 +19,7 @@ import {
 } from "@/lib/records";
 
 const FIELD =
-  "w-full rounded-md border border-line-hi bg-bg px-4 py-3 text-[16px] text-text focus:border-sky";
+  "w-full rounded-md border border-line-hi bg-bg px-4 py-3 text-[16px] text-text focus:border-accent";
 
 /**
  * The baseline every later comparison is made against.

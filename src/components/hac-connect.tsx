@@ -92,7 +92,7 @@ export function HacConnect({
       {/* Said before the fields, not after. A student is about to hand over the
           password that is probably also behind their school email. */}
       {!disconnected && (
-      <div className="mt-5 rounded-md bg-sky-soft px-5 py-4">
+      <div className="mt-5 rounded-md bg-accent-soft px-5 py-4">
         <p className="text-[14px] leading-relaxed text-text-muted">
           Be clear on the trade: your HAC password is stored, encrypted, so we
           can fetch your gradebook when you&rsquo;re not looking.{" "}
@@ -137,7 +137,7 @@ export function HacConnect({
         />
 
         {error && (
-          <p className="mt-4 text-[14px] leading-relaxed text-butter">{error}</p>
+          <p className="mt-4 text-[14px] leading-relaxed text-alert">{error}</p>
         )}
 
         <button

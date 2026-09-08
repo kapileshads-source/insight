@@ -40,7 +40,7 @@ export default async function SettingsPage() {
 
       <p className="mt-12 text-[14px] leading-relaxed text-text-faint">
         How all of this works is written out on the{" "}
-        <Link href="/privacy" className="text-sky underline underline-offset-2">
+        <Link href="/privacy" className="text-accent underline underline-offset-2">
           privacy page
         </Link>
         .

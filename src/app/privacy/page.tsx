@@ -39,7 +39,7 @@ export default function PrivacyPage() {
         Parents: there&rsquo;s a{" "}
         <Link
           href="/privacy/parents"
-          className="text-sky underline underline-offset-2"
+          className="text-accent underline underline-offset-2"
         >
           shorter version written for you
         </Link>
@@ -257,7 +257,7 @@ export default function PrivacyPage() {
           Write to{" "}
           <a
             href="mailto:kapilesh.rajaravi@gmail.com"
-            className="text-sky underline underline-offset-2"
+            className="text-accent underline underline-offset-2"
           >
             kapilesh.rajaravi@gmail.com
           </a>

@@ -46,12 +46,12 @@ export function Mark({ size = 22 }: { size?: number }) {
       <rect x="1" y="1" width="22" height="22" rx="6" stroke="var(--line-hi)" />
       <path
         d="M5 17.5 L19 7"
-        stroke="var(--sky-deep)"
+        stroke="var(--accent-deep)"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
       <circle cx="7.5" cy="15.5" r="2.6" fill="var(--ember)" />
-      <circle cx="16.5" cy="8.5" r="2.6" fill="var(--sky)" />
+      <circle cx="16.5" cy="8.5" r="2.6" fill="var(--accent)" />
     </svg>
   );
 }

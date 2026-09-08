@@ -79,7 +79,7 @@ export function InsightRow({
         </p>
 
         {suggestion && (
-          <p className="mt-4 rounded-md bg-sky-soft px-4 py-3.5 text-[15px] leading-relaxed text-text-muted">
+          <p className="mt-4 rounded-md bg-accent-soft px-4 py-3.5 text-[15px] leading-relaxed text-text-muted">
             {suggestion}
           </p>
         )}

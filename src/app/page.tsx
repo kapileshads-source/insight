@@ -419,7 +419,7 @@ export default function Home() {
 function Figure({ value, label }: { value: string; label: string }) {
   return (
     <div>
-      <div className="figure text-[clamp(2.4rem,5.5vw,3.4rem)] text-sky">
+      <div className="figure text-[clamp(2.4rem,5.5vw,3.4rem)] text-accent">
         {value}
       </div>
       <p className="mt-3 max-w-[15rem] text-[15px] leading-snug text-text-muted">
@@ -464,7 +464,7 @@ function WeekPanel() {
                 <div
                   key={i}
                   className={`rounded-t-[4px] ${
-                    d.minutes === 0 ? "bg-line" : "bg-sky"
+                    d.minutes === 0 ? "bg-line" : "bg-accent"
                   }`}
                   // A zero day still gets a sliver, so the axis reads as seven
                   // days rather than six and a gap.

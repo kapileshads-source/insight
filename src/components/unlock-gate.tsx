@@ -67,7 +67,7 @@ function UnlockScreen() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mt-2 w-full rounded-md border border-line-hi bg-surface px-4 py-3 text-[16px] text-text focus:border-sky"
+          className="mt-2 w-full rounded-md border border-line-hi bg-surface px-4 py-3 text-[16px] text-text focus:border-accent"
         />
 
         {error && (
@@ -81,7 +81,7 @@ function UnlockScreen() {
             type="checkbox"
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
-            className="mt-1 h-4 w-4 accent-[color:var(--sky)]"
+            className="tick mt-0.5"
           />
           <span>
             Stay unlocked on this device

@@ -92,7 +92,7 @@ function Row({
         checked={false}
         onChange={() => onDone?.(row.id)}
         aria-label={`Mark "${row.name}" done`}
-        className="mt-1 h-4 w-4 shrink-0 accent-sky"
+        className="tick mt-0.5"
       />
       <div className="min-w-0 flex-1">
         {/* Two lines, not one. Canvas titles run long — "Final Research
@@ -134,7 +134,7 @@ function Group({
   return (
     <section className="mt-6 first:mt-0">
       <h3
-        className={`label ${group.bucket === "MISSING" ? "text-butter" : "text-text-faint"}`}
+        className={`label ${group.bucket === "MISSING" ? "text-alert" : "text-text-faint"}`}
       >
         {group.label}
         {urgent && ` · ${group.rows.length}`}
@@ -236,11 +236,11 @@ export function AssignmentsPanel() {
 
   if (failed) {
     return (
-      <section className="mt-14 panel p-6">
+      <section className="panel p-6">
         <h2 className="h3 text-[17px]">What&rsquo;s due</h2>
         <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
           These couldn&rsquo;t be read with your current password. Syncing{" "}
-          <Link href="/canvas" className="text-sky underline underline-offset-2">
+          <Link href="/canvas" className="text-accent underline underline-offset-2">
             Canvas
           </Link>{" "}
           again will rewrite them.
@@ -311,7 +311,7 @@ export function AssignmentList({
   const hidden = groups.length - visible.length;
 
   return (
-    <section className="mt-14 panel p-6">
+    <section className="panel p-6">
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="h3 text-[17px]">What&rsquo;s due</h2>
         <Link href="/canvas" className="label text-text-faint hover:text-text-muted">
@@ -321,7 +321,7 @@ export function AssignmentList({
 
       <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
         {summary.missing > 0 && (
-          <span className="text-butter">
+          <span className="text-alert">
             {summary.missing} marked missing.{" "}
           </span>
         )}
@@ -363,7 +363,7 @@ export function AssignmentList({
         <button
           type="button"
           onClick={onShowAll}
-          className="mt-6 text-[14px] text-sky"
+          className="mt-6 text-[14px] text-accent"
         >
           Show {hidden} more group{hidden === 1 ? "" : "s"}
         </button>

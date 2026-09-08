@@ -151,7 +151,18 @@ model DistrictCalendarDay {
 
   note String?
 
+  /// The extractor read this day from the published PDF but could not resolve
+  /// it cleanly — a Monday it missed, or alternation breaking next to a
+  /// late-arrival day. Flagged so `/admin/schedules` can list it for a human,
+  /// and cleared the moment one confirms it.
+  ///
+  /// It lives here rather than in a hardcoded list on the page, which is what
+  /// it replaced. That list could not shrink: confirming a date left it on
+  /// screen forever, so the worklist never got shorter and stopped being read.
+  needsReview Boolean @default(false)
+
   @@index([date])
+  @@index([needsReview])
 }
 
 /// Campus-specific deviation from the district calendar.

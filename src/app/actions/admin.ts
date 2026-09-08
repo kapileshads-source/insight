@@ -89,6 +89,9 @@ export async function upsertCalendarDay(input: unknown): Promise<AdminResult> {
       dayType: parsed.data.dayType,
       variant: parsed.data.variant,
       note: parsed.data.note ?? null,
+      // Confirming a day is what clears the flag. That is the whole point of
+      // moving this out of a hardcoded array: the list now gets shorter.
+      needsReview: false,
     },
     create: {
       date,

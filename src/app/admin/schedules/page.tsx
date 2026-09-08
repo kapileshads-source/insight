@@ -42,20 +42,11 @@ export default async function AdminSchedulesPage(
           orderBy: { startDate: "asc" },
         })
       : Promise.resolve([]),
-    // The dates the calendar extractor flagged. Surfaced here so they get
-    // fixed by hand rather than sitting wrong all year.
+    // The days the extractor flagged, read from the database rather than from
+    // a list in this file. The list was the bug: confirming a date left it on
+    // screen forever, so the worklist never shortened and stopped being read.
     db.districtCalendarDay.findMany({
-      where: {
-        date: {
-          in: [
-            new Date("2027-05-03T00:00:00Z"),
-            new Date("2027-05-10T00:00:00Z"),
-            new Date("2026-10-01T00:00:00Z"),
-            new Date("2027-04-07T00:00:00Z"),
-            new Date("2027-04-22T00:00:00Z"),
-          ],
-        },
-      },
+      where: { needsReview: true },
       orderBy: { date: "asc" },
     }),
   ]);
@@ -133,8 +124,9 @@ export default async function AdminSchedulesPage(
           <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-text-muted">
             The extractor read these from the published PDF but couldn&rsquo;t
             resolve them cleanly — two Mondays it missed entirely, and three
-            places where alternation broke next to a late-arrival day. Confirm
-            them against the calendar and correct any that are wrong.
+            places where alternation broke next to a late-arrival day. Check
+            each against the district calendar and save it above, right or
+            wrong: saving is what takes it off this list.
           </p>
           <ul className="mt-4 space-y-2">
             {unresolved.map((d) => (

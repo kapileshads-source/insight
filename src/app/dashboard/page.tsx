@@ -3,7 +3,6 @@ import { AppNav } from "@/components/chrome";
 import { GpaPanel, GradesPanel } from "@/components/grades-panel";
 import { GradebookProvider } from "@/components/gradebook-data";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
 import { getOrCreateUser, nextOnboardingStep } from "@/lib/user";
 import { getSchoolDayState } from "@/lib/current-period";
 import { getCanvasStatus } from "@/app/actions/canvas";

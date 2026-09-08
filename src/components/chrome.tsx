@@ -107,6 +107,7 @@ export function SiteNav() {
 
 const APP_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/gpa", label: "GPA" },
   { href: "/canvas", label: "Canvas" },
   { href: "/hac", label: "HAC" },
   { href: "/devices", label: "Devices" },

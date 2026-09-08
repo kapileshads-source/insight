@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import {
   estimateGpa,
@@ -69,13 +70,12 @@ export function GpaCard({
   // Excluded by default where the title says so, and adjustable by hand.
   // Deliberately a student's decision rather than a model's: a guess about
   // whether a course counts silently moves a GPA, and nobody can see it happen.
-  const [excluded, setExcluded] = useState<Set<string>>(
-    () => new Set(courses.filter((c) => looksNonAcademic(c.title)).map((c) => c.id)),
+  // Non-academic classes sit out by default. The card only shows a total, so
+  // this is fixed here; changing which classes count is done on /gpa, where
+  // the change is visible next to the class it applies to.
+  const excluded = new Set(
+    courses.filter((c) => looksNonAcademic(c.title)).map((c) => c.id),
   );
-  const [open, setOpen] = useState(false);
-  /// Hypothetical grades, by course id. Empty is the normal state, and an
-  /// empty map returns the real GPA exactly — see `gpaIf`.
-  const [tryout, setTryout] = useState<Map<string, number>>(new Map());
 
   // A course reading 0.00 has not been graded — it has not failed.
   //
@@ -103,15 +103,6 @@ export function GpaCard({
   }));
 
   const estimate = estimateGpa(forEstimate);
-
-  function toggle(id: string) {
-    setExcluded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
 
   // Says it is waiting rather than rendering nothing.
   //
@@ -152,30 +143,6 @@ export function GpaCard({
       .map((c) => ({ level: c.level, grade: c.grades[0] })),
   );
   const anchored = past?.weighted != null;
-
-  // What the GPA would be with the tried-out grades. Computed here rather than
-  // asked of anything — this is the number a student decides things on.
-  const withTryout = gpaIf(
-    past ?? { weighted: null, unweighted: null },
-    priorCount,
-    forEstimate
-      .filter((c) => !c.excluded)
-      .map((c) => ({ id: c.id, level: c.level, grade: c.grades[0] })),
-    tryout,
-  );
-  const trying = tryout.size > 0;
-  const shift = gpaDelta(today.weighted, withTryout.weighted);
-
-  function tryGrade(id: string, raw: string) {
-    setTryout((prev) => {
-      const next = new Map(prev);
-      const value = Number(raw);
-      // An empty box means "back to the real grade", not "a zero".
-      if (raw.trim() === "" || !Number.isFinite(value)) next.delete(id);
-      else next.set(id, Math.max(0, Math.min(120, value)));
-      return next;
-    });
-  }
 
   /* Starlight, not another Midnight panel.
    *
@@ -235,150 +202,243 @@ export function GpaCard({
         )}
       </div>
 
-      {/* The caveats, on a slightly darker shelf so the numbers above keep the
-          light. Stated plainly and near the figures, not in small print. */}
-      <div className="border-on-light/10 bg-paper-dim/60 border-t px-7 py-5 sm:px-9">
-        <p className="max-w-2xl text-[14px] leading-relaxed text-on-light-muted">
-          {anchored
-            ? "Your finished semesters are exactly what the school calculated — that part isn't guesswork. This term is added at whatever your gradebook shows today, so the top number moves every time a mark is posted, and it isn't official until the semester closes."
-            : "Worked out from the grades your gradebook is showing right now. Your school calculates the real one when the semester ends, and the two will not match exactly — this moves every time a mark is posted."}
+      {/* One line out, and the rest on its own page.
+
+          This card used to carry everything: the caveat paragraph, the list of
+          which classes count, the what-if boxes, and a note about any class
+          reading 0%. All of it is worth saying and none of it is worth saying
+          on the screen a student opens twenty times a week. It made the first
+          thing on the dashboard the densest thing on it.
+
+          So the card is the answer and the page is the working. */}
+      <div className="border-on-light/10 bg-paper-dim/60 flex flex-wrap items-center gap-x-5 gap-y-2 border-t px-7 py-4 sm:px-9">
+        <Link
+          href="/gpa"
+          className="btn-secondary-on-light px-5 py-2.5 text-[14px] font-medium"
+        >
+          Try a different grade
+        </Link>
+        <p className="text-[14px] text-on-light-muted">
+          See what a class ending differently would do, and which ones count.
         </p>
-
-        {!anchored && (
-          <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-on-light-muted">
-            Read your transcript on the HAC page and this becomes your real
-            cumulative GPA, brought up to today — not just this term.
-          </p>
-        )}
-
-        {ungraded.length > 0 && (
-          <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-on-light-muted">
-            {ungraded.length === 1
-              ? `${ungraded[0].title} isn't counted yet — it still reads 0%, which means no assessments have been marked in it.`
-              : `${ungraded.length} classes aren't counted yet — they still read 0%, which means no assessments have been marked in them.`}
-          </p>
-        )}
-
-        {/* Discoverability, learned the hard way.
-        
-            This was one link reading "Which classes count, and try a grade",
-            collapsed. The what-if is the most useful thing on the card — it is
-            the question a student actually asks about a grade — and it was the
-            fourth word of a disclosure about something else. It got asked for
-            twice by the person who had already been shown it.
-        
-            So the action leads, it says what it does, and it looks like a
-            control rather than a footnote. */}
-        <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            className="btn-secondary-on-light px-5 py-2.5 text-[14px] font-medium"
-          >
-            {open ? "Done" : "Try a different grade"}
-          </button>
-          <p className="text-[14px] text-on-light-muted">
-            {open
-              ? "Type a grade next to any class to see where you would land."
-              : "See what your GPA would be if a class ended differently."}
-          </p>
-        </div>
-
-        {open && (
-          <ul className="border-on-light/15 mt-4 border-t">
-            {withGrades.map((c) => {
-              const out = excluded.has(c.id);
-              return (
-                <li
-                  key={c.id}
-                  className="border-on-light/10 flex items-center justify-between gap-4 border-b py-2.5"
-                >
-                  <label className="flex min-w-0 items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={!out}
-                      onChange={() => toggle(c.id)}
-                      className="tick tick-on-light"
-                    />
-                    <span
-                      className={`truncate text-[15px] ${
-                        out
-                          ? "text-on-light-muted line-through"
-                          : "text-on-light"
-                      }`}
-                    >
-                      {c.title}
-                    </span>
-                  </label>
-                  <span className="flex shrink-0 items-center gap-3 text-[13px] text-on-light-muted">
-                    {LEVEL_LABEL[levelOf(c.title)]}
-                    {/* The real grade, struck through once a hypothetical is
-                        standing in for it, so it is never unclear which of the
-                        two numbers on this row is true. */}
-                    <span
-                      className={
-                        tryout.has(c.id) ? "line-through opacity-60" : ""
-                      }
-                    >
-                      {c.grade}
-                    </span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={120}
-                      value={tryout.get(c.id) ?? ""}
-                      onChange={(e) => tryGrade(c.id, e.target.value)}
-                      disabled={out}
-                      aria-label={`Try a different grade for ${c.title}`}
-                      placeholder="try"
-                      className="border-on-light/25 w-16 rounded border bg-transparent px-2 py-1 text-[13px] text-on-light placeholder:text-on-light-muted disabled:opacity-40"
-                    />
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        {/* The answer, right under the boxes that produced it. Deterministic —
-            the same `presentGpa` the big number at the top uses, with the
-            typed grades swapped in. Nothing is asked of a model, because this
-            is the figure a student decides things on. */}
-        {open && trying && (
-          <div className="border-on-light/15 mt-5 flex flex-wrap items-end gap-x-8 gap-y-3 border-t pt-5">
-            <div>
-              <p className="label text-on-light-muted">With those grades</p>
-              <p className="figure mt-1.5 text-[1.8rem] text-on-light">
-                {withTryout.weighted === null
-                  ? "—"
-                  : withTryout.weighted.toFixed(3)}
-              </p>
-            </div>
-            {shift !== null && (
-              <p className="figure pb-1 text-[1.1rem] text-on-light">
-                {shift > 0 ? "+" : shift < 0 ? "\u2212" : ""}
-                {Math.abs(shift).toFixed(3)}
-                <span className="ml-2 font-sans text-[13px] text-on-light-muted">
-                  {shift === 0 ? "no change" : "vs. now"}
-                </span>
-              </p>
-            )}
-            <button
-              type="button"
-              onClick={() => setTryout(new Map())}
-              className="ml-auto pb-1 text-[13px] text-on-light underline underline-offset-4"
-            >
-              Clear
-            </button>
-          </div>
-        )}
       </div>
     </section>
   );
 }
 
-/// Null renders as a dash, never as 0.00. A student with no marks yet has *no*
-/// GPA, and a zero would read as catastrophe rather than as absence.
+/**
+ * The working behind the number: what it is and is not, which classes are in
+ * it, and what happens if one of them ends differently.
+ *
+ * Lives on `/gpa` rather than on the dashboard. Everything here is true and
+ * worth saying once; none of it is worth reading daily, and putting it under
+ * the headline figure made the top of the dashboard its heaviest region.
+ */
+export function GpaDetail({
+  courses: all,
+  past = null,
+  priorCount = 0,
+}: {
+  courses: GpaInput[];
+  past?: { weighted: number | null; unweighted: number | null } | null;
+  priorCount?: number;
+}) {
+  const courses = onlyEnrolled(all);
+  const [excluded, setExcluded] = useState<Set<string>>(
+    () => new Set(courses.filter((c) => looksNonAcademic(c.title)).map((c) => c.id)),
+  );
+  const [tryout, setTryout] = useState<Map<string, number>>(new Map());
+
+  const withGrades = courses.filter((c) => hasUsableGrade(c.grade));
+  const ungraded = courses.filter(
+    (c) => c.grade !== null && !hasUsableGrade(c.grade),
+  );
+
+  const forEstimate: GpaCourse[] = withGrades.map((c) => ({
+    id: c.id,
+    title: c.title,
+    level: levelOf(c.title),
+    grades: [c.grade as number],
+    excluded: excluded.has(c.id),
+  }));
+
+  const anchored = past?.weighted != null;
+  const live = forEstimate
+    .filter((c) => !c.excluded)
+    .map((c) => ({ id: c.id, level: c.level, grade: c.grades[0] }));
+
+  const today = presentGpa(
+    past ?? { weighted: null, unweighted: null },
+    priorCount,
+    live.map((c) => ({ level: c.level, grade: c.grade })),
+  );
+  const withTryout = gpaIf(
+    past ?? { weighted: null, unweighted: null },
+    priorCount,
+    live,
+    tryout,
+  );
+  const trying = tryout.size > 0;
+  const shift = gpaDelta(today.weighted, withTryout.weighted);
+
+  function toggle(id: string) {
+    setExcluded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function tryGrade(id: string, raw: string) {
+    setTryout((prev) => {
+      const next = new Map(prev);
+      const value = Number(raw);
+      // An empty box means "back to the real grade", not "a zero".
+      if (raw.trim() === "" || !Number.isFinite(value)) next.delete(id);
+      else next.set(id, Math.max(0, Math.min(120, value)));
+      return next;
+    });
+  }
+
+  if (withGrades.length === 0) {
+    return (
+      <p className="max-w-xl text-[16px] leading-relaxed text-text-muted">
+        No class has a posted percentage yet, so there is nothing to work from.
+        This fills in as soon as one does.
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      {/* The result, above the inputs rather than below them. It is what the
+          page is for, and it should not move down the screen as classes are
+          added. */}
+      <section className="panel flex flex-wrap items-end gap-x-10 gap-y-5 px-7 py-6">
+        <div>
+          <p className="label text-text-faint">
+            {trying ? "With those grades" : "Your GPA right now"}
+          </p>
+          <p className="figure mt-2 text-[2.6rem] text-text">
+            {(trying ? withTryout.weighted : today.weighted)?.toFixed(3) ?? "—"}
+          </p>
+          <p className="mt-1 text-[13px] text-text-faint">Weighted</p>
+        </div>
+        <div>
+          <p className="figure text-[1.6rem] text-text">
+            {(trying ? withTryout.unweighted : today.unweighted)?.toFixed(3) ??
+              "—"}
+          </p>
+          <p className="mt-1 text-[13px] text-text-faint">Unweighted</p>
+        </div>
+        {trying && shift !== null && (
+          <p className="figure pb-1 text-[1.3rem] text-text">
+            {shift > 0 ? "+" : shift < 0 ? "\u2212" : ""}
+            {Math.abs(shift).toFixed(3)}
+            <span className="ml-2 font-sans text-[13px] text-text-faint">
+              {shift === 0 ? "no change" : "vs. now"}
+            </span>
+          </p>
+        )}
+        {trying && (
+          <button
+            type="button"
+            onClick={() => setTryout(new Map())}
+            className="btn-secondary ml-auto px-5 py-2.5 text-[14px]"
+          >
+            Clear
+          </button>
+        )}
+      </section>
+
+      <section className="mt-8">
+        <h2 className="h3 text-[17px]">Your classes</h2>
+        <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-text-muted">
+          Type a grade in the box to see where you would land. Untick a class to
+          leave it out of the calculation entirely.
+        </p>
+
+        <ul className="mt-5 border-t border-line">
+          {withGrades.map((c) => {
+            const out = excluded.has(c.id);
+            return (
+              <li
+                key={c.id}
+                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line py-3"
+              >
+                <label className="flex min-w-0 flex-1 items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={!out}
+                    onChange={() => toggle(c.id)}
+                    className="tick"
+                  />
+                  <span
+                    className={`truncate text-[15px] ${
+                      out ? "text-text-faint line-through" : "text-text"
+                    }`}
+                  >
+                    {c.title}
+                  </span>
+                </label>
+                <span className="flex shrink-0 items-center gap-4 text-[13px] text-text-faint">
+                  {LEVEL_LABEL[levelOf(c.title)]}
+                  <span
+                    className={tryout.has(c.id) ? "line-through opacity-60" : ""}
+                  >
+                    {c.grade}
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={120}
+                    value={tryout.get(c.id) ?? ""}
+                    onChange={(e) => tryGrade(c.id, e.target.value)}
+                    disabled={out}
+                    aria-label={`Try a different grade for ${c.title}`}
+                    placeholder="try"
+                    className="w-20 rounded border border-line bg-bg px-2.5 py-1.5 text-[14px] text-text disabled:opacity-40"
+                  />
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <section className="mt-10 max-w-2xl space-y-3 text-[15px] leading-relaxed text-text-muted">
+        <h2 className="h3 text-[17px] text-text">How this is worked out</h2>
+        <p>
+          {anchored
+            ? "Your finished semesters are exactly what the school calculated — that part isn't guesswork. This term is added at whatever your gradebook shows today, so the number moves every time a mark is posted, and it isn't official until the semester closes."
+            : "Worked out from the grades your gradebook is showing right now. Your school calculates the real one when the semester ends, and the two will not match exactly."}
+        </p>
+        {!anchored && (
+          <p>
+            Read your transcript on the HAC page and this becomes your real
+            cumulative GPA, brought up to today — not just this term.
+          </p>
+        )}
+        <p className="text-text-faint">
+          Frisco weights per percentage point: an on-level class tops out at
+          5.0, Advanced at 5.5 and AP at 6.0, losing 0.1 for every point below
+          100. The unweighted figure uses letter grades on the 4.0 scale, which
+          is a different calculation entirely — that is why the two move at
+          different speeds.
+        </p>
+        {ungraded.length > 0 && (
+          <p className="text-text-faint">
+            {ungraded.length === 1
+              ? `${ungraded[0].title} isn't counted yet — it still reads 0%, which means no assessments have been marked in it.`
+              : `${ungraded.length} classes aren't counted yet — they still read 0%, which means no assessments have been marked in them.`}
+          </p>
+        )}
+      </section>
+    </div>
+  );
+}
+
 function Figure({
   label,
   value,

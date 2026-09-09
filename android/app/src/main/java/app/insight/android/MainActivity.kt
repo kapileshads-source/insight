@@ -196,14 +196,14 @@ class MainActivity : ComponentActivity() {
 
 /** The website's palette, so the phone doesn't feel like a different product. */
 object Insight {
-    val background = Color(0xFF0E0F11)
-    val surface = Color(0xFF16181B)
-    val text = Color(0xFFECEDEE)
-    val textMuted = Color(0xFF9BA1A6)
-    val textFaint = Color(0xFF6E747A)
-    val accent = Color(0xFF5BA8F5)
-    val good = Color(0xFF4AC38A)
-    val bad = Color(0xFFE57A7A)
+    val background = Color(0xFF131316)
+    val surface = Color(0xFF1B1B20)
+    val text = Color(0xFFEDEDF0)
+    val textMuted = Color(0xFF9C9CA8)
+    val textFaint = Color(0xFF7A7A87)
+    val accent = Color(0xFF1FA97A)
+    val good = Color(0xFF3FBF8F)
+    val bad = Color(0xFFE2563F)
 }
 
 @Composable

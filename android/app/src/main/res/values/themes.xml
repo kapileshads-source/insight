@@ -2,8 +2,8 @@
 <resources>
     <!-- Dark from the first frame, so launching never flashes white. -->
     <style name="Theme.Insight" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#0E0F11</item>
-        <item name="android:statusBarColor">#0E0F11</item>
-        <item name="android:navigationBarColor">#0E0F11</item>
+        <item name="android:windowBackground">#131316</item>
+        <item name="android:statusBarColor">#131316</item>
+        <item name="android:navigationBarColor">#131316</item>
     </style>
 </resources>

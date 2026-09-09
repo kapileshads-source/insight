@@ -6,18 +6,18 @@
       /* Same palette as the website — Midnight and Sky Blue — so the popup
          reads as part of Insight rather than a stray tool. */
       :root {
-        --bg: #171b26;
-        --surface: #1f2432;
+        --bg: #131316;
+        --surface: #1b1b20;
         --line: rgba(255, 255, 255, 0.1);
         --line-hi: rgba(255, 255, 255, 0.2);
-        --text: #e9ecf2;
-        --muted: #98a1b5;
-        --faint: #828ba0;
-        --sky: #a8c8e0;
-        --sky-deep: #6d92ae;
-        --on-light: #1b1f2a;
-        --up: #86a98c;
-        --down: #d3a081;
+        --text: #ededf0;
+        --muted: #9c9ca8;
+        --faint: #7a7a87;
+        --sky: #1fa97a;
+        --sky-deep: #157a58;
+        --on-light: #131316;
+        --up: #3fbf8f;
+        --down: #e2563f;
       }
       * { box-sizing: border-box; }
       body {
@@ -30,7 +30,19 @@
         font-size: 14px;
         line-height: 1.5;
       }
-      h1 { font-size: 15px; margin: 0 0 14px; letter-spacing: -0.01em; }
+      /* Type, borrowed from the web app without shipping its fonts.
+         Space Grotesk and JetBrains Mono are what the site is set in, but
+         bundling font files into an extension adds weight to every install and
+         another thing for a store reviewer to ask about. The recognisable part
+         of that system is the *treatment* rather than the faces: uppercase
+         mono labels with wide tracking, and figures in a mono stack. Both are
+         available from the system on every platform. */
+      h1 {
+        font-size: 15px;
+        margin: 0 0 14px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
       p { margin: 0 0 10px; color: var(--muted); }
       .status {
         border: 1px solid var(--line);
@@ -48,8 +60,18 @@
       }
       .on { background: var(--up); }
       .off { background: var(--faint); }
-      label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+      label {
+        display: block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin-bottom: 6px;
+      }
       input {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         width: 100%;
         padding: 9px 11px;
         border-radius: 8px;

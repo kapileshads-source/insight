@@ -23,9 +23,13 @@ type Minted = { kind: string; token: string };
 export function DevicesPanel({
   devices,
   appUrl,
+  extensionUrl,
 }: {
   devices: DeviceRow[];
   appUrl: string;
+  /// The Chrome Web Store listing, once it exists. Undefined until then, and
+  /// the manual route is shown instead — see below.
+  extensionUrl?: string;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -147,27 +151,59 @@ export function DevicesPanel({
           time.
         </p>
 
-        <ol className="mt-5 space-y-3 text-[15px] leading-relaxed text-text-muted">
-          <li>
-            <span className="text-text">1.</span> Download the extension folder
-            and unzip it somewhere you won&rsquo;t delete by accident.
-          </li>
-          <li>
-            <span className="text-text">2.</span> Open{" "}
-            <code className="rounded bg-bg px-1.5 py-0.5 text-[14px] text-text">
-              chrome://extensions
-            </code>{" "}
-            and turn on <strong>Developer mode</strong>, top right.
-          </li>
-          <li>
-            <span className="text-text">3.</span> Click{" "}
-            <strong>Load unpacked</strong> and choose that folder.
-          </li>
-          <li>
-            <span className="text-text">4.</span> Click the Insight icon in the
-            toolbar and paste the code below.
-          </li>
-        </ol>
+        {/* Two routes, and which one a student gets depends on whether the
+            store listing is live yet.
+
+            Load unpacked is not a lesser version of the same thing — it needs
+            developer mode on, it silently stops working if the folder moves,
+            it never updates itself, and Chrome nags about it on every launch.
+            It was the only route available, and the moment it is not, showing
+            it would be teaching people the hard way round. */}
+        {extensionUrl ? (
+          <>
+            <a
+              href={extensionUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-primary mt-5 inline-block px-6 py-3 text-[15px]"
+            >
+              Add to Chrome
+            </a>
+            <ol className="mt-6 space-y-3 text-[15px] leading-relaxed text-text-muted">
+              <li>
+                <span className="text-text">1.</span> Click{" "}
+                <strong>Add to Chrome</strong>, then{" "}
+                <strong>Add extension</strong> when it asks.
+              </li>
+              <li>
+                <span className="text-text">2.</span> Click the Insight icon in
+                the toolbar and paste the code below.
+              </li>
+            </ol>
+          </>
+        ) : (
+          <ol className="mt-5 space-y-3 text-[15px] leading-relaxed text-text-muted">
+            <li>
+              <span className="text-text">1.</span> Download the extension
+              folder and unzip it somewhere you won&rsquo;t delete by accident.
+            </li>
+            <li>
+              <span className="text-text">2.</span> Open{" "}
+              <code className="rounded bg-bg px-1.5 py-0.5 text-[14px] text-text">
+                chrome://extensions
+              </code>{" "}
+              and turn on <strong>Developer mode</strong>, top right.
+            </li>
+            <li>
+              <span className="text-text">3.</span> Click{" "}
+              <strong>Load unpacked</strong> and choose that folder.
+            </li>
+            <li>
+              <span className="text-text">4.</span> Click the Insight icon in
+              the toolbar and paste the code below.
+            </li>
+          </ol>
+        )}
 
         {pairingBlock(
           "BROWSER_EXTENSION",

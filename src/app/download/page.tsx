@@ -18,7 +18,7 @@ export default async function DownloadPage() {
 
       <PageHero
         eyebrow="Optional"
-        title="The desktop apps."
+        title="Get the apps."
         lede="Optional. Insight works without them — they add the half of your time that isn’t in a browser, and let Focus Mode reach apps rather than only websites. On a phone, that means Android: iOS doesn’t allow it, and never will without Apple’s permission."
       />
 
@@ -32,11 +32,11 @@ export default async function DownloadPage() {
         instead.
       </p>
       <p className="mt-4 text-[15px] text-text-faint">
-        The browser extension is separate, and you&rsquo;ll find it on your{" "}
+        Everything needs a pairing code, which is on your{" "}
         <Link href="/devices" className="text-accent underline underline-offset-2">
           Devices page
-        </Link>{" "}
-        along with the pairing code both of these need.
+        </Link>
+        .
       </p>
 
       <div className="mt-10">
@@ -45,6 +45,7 @@ export default async function DownloadPage() {
           windowsUrl={process.env.NEXT_PUBLIC_DOWNLOAD_WINDOWS_URL}
           macUrl={process.env.NEXT_PUBLIC_DOWNLOAD_MAC_URL}
           androidUrl={process.env.NEXT_PUBLIC_DOWNLOAD_ANDROID_URL}
+          extensionUrl={process.env.NEXT_PUBLIC_EXTENSION_URL}
         />
       </div>
       </div>

@@ -26,7 +26,11 @@ export default async function DevicesPage() {
         />
 
         <div className="mt-10">
-          <DevicesPanel devices={devices} appUrl={appUrl} />
+          <DevicesPanel
+            devices={devices}
+            appUrl={appUrl}
+            extensionUrl={process.env.NEXT_PUBLIC_EXTENSION_URL}
+          />
 
           <NudgeOptIn />
       </div>

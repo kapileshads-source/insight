@@ -15,11 +15,13 @@ export function DownloadPanel({
   windowsUrl,
   macUrl,
   androidUrl,
+  extensionUrl,
 }: {
   os: DesktopOs;
   windowsUrl?: string;
   macUrl?: string;
   androidUrl?: string;
+  extensionUrl?: string;
 }) {
   const cards = [
     {
@@ -61,6 +63,18 @@ export function DownloadPanel({
         "Then it asks to draw over other apps. That one is what lets Focus Mode actually block something, and you can skip it if you only want the counting.",
       ],
     },
+    {
+      id: "extension" as const,
+      title: "Chrome extension",
+      size: "12 KB",
+      url: extensionUrl,
+      file: "Chrome Web Store",
+      steps: [
+        "Click Add to Chrome, then Add extension when it asks.",
+        "Click the Insight icon in the toolbar and paste the code from your Devices page.",
+        "That's it. It counts sites only while a session is running, and does nothing at any other time.",
+      ],
+    },
   ];
 
   // Whichever one you're on goes first; the rest keep their order.
@@ -94,9 +108,11 @@ export function DownloadPanel({
             </div>
 
             <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
-              {card.id === "android"
-                ? "Records which apps you use while a session is running, and puts a screen in front of blocked ones when Focus Mode is on. The only phone that can do either."
-                : "Records which apps you use while a session is running, and closes blocked ones when Focus Mode is on. No installer, no admin rights."}
+              {card.id === "extension"
+                ? "Counts the sites you use during a session, and blocks the distracting ones when Focus Mode is on. It never sees a password and holds no encryption key."
+                : card.id === "android"
+                  ? "Records which apps you use while a session is running, and puts a screen in front of blocked ones when Focus Mode is on. The only phone that can do either."
+                  : "Records which apps you use while a session is running, and closes blocked ones when Focus Mode is on. No installer, no admin rights."}
             </p>
 
             {card.url ? (
@@ -106,14 +122,17 @@ export function DownloadPanel({
                   primary ? "btn-primary" : "btn-secondary text-text-muted"
                 }`}
               >
-                Download for {card.title}
+                {card.id === "extension"
+                  ? "Add to Chrome"
+                  : `Download for ${card.title}`}
               </a>
             ) : (
               // Never a dead button. A link that goes nowhere reads as a
               // broken site; a sentence explaining the wait doesn't.
               <p className="mt-5 rounded-md border border-line bg-bg px-4 py-3 text-[15px] text-text-muted">
-                Not published yet. It&rsquo;s built and working — ask Kapilesh
-                or Sahas for a copy in the meantime.
+                {card.id === "extension"
+                  ? "Waiting on Chrome Web Store review. Until it clears, the Devices page has the manual route."
+                  : "Not published yet. It\u2019s built and working \u2014 ask Kapilesh or Sahas for a copy in the meantime."}
               </p>
             )}
 

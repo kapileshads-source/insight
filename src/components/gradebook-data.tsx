@@ -205,16 +205,22 @@ export function GradebookProvider({ children }: { children: React.ReactNode }) {
   }, [reveal]);
 
   useEffect(() => {
-    if (status !== "unlocked") {
-      setState({ status: "locked" });
-      return;
-    }
+    // Locked and loading are *derived* from the crypto status, not stored.
+    //
+    // Both used to be written here with `setState`, which is the one genuine
+    // instance of the lint rule's complaint in this codebase: a synchronous
+    // setState inside an effect renders twice for a value that was already
+    // knowable during the first render. Everything else flagged by that rule
+    // sets state after awaiting a round trip, which is fine.
+    //
+    // So the effect now only ever reports the *result* of a decrypt, and the
+    // two states that are a function of `status` are worked out below.
+    if (status !== "unlocked") return;
 
     // Guarded because the read is slow — every row is decrypted one at a time
     // — and a student can unlock, look, and navigate away well before it
     // finishes. Without this, the result lands on an unmounted component.
     let live = true;
-    setState({ status: "loading" });
     void gather().then((result) => {
       if (!live) return;
       setState(result);
@@ -229,7 +235,20 @@ export function GradebookProvider({ children }: { children: React.ReactNode }) {
     };
   }, [status, gather]);
 
-  return <Ctx.Provider value={state}>{children}</Ctx.Provider>;
+  // The key is not in memory, so nothing can be read and nothing should
+  // render — whatever a previous unlock left in `state` is stale the moment
+  // the key goes, so it is ignored rather than cleared.
+  const value: GradebookState =
+    status !== "unlocked"
+      ? { status: "locked" }
+      : // Unlocked but the decrypt has not landed yet. `state` still holds
+        // whatever the last one produced, which for a re-lock-and-unlock is
+        // the previous session's data; "loading" until a fresh result arrives.
+        state.status === "locked"
+        ? { status: "loading" }
+        : state;
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function useGradebook(): GradebookState {

@@ -272,3 +272,44 @@ That one line prints everything the status screen shows, without the phone
 being in anyone's hand. `dumpsys activity services app.insight.android` says
 whether the services are actually alive, which the app itself cannot tell you
 when the failure is that it isn't running.
+
+
+## Building a release APK
+
+**You need JDK 21, not the JDK on your PATH.** This Mac runs Java 25, and the
+Kotlin compiler pinned here cannot parse that version string — it fails with
+the whole error message being `25.0.3`, which reads like a missing build-tools
+version and is not. The stack trace names `JavaVersion.parse`.
+
+A JDK 21 lives in `~/.jdks/` (userspace, installed without sudo):
+
+```bash
+cd android
+JAVA_HOME=~/.jdks/jdk-21.0.12.1+1/Contents/Home \
+ANDROID_HOME=~/Library/Android/sdk \
+  ./gradlew assembleRelease
+```
+
+That produces `app-release-unsigned.apk`, which Android refuses to install.
+Align and sign it:
+
+```bash
+AS=~/Library/Android/sdk/build-tools/35.0.0
+PW=$(cat ~/.insight-keys/keystore-password.txt)
+$AS/zipalign -f -p 4 app/build/outputs/apk/release/app-release-unsigned.apk /tmp/aligned.apk
+$AS/apksigner sign --ks ~/.insight-keys/insight-release.jks \
+  --ks-pass "pass:$PW" --key-pass "pass:$PW" \
+  --out /tmp/Insight-android.apk /tmp/aligned.apk
+$AS/apksigner verify --print-certs /tmp/Insight-android.apk
+```
+
+### The keystore
+
+`~/.insight-keys/insight-release.jks`, with its password beside it. It is
+**deliberately outside this repository and must never be committed** — a
+signing key in git is a signing key everyone has.
+
+**Back both files up somewhere you will still have in a year.** Android
+identifies an app by its signature: lose this key and you cannot ship an
+update that existing installs will accept. The only fix is telling every user
+to uninstall and start over, which for a study log means losing their data.

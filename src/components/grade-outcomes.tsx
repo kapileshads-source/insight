@@ -146,6 +146,10 @@ export function GradeOutcomes() {
 
   useEffect(() => {
     if (status !== "unlocked") return;
+    // `run` awaits a round trip before it touches state, so there is no
+    // cascading render for the rule to see — and the data arrives as
+    // ciphertext, so this cannot happen anywhere but the client.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void run();
     // Ten minutes, matching the Canvas pull, so a grade posted during a free
     // period becomes a score in the same visit rather than the next one.

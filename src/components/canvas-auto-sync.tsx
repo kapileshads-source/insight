@@ -166,12 +166,20 @@ export function CanvasAutoSync() {
 
   useEffect(() => {
     if (status !== "unlocked") return;
+    // `refreshStatus` awaits a round trip before it touches state, so there is no
+    // cascading render for the rule to see — and the data arrives as
+    // ciphertext, so this cannot happen anywhere but the client.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshStatus();
   }, [status, refreshStatus]);
 
   useEffect(() => {
     if (status !== "unlocked" || !conditions?.connected) return;
 
+    // `attempt` awaits a round trip before it touches state, so there is no
+    // cascading render for the rule to see — and the data arrives as
+    // ciphertext, so this cannot happen anywhere but the client.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void attempt();
 
     // Checked more often than the interval so that coming back to a tab left

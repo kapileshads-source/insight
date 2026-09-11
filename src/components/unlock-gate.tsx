@@ -16,7 +16,23 @@ function Shell({ children }: { children: React.ReactNode }) {
 function UnlockScreen() {
   const { unlock } = useCrypto();
   const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
+  /// Ticked by default, which it was not.
+  ///
+  /// Unticked, a student typed their password on every visit, several times a
+  /// day, which is the single most tiring thing about using Insight and the
+  /// reason the two-password design felt worse than it is. Ticked, it is once
+  /// per browser.
+  ///
+  /// The obvious alternative, asking again whenever the IP changes, is worse
+  /// rather than better. A phone moves between cell network, school wifi and
+  /// home wifi in a single day, so an IP rule would prompt a phone user more
+  /// often than no rule at all, and an IP is a poor signal for who is holding
+  /// the device anyway. The browser is the real boundary, because that is
+  /// where the key is stored.
+  ///
+  /// It stays a checkbox, and the warning under it stays, because a school
+  /// computer is exactly where the default is wrong.
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -50,14 +66,22 @@ function UnlockScreen() {
       <h1 className="h1 mt-8 text-[clamp(2rem,5vw,2.5rem)]">
         Unlock your data.
       </h1>
+      {/* Says which password, because it is not the one they just typed.
+          Signing in and unlocking are two different steps with two different
+          passwords, and the screen used to label this field simply "Password".
+          Anyone who had just signed in read that as the sign-in having failed,
+          which is the single most confusing moment in the product and the
+          thing a store reviewer would reject over. */}
       <p className="mt-4 text-[17px] leading-relaxed text-text-muted">
-        Your sessions and grades are encrypted. We can&rsquo;t open them, so
-        we have to ask you.
+        Your sessions and grades are encrypted, and we cannot open them, so we
+        have to ask you. This is your <strong className="text-text">Insight
+        password</strong>, the one you chose when you set up your account. It
+        is not the password you just signed in with.
       </p>
 
       <form onSubmit={submit} className="mt-8">
         <label htmlFor="unlock-password" className="label text-text-muted">
-          Password
+          Insight password
         </label>
         <input
           id="unlock-password"
@@ -84,10 +108,11 @@ function UnlockScreen() {
             className="tick mt-0.5"
           />
           <span>
-            Stay unlocked on this device
+            Stay unlocked on this browser
             <span className="mt-0.5 block text-[14px] text-text-faint">
-              Don&rsquo;t use this on a school or shared computer, anyone who
-              opens the browser after you would see your data.
+              You will not be asked again here. Untick it on a school or shared
+              computer, where anyone opening the browser after you would see
+              your data.
             </span>
           </span>
         </label>

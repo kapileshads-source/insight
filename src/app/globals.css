@@ -316,6 +316,29 @@ body {
     transform 70ms ease;
 }
 
+/* A finger-sized hit area without a finger-sized box.
+ *
+ * The control is 1.15rem, which is right on a desktop and much too small on a
+ * phone: both Apple and Google put the minimum touch target at around 44px,
+ * and measuring the real pages at 375px found seventeen controls under 40.
+ * The tick is the worst of them, because in the assignments list the box is
+ * the only tappable thing on the row, and ticking work off is the one action
+ * in this app a student takes for pleasure.
+ *
+ * An invisible ::before centred on the box does it. Growing the box itself
+ * would wreck the alignment of every row it sits in; this leaves the drawing
+ * alone and only widens what counts as a tap. `::after` is the checkmark, so
+ * this has to be `::before`. */
+.tick::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+
 .tick:hover {
   border-color: var(--accent);
 }

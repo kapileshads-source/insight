@@ -41,7 +41,7 @@ function Tile({
   return (
     <Link
       href={href}
-      className="panel panel-link enter flex min-h-[9.5rem] flex-col justify-between px-6 py-5"
+      className="panel panel-link enter flex min-h-[7.5rem] flex-col justify-between px-4 py-4 sm:min-h-[9.5rem] sm:px-6 sm:py-5"
     >
       <span className="label text-text-faint">{label}</span>
       <div className="mt-3">{children}</div>
@@ -58,7 +58,7 @@ function Tile({
 /// on separate lines; anything longer belongs in the foot.
 function Big({ value, unit }: { value: string | null; unit?: string }) {
   return (
-    <span className="figure text-[2rem] text-text">
+    <span className="figure text-[1.6rem] text-text sm:text-[2rem]">
       {value ?? ", "}
       {unit && (
         <span className="ml-1.5 font-sans text-[13px] text-text-muted">
@@ -109,7 +109,14 @@ export function SummaryTiles() {
   ).length;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    /* Two across on a phone, not one.
+    
+       Stacked single file, six tiles at 9.5rem each was most of a screen per
+       tile and several screens of scrolling before anything else on the page.
+       A summary you have to scroll through is not a summary. Narrower tiles
+       mean the labels wrap onto two lines, which is fine: they are two words
+       of mono at 11px and the figure is what the eye goes to. */
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
       <Tile
         href="/gpa"
         label="Your GPA"

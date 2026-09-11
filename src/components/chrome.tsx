@@ -119,6 +119,26 @@ const APP_LINKS = [
   { href: "/devices", label: "Devices" },
 ];
 
+/**
+ * The five destinations that get a bottom bar on a phone.
+ *
+ * `APP_LINKS` has eight, which is two too many for a tab bar and includes
+ * three (Canvas, HAC, Devices) that are setup rather than daily use. Those
+ * stay reachable from Settings and from the pages that need them.
+ *
+ * This exists because the top nav is `hidden md:flex`, so on a phone the app
+ * had no navigation whatsoever: a wordmark, an email, and no way to reach any
+ * other page. The site was unusable on the device most students hold most of
+ * the time, and it took someone opening it on their phone to notice.
+ */
+const TAB_LINKS = [
+  { href: "/dashboard", label: "Home", icon: "M3 10.5 12 3l9 7.5M5.5 9.5V20h13V9.5" },
+  { href: "/study", label: "Study", icon: "M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" },
+  { href: "/work", label: "Work", icon: "M4 5h16v15H4zM8 3v4M16 3v4M8 12h8M8 16h5" },
+  { href: "/gpa", label: "GPA", icon: "M4 19V9M10 19V5M16 19v-6M22 19H2" },
+  { href: "/logs", label: "Insights", icon: "M4 18l5-6 4 3 7-8" },
+];
+
 /// Drawn rather than fetched, so it costs no request and cannot 404, and it
 /// inherits `currentColor` so it dims and brightens with the link beside it.
 function GearIcon() {
@@ -150,8 +170,9 @@ function GearIcon() {
  */
 export function AppNav({ email }: { email?: string | null }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-bg/85 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-3.5">
+    <>
+      <header className="sticky top-0 z-50 border-b border-line bg-bg/85 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-3.5">
         <Wordmark href="/dashboard" />
 
         <nav className="hidden items-center gap-6 text-[15px] text-text-muted md:flex">
@@ -175,6 +196,17 @@ export function AppNav({ email }: { email?: string | null }) {
           </Link>
         </nav>
 
+        {/* The gear moves into the top bar on a phone, where the nav it
+            normally sits in is hidden and the bottom tabs have no room for it. */}
+        <Link
+          href="/settings"
+          aria-label="Settings"
+          title="Settings"
+          className="-m-2.5 p-2.5 text-text-muted transition-colors duration-150 hover:text-text md:hidden"
+        >
+          <GearIcon />
+        </Link>
+
         {/* The email was dead text for the life of the app, which meant the
             only way off an account was clearing site data: there was no
             sign-out anywhere. It is a link to Settings now, where signing out
@@ -189,8 +221,47 @@ export function AppNav({ email }: { email?: string | null }) {
             {email}
           </Link>
         )}
-      </div>
-    </header>
+        </div>
+      </header>
+
+      {/* The bottom bar, phones only.
+      
+          A tab bar rather than a hamburger because this is a tool opened for
+          twenty seconds at a time: what is due, what was marked, start a
+          session. A menu that has to be opened first puts a tap in front of
+          every one of those.
+      
+          `pb-[env(safe-area-inset-bottom)]` is what keeps the labels above the
+          home indicator on a notched iPhone, which is most of them. Pages carry
+          `pb-32`, which is already enough room to scroll clear of this. */}
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
+        <ul className="mx-auto flex max-w-md items-stretch justify-between px-2">
+          {TAB_LINKS.map((t) => (
+            <li key={t.href} className="flex-1">
+              <Link
+                href={t.href}
+                className="flex flex-col items-center gap-1 px-1 py-2.5 text-text-faint transition-colors duration-150 active:text-accent"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="21"
+                  height="21"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d={t.icon} />
+                </svg>
+                <span className="text-[11px] leading-none">{t.label}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </>
   );
 }
 

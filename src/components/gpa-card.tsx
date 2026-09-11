@@ -404,7 +404,7 @@ export function GpaDetail({
                     disabled={out}
                     aria-label={`Try a different grade for ${c.title}`}
                     placeholder="try"
-                    className="w-20 rounded border border-line bg-bg px-2.5 py-1.5 text-[14px] text-text disabled:opacity-40"
+                    className="h-11 w-20 rounded border border-line bg-bg px-2.5 text-[14px] text-text disabled:opacity-40"
                   />
                 </span>
               </li>

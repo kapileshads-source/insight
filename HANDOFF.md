@@ -187,6 +187,46 @@ nothing.
 
 ---
 
+## Reading data from outside the website
+
+Added 2026-09-10. Until then every `/api/devices/*` route wrote and none read,
+so a second client could start a session and learn nothing else. The iOS app
+could not show a grade, and a browser extension could not show anything at all.
+The web app gets its data through Next.js server actions, which Swift cannot
+call, so there was simply no door.
+
+Two routes, both `GET`, both bearer-authenticated by a device token exactly
+like the write routes beside them:
+
+- `/api/devices/gradebook` — courses, assignments, and the transcript
+- `/api/devices/records` — sessions, sleep, screen time, outcomes, and what
+  the extension measured
+
+**Everything they return is ciphertext.** The server cannot decrypt it and does
+not try, so a caller needs the student's key: `Crypto.swift` on iOS, `crypto.ts`
+on the web. That is why there is no `/api/devices/gpa`, and there should never
+be one. A GPA is computed from decrypted rows on the device, by `presentGpa`.
+An endpoint that returned a number would mean the server had read the grades.
+
+The same applies to insights. `insights.ts` is pure arithmetic over plain
+arrays with no imports from the rest of the app, and that is deliberate: a
+client wanting patterns ports the engine rather than asking the server for the
+answer.
+
+Query shapes mirror `fetchGradebook` and `fetchEncryptedRecords` field for
+field, including the 120-day window and the row limits, so the two clients can
+never disagree about which term is current.
+
+**Verified:** 401 without a token, 401 with a bad token, 204 on preflight.
+**Not verified:** the authenticated response, because that needs a real device
+token and the only database to hand is production. To check it yourself,
+generate a pairing code on `/devices`, exchange it, then:
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+  https://insight-study-sleep.vercel.app/api/devices/gradebook
+```
+
 ## The pairing code that isn't like the others
 
 A laptop tracker only ever *adds*, that's why the pairing screen can say

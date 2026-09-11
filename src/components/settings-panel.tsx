@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import { useCrypto } from "@/components/crypto-provider";
 import {
   changePassword,
@@ -61,6 +62,7 @@ export function SettingsPanel({
 }) {
   const router = useRouter();
   const { lock } = useCrypto();
+  const { signOut } = useClerk();
   const [pending, startTransition] = useTransition();
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -183,6 +185,34 @@ export function SettingsPanel({
           className="btn-secondary px-5 py-2.5 text-[15px] text-text-muted disabled:opacity-60"
         >
           Lock now
+        </button>
+      </Card>
+
+      {/* Signing out, which the app went its whole life without offering.
+          There was no sign-out anywhere: not here, not in the nav, nowhere.
+          Clearing site data was the only way off an account, which is useless
+          on a shared school computer and the first thing a store reviewer
+          needs when testing with a supplied login.
+
+          The key is dropped before the session is, deliberately. Signing out
+          of Clerk alone would leave the decryption key sitting in this
+          browser's IndexedDB for the next person to sign in on this machine,
+          which is exactly the situation "sign out" is supposed to end. */}
+      <Card
+        title="Sign out"
+        description="Ends your session and forgets your password on this browser. Both, so nothing is left behind on a computer you share."
+      >
+        <button
+          onClick={() =>
+            startTransition(async () => {
+              await lock();
+              await signOut({ redirectUrl: "/" });
+            })
+          }
+          disabled={pending}
+          className="btn-secondary px-5 py-2.5 text-[15px] text-text-muted disabled:opacity-60"
+        >
+          {pending ? "Signing out…" : "Sign out"}
         </button>
       </Card>
 

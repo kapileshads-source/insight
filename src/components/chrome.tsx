@@ -175,10 +175,19 @@ export function AppNav({ email }: { email?: string | null }) {
           </Link>
         </nav>
 
+        {/* The email was dead text for the life of the app, which meant the
+            only way off an account was clearing site data: there was no
+            sign-out anywhere. It is a link to Settings now, where signing out
+            lives, because the address you are signed in as is the obvious
+            thing to reach for when you want to stop being signed in as it. */}
         {email && (
-          <span className="max-w-[9rem] truncate text-[13px] text-text-faint sm:max-w-none sm:text-[14px]">
+          <Link
+            href="/settings"
+            title="Account settings"
+            className="max-w-[9rem] truncate text-[13px] text-text-faint transition-colors duration-150 hover:text-text-muted sm:max-w-none sm:text-[14px]"
+          >
             {email}
-          </span>
+          </Link>
         )}
       </div>
     </header>

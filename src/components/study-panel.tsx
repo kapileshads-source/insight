@@ -60,7 +60,7 @@ export function StudyStats() {
           <Stat value={String(stats.sessionsThisWeek)} label="Sessions this week" />
           <Stat value={formatDuration(stats.minutesThisWeek)} label="Time logged" />
           <Stat
-            value={stats.meanSleep ? `${stats.meanSleep.toFixed(1)} hrs` : ", "}
+            value={stats.meanSleep ? `${stats.meanSleep.toFixed(1)} hrs` : "-"}
             label="Sleep, 7-day"
           />
           {stats.focusShareThisWeek !== null ? (

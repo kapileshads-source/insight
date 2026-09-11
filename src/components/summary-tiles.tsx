@@ -59,7 +59,7 @@ function Tile({
 function Big({ value, unit }: { value: string | null; unit?: string }) {
   return (
     <span className="figure text-[1.6rem] text-text sm:text-[2rem]">
-      {value ?? ", "}
+      {value ?? "-"}
       {unit && (
         <span className="ml-1.5 font-sans text-[13px] text-text-muted">
           {unit}

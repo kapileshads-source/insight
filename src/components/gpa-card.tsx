@@ -327,14 +327,14 @@ export function GpaDetail({
             key={String(trying ? withTryout.weighted : today.weighted)}
             className="figure figure-live mt-2 text-[2.6rem] text-text"
           >
-            {(trying ? withTryout.weighted : today.weighted)?.toFixed(3) ?? ", "}
+            {(trying ? withTryout.weighted : today.weighted)?.toFixed(3) ?? "-"}
           </p>
           <p className="mt-1 text-[13px] text-text-faint">Weighted</p>
         </div>
         <div>
           <p className="figure text-[1.6rem] text-text">
             {(trying ? withTryout.unweighted : today.unweighted)?.toFixed(3) ??
-              ", "}
+              "-"}
           </p>
           <p className="mt-1 text-[13px] text-text-faint">Unweighted</p>
         </div>
@@ -465,7 +465,7 @@ function Figure({
   return (
     <div>
       <div className={`figure text-on-light ${size}`}>
-        {value === null ? ", " : value.toFixed(3)}
+        {value === null ? "-" : value.toFixed(3)}
       </div>
       <p className="mt-1.5 text-[13px] text-on-light-muted">{label}</p>
     </div>

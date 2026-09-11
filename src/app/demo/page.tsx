@@ -2,7 +2,7 @@ import { PageHero, SiteFooter, SiteNav } from "@/components/chrome";
 
 import { DemoSeeder } from "@/components/demo-seeder";
 
-export const metadata = { title: "Sample data — Insight" };
+export const metadata = { title: "Sample data, Insight" };
 
 /**
  * Filling an empty account with a term of sample data.
@@ -30,7 +30,7 @@ export default function DemoPage() {
         <h2 className="h3 text-[17px]">This is not real data</h2>
         <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
           It is invented, and it must never be described as anyone&rsquo;s
-          actual usage — in a submission, a video, or anywhere else. Use it to
+          actual usage, in a submission, a video, or anywhere else. Use it to
           show what the app <em>does</em>, not what it found.
         </p>
         <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
@@ -53,7 +53,7 @@ export default function DemoPage() {
         </ul>
         <p className="mt-4 text-[15px] leading-relaxed text-text-muted">
           The student has a deliberate pattern: they score worse after late
-          nights. That is the point — you can check whether the engine finds
+          nights. That is the point, you can check whether the engine finds
           what was put there, and whether it stays quiet about the things that
           were left as noise. It should surface the late-night pattern and say
           nothing about where they studied, because nothing was planted there.
@@ -61,7 +61,7 @@ export default function DemoPage() {
         <p className="mt-4 text-[13px] leading-relaxed text-text-faint">
           Everything is encrypted in your browser on the way in, exactly like
           real logs. The generator has to run here for the same reason the rest
-          of the app does — the server has no key.
+          of the app does, the server has no key.
         </p>
       </section>
       </div>

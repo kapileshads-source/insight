@@ -2,7 +2,7 @@ import { SignUp } from "@clerk/nextjs";
 import { SiteNav } from "@/components/chrome";
 import Link from "next/link";
 
-export const metadata = { title: "Sign up — Insight" };
+export const metadata = { title: "Sign up, Insight" };
 
 export default function SignUpPage() {
   return (

@@ -53,7 +53,7 @@ function Row({
 }) {
   const due = relativeDue(row.dueAt, now);
 
-  // With no due date, when it was handed out is the only thing worth saying —
+  // With no due date, when it was handed out is the only thing worth saying,
   // and it is what the "probably this week" guess rests on, so showing it lets
   // a student judge the guess rather than take it on faith.
   const assigned =
@@ -78,7 +78,7 @@ function Row({
         className="tick mt-0.5"
       />
       <div className="min-w-0 flex-1">
-        {/* Two lines, not one. Canvas titles run long — "Final Research
+        {/* Two lines, not one. Canvas titles run long, "Final Research
             Question- Assessment Grade- After completing the Peer Reviews
             please submit yo…" was being cut mid-word, which loses the part
             that says what the work actually is. */}
@@ -135,7 +135,7 @@ export function AssignmentsPanel() {
   const { groups, units, failed, unlocked } = useAssignments();
   const [showAll, setShowAll] = useState(false);
   // Optimistically hidden rows. The write goes to the server, but the row has
-  // to leave the list now — a checkbox that pauses before responding feels
+  // to leave the list now, a checkbox that pauses before responding feels
   // broken in a way a wrong guess here would not.
   const [done, setDone] = useState<Set<string>>(new Set());
 
@@ -181,7 +181,7 @@ export function AssignmentsPanel() {
 /**
  * The card itself, with no crypto and no fetching.
  *
- * Split out so it can be rendered against sample data and looked at — the
+ * Split out so it can be rendered against sample data and looked at, the
  * panel above needs a signed-in user and an unlocked key, which makes the one
  * thing worth checking (does this read well?) the one thing hardest to check.
  */
@@ -194,7 +194,7 @@ export function AssignmentList({
 }: {
   groups: AssignmentGroup[];
   /// What each class is currently on, from Canvas modules. The one question
-  /// only Canvas can answer — HAC's gradebook has no idea what is being taught.
+  /// only Canvas can answer, HAC's gradebook has no idea what is being taught.
   units?: { course: string; unit: string }[];
   showAll?: boolean;
   onShowAll?: () => void;
@@ -266,7 +266,7 @@ export function AssignmentList({
       )}
 
       <p className="mt-6 border-t border-line pt-4 text-[13px] leading-relaxed text-text-faint">
-        Graded and handed-in work isn&rsquo;t listed — this is what&rsquo;s
+        Graded and handed-in work isn&rsquo;t listed, this is what&rsquo;s
         left. Names and points are encrypted here in your browser, the same as
         everything else.
       </p>

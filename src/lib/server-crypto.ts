@@ -6,7 +6,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
  *
  * Every other student secret is encrypted in the browser under a key we never
  * see. This one can't be, because the server has to call Canvas on the
- * student's behalf — a background sync can't ask them to type a password.
+ * student's behalf, a background sync can't ask them to type a password.
  *
  * So this protects against a stolen database, not against us. That distinction
  * is the whole reason the privacy page names it explicitly rather than hiding

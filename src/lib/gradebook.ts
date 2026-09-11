@@ -7,8 +7,8 @@
  * of every grade app students actually keep on their phones, and it was missing.
  *
  * **The rule this file exists to enforce: a course grade is quoted, never
- * computed.** Frisco weights its categories — "Progress Check for Learning"
- * against "Assessment of Learning" — and the weights are not published in the
+ * computed.** Frisco weights its categories, "Progress Check for Learning"
+ * against "Assessment of Learning", and the weights are not published in the
  * page we read. A real gradebook, captured 2026-09-05, printed
  * `Student Grades 0.00%` for a class holding seven graded progress checks,
  * because its assessment category was empty. Any average we derived would have
@@ -19,7 +19,7 @@
  * So `reportedGrade` is free text straight from the source, and there is
  * deliberately no function here that returns a course percentage.
  *
- * Per-assignment percentages are a different thing and are fine — 17 out of 20
+ * Per-assignment percentages are a different thing and are fine, 17 out of 20
  * is 85% by arithmetic nobody weights.
  */
 
@@ -40,7 +40,7 @@ export type GradeRow = {
   score: number | null;
   pointsPossible: number | null;
   status: GradeStatus;
-  /// When a sync last rewrote this row — the closest thing to "graded at" that
+  /// When a sync last rewrote this row, the closest thing to "graded at" that
   /// either gradebook gives us.
   updatedAt: Date;
 };
@@ -80,7 +80,7 @@ export function percentOf(row: {
  * Whether the percentage is worth printing beside the raw mark.
  *
  * Almost every Frisco assignment is out of 100, which makes "93/100" and "93%"
- * the same sentence twice — and the repetition is not harmless, because a
+ * the same sentence twice, and the repetition is not harmless, because a
  * column of duplicated figures is what the eye learns to skip. The percentage
  * earns its place only when the arithmetic isn't already done: 17 out of 20.
  */
@@ -102,7 +102,7 @@ export function isGraded(row: { status: GradeStatus }): boolean {
  * Group rows into classes, newest mark first.
  *
  * `reportedGrades` maps course name to whatever the gradebook printed. A course
- * missing from it simply has no grade to show — which is the honest state early
+ * missing from it simply has no grade to show, which is the honest state early
  * in a term, and is why the value is nullable rather than defaulted to zero.
  */
 export function buildGradebook(
@@ -147,7 +147,7 @@ export function buildGradebook(
   // The first version sorted these to the bottom instead, on the reasoning that
   // a missing class looks like a broken sync. On a real account that produced a
   // screen of six identical cards reading "No grade posted yet / Nothing marked
-  // yet in this class" — including two that are not classes — and the marks
+  // yet in this class", including two that are not classes, and the marks
   // that did exist were buried under them. An empty card is not reassurance,
   // it is noise, and there are enough of them in September to bury everything
   // else.
@@ -174,7 +174,7 @@ export function hasSomethingToShow(course: CourseGrades): boolean {
  * a daily habit, so the app that says "three new marks" before you think to
  * open the gradebook becomes the one you open.
  *
- * `since` being null means we have never recorded a visit — a first run, or a
+ * `since` being null means we have never recorded a visit, a first run, or a
  * new device. That returns nothing rather than everything: greeting someone
  * with "47 new grades" on their first open is noise, not news.
  */
@@ -188,14 +188,14 @@ export function gradedSince(rows: GradeRow[], since: Date | null): GradeRow[] {
 /**
  * One card per class, not one per system.
  *
- * A student taking Chemistry saw it twice — HAC's `SCI22200A - 6 Chemistry Adv
+ * A student taking Chemistry saw it twice, HAC's `SCI22200A - 6 Chemistry Adv
  * S1` at 83.00% and Canvas's `Chemistry Adv YR (Whitt, Austin)` at 80.02%.
  * That is one class read from two places at two different moments, not two
  * grades, and showing both invites the student to wonder which is real when
  * the answer is always the same one.
  *
  * Delegates to `onlyEnrolled` so the grades list and the GPA estimate cannot
- * answer this question differently — which they did, and which is why the
+ * answer this question differently, which they did, and which is why the
  * duplicate survived on one screen after being fixed on the other.
  */
 export function oneCardPerClass(courses: CourseGrades[]): CourseGrades[] {

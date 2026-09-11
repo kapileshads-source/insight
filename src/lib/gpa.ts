@@ -4,7 +4,7 @@
  * **This is an estimate and the wording must never stop saying so.** The
  * district computes GPA once, after a semester closes, from semester final
  * grades. Anything derived mid-term from in-progress marks is a projection of
- * what those finals might be, and it will disagree with the transcript — which
+ * what those finals might be, and it will disagree with the transcript, which
  * is fine as long as nobody is told otherwise. A GPA is the number a student
  * cares about most, and being confidently wrong about it once is the kind of
  * error they do not come back from.
@@ -17,11 +17,11 @@
  * - **Weighted** is per-percent: every point below 100 costs 0.1, from a
  *   maximum set by the course's level. An AP 100 is 6.0, an AP 90 is 5.0.
  *   Checked against a real 2025-26 transcript, this reproduced **4.6688**
- *   against a printed **4.6940** — the whole residual being which courses count
+ *   against a printed **4.6940**, the whole residual being which courses count
  *   as Advanced. The formula is right.
  * - **Unweighted (the "4.0 College GPA")** is *letter-based*. Applying the
  *   per-percent rule with a 4.0 maximum gave **3.2312** against a printed
- *   **3.7780** — visibly, unusably wrong. A plain letter scale gives ≈3.75,
+ *   **3.7780**, visibly, unusably wrong. A plain letter scale gives ≈3.75,
  *   which is essentially right.
  *
  * The remaining ~0.03 on each is unconfirmed: the exact letter cutoffs, and
@@ -37,7 +37,7 @@ export const LEVEL_MAX: Record<CourseLevel, number> = {
   ON_LEVEL: 5.0,
 };
 
-/// The unweighted scale tops out here regardless of level — that is what makes
+/// The unweighted scale tops out here regardless of level, that is what makes
 /// it unweighted.
 export const UNWEIGHTED_MAX = 4.0;
 
@@ -90,7 +90,7 @@ export function weightedPoints(grade: number, level: CourseLevel): number {
 /**
  * Unweighted points, on the 4.0 scale.
  *
- * Letter bands, not arithmetic — see the note at the top. The cutoffs here are
+ * Letter bands, not arithmetic, see the note at the top. The cutoffs here are
  * plain decades, which reproduced a real transcript to within 0.03. **They are
  * not confirmed against district policy**, and the residual is probably here:
  * Frisco may use 90/80/75/70 rather than 90/80/70/60. One line to change if so,
@@ -130,7 +130,7 @@ export type GpaEstimate = {
  * The estimate.
  *
  * Null rather than zero when nothing counts. A student who has excluded
- * everything, or whose term has not started, has *no* GPA — and rendering that
+ * everything, or whose term has not started, has *no* GPA, and rendering that
  * as 0.00 would read as catastrophe rather than as absence.
  */
 export function estimateGpa(courses: GpaCourse[]): GpaEstimate {
@@ -168,14 +168,14 @@ export function estimateGpa(courses: GpaCourse[]): GpaEstimate {
 /**
  * Courses that should not count toward a GPA by default.
  *
- * Kapilesh's own dashboard surfaced "CHS Flashing Lights" — a district
+ * Kapilesh's own dashboard surfaced "CHS Flashing Lights", a district
  * compliance course that appears in Canvas and is not a class. Counting it
  * would move a GPA.
  *
  * Deliberately a small, explicit list of markers rather than an LLM judgement.
  * A model guessing whether a course counts is a guess that silently changes the
  * number a student cares about most, and the student cannot see it happen. The
- * transcript already marks the real answer — those rows carry 0.0000 credit —
+ * transcript already marks the real answer, those rows carry 0.0000 credit,
  * so where credit is known it should win over any inference, and where it is
  * not, the student gets a toggle.
  */
@@ -185,15 +185,15 @@ export function estimateGpa(courses: GpaCourse[]): GpaEstimate {
  * Kapilesh's idea, and it is better than the marker list below because it is
  * evidence rather than guesswork. HAC lists what a student is actually
  * enrolled in. Canvas lists that *plus* whatever the district has pushed into
- * it — "Frisco ISD 1forAll Student Course 26-27", "Cen10 Titans Info", "CHS
- * Flashing Lights" — which are Canvas shells, not classes, and one of them was
+ * it, "Frisco ISD 1forAll Student Course 26-27", "Cen10 Titans Info", "CHS
+ * Flashing Lights", which are Canvas shells, not classes, and one of them was
  * sitting at 100% and lifting a GPA.
  *
  * So: if HAC has told us anything, HAC is the roll. A Canvas course with no
  * counterpart there is not a class the student takes.
  *
  * Matching is the same asymmetric matcher the assignments use, because the two
- * systems name a class nothing alike — `SCI22200A - 6 Chemistry Adv S1` against
+ * systems name a class nothing alike, `SCI22200A - 6 Chemistry Adv S1` against
  * `Chemistry Adv YR (Whitt, Austin)`. It refuses rather than guesses, so an
  * unmatched Canvas course is dropped rather than kept on a maybe.
  *
@@ -207,7 +207,7 @@ export function estimateGpa(courses: GpaCourse[]): GpaEstimate {
  *
  * HAC is the roll. Once it has named anything, every row not on that roll is
  * either a duplicate of one that is, or a district shell that was never a
- * class — and both should go.
+ * class, and both should go.
  *
  * **This replaced a version that tried to match Canvas titles against HAC
  * ones**, keeping a Canvas row when it looked like the same subject. That kept
@@ -216,8 +216,8 @@ export function estimateGpa(courses: GpaCourse[]): GpaEstimate {
  * and showed it once. Two filters that disagreed about the same question, and
  * the more clever one was the wrong one.
  *
- * A class HAC matched onto an existing Canvas row is still on the roll — the
- * sync marks it when it writes the grade — so nothing is lost by dropping the
+ * A class HAC matched onto an existing Canvas row is still on the roll, the
+ * sync marks it when it writes the grade, so nothing is lost by dropping the
  * matching logic.
  *
  * **If HAC has said nothing yet, nothing is dropped.** A filter that empties
@@ -245,14 +245,14 @@ const NOT_A_CLASS = [
 ];
 
 // Note what is deliberately *not* in that list: "lunch". Frisco writes the
-// lunch wave into real course titles — "AP Pre Calculus S1 - C Lunch",
-// "Computer Science 1 Adv S1 - A Lunch" — so matching it would have excluded
+// lunch wave into real course titles, "AP Pre Calculus S1 - C Lunch",
+// "Computer Science 1 Adv S1 - A Lunch", so matching it would have excluded
 // an AP class from the GPA and quietly lowered it.
 
 /**
  * Whether a course grade can be used in a GPA at all.
  *
- * A course reading 0 has not been graded — it has not failed. Progress checks
+ * A course reading 0 has not been graded, it has not failed. Progress checks
  * count for nothing and assessments are the whole grade, so a class whose
  * assessment category is still empty prints `0.00%` while holding a page of
  * marked work. A real Frisco English class did exactly that.
@@ -260,7 +260,7 @@ const NOT_A_CLASS = [
  * Feeding that into a GPA turns "the term has not really started" into a
  * catastrophic number, and it is the first thing a student would see. A
  * genuine zero across a whole course does not happen to someone attending
- * school, so excluding is the safe direction — and the moment one assessment
+ * school, so excluding is the safe direction, and the moment one assessment
  * is marked, the course reappears on its own.
  */
 export function hasUsableGrade(grade: number | null): boolean {
@@ -290,7 +290,7 @@ export type CumulativeGpa = {
  *
  * ## Why this does not re-add up the transcript
  *
- * The obvious approach — score every finished course and average the lot — was
+ * The obvious approach, score every finished course and average the lot, was
  * built first and checked against a real transcript. It produced **4.4211**
  * where the school prints **4.6940**. The unweighted figure was close (3.7368
  * against 3.7780) because it needs no level; the weighted one was a quarter of
@@ -351,13 +351,13 @@ export function presentGpa(
  *
  * The single most useful question a student asks about their grades, and the
  * one the app could not answer. It was asked of the chat, which correctly said
- * it lacked the credit weightings — an honest refusal, and a bad experience.
+ * it lacked the credit weightings, an honest refusal, and a bad experience.
  *
  * **This is deliberately not something the model does.** A language model doing
  * arithmetic on a GPA will produce a number that looks right and sometimes is
  * not, presented with exactly the same confidence either way. This is the
- * figure a student will act on — decide whether to keep pushing in a class,
- * decide whether they can afford an off period — so it is computed here,
+ * figure a student will act on, decide whether to keep pushing in a class,
+ * decide whether they can afford an off period, so it is computed here,
  * deterministically, from the same `presentGpa` the dashboard headlines. The
  * chat's job is to point at this, not to attempt it.
  *
@@ -383,7 +383,7 @@ export function gpaIf(
 }
 
 /// The move from one GPA to another, as a signed delta. Null whenever either
-/// side is unknown — a change of "—" is not a change of zero.
+/// side is unknown, a change of ", " is not a change of zero.
 export function gpaDelta(
   from: number | null,
   to: number | null,

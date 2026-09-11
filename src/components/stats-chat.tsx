@@ -21,7 +21,7 @@ import {
  * the browser, from the same decrypt the rest of the dashboard uses. There is
  * no server-side "get my stats" and there cannot be one.
  *
- * What gets sent is an aggregate — GPA, course percentages, this week's
+ * What gets sent is an aggregate, GPA, course percentages, this week's
  * counts, and the sentences the insight engine has already validated. Never a
  * session, never an assignment name, never an individual mark. That is the
  * same line `requestRecommendation` draws, and it is drawn once, in
@@ -64,7 +64,7 @@ export function readableCourse(title: string): string {
 export function StatsChat() {
   // Both halves of the aggregate come from providers rather than from props.
   // The chat needs the gradebook *and* the study log, and neither can be read
-  // anywhere but the browser — so it reads the two decrypts the page has
+  // anywhere but the browser, so it reads the two decrypts the page has
   // already done rather than being handed a summary by whoever mounts it.
   const data = useGradebook();
   const { stats, insights } = useStudyData();
@@ -78,8 +78,8 @@ export function StatsChat() {
   const courses = onlyEnrolled(data.gpa).filter((c) => hasUsableGrade(c.grade));
 
   // The number the dashboard headlines, which is the one a student means by
-  // "my GPA". The first version sent `past` — the school's last *confirmed*
-  // figure — so asked "what's my GPA right now", the chat answered 4.694 while
+  // "my GPA". The first version sent `past`, the school's last *confirmed*
+  // figure, so asked "what's my GPA right now", the chat answered 4.694 while
   // the band at the top of the same screen said 4.733. Being wrong about this
   // one number is worse than not having the feature.
   const today = presentGpa(
@@ -218,7 +218,7 @@ export function StatsChat() {
       </form>
 
       <p className="mt-3 text-[13px] leading-relaxed text-text-faint">
-        Your totals are sent to phrase an answer — your GPA, your course
+        Your totals are sent to phrase an answer, your GPA, your course
         percentages and this week&rsquo;s counts. Individual sessions,
         assignment names and marks are not.
       </p>

@@ -2,8 +2,8 @@
  * Lifting HAC's gradebook page into the plain structures `hac.ts` reads.
  *
  * Deliberately dull, and deliberately separate. Everything that can be subtly
- * wrong — which column is the score, what `Z` means, whether a row is a real
- * assignment — lives next door and is tested without a browser. This file
+ * wrong, which column is the score, what `Z` means, whether a row is a real
+ * assignment, lives next door and is tested without a browser. This file
  * only walks a document, and if it is wrong it is wrong loudly.
  *
  * The selectors are HAC's, confirmed against a working public parser:
@@ -26,7 +26,7 @@ const text = (node: Element | null | undefined): string =>
  * The header labels for a course's table.
  *
  * HAC renders them as `th` in some views and as a styled `td` row in others,
- * so both are tried before giving up. Giving up is fine — `readTable` treats
+ * so both are tried before giving up. Giving up is fine, `readTable` treats
  * an empty header list as "guess, and admit it".
  */
 function headersFor(grid: Element): string[] {
@@ -88,7 +88,7 @@ export function extractTables(doc: Document): HacTable[] {
   return tables;
 }
 
-/// Parse a page fetched as HTML. Browser only — there is no DOMParser in Node,
+/// Parse a page fetched as HTML. Browser only, there is no DOMParser in Node,
 /// which is exactly why the decisions live in `hac.ts` instead of here.
 export function parseHacHtml(html: string): HacTable[] {
   const doc = new DOMParser().parseFromString(html, "text/html");
@@ -109,8 +109,8 @@ export function parseHacHtml(html: string): HacTable[] {
  * and they will change if the page is rebuilt. That is acceptable *here* in a
  * way positional cell indices are not: an id that no longer exists yields
  * nothing and is obvious, while a shifted column yields a wrong grade and is
- * not. Where this file does read cells by position — the course rows have no
- * header to bind to — every row is validated in `transcript.ts` before it is
+ * not. Where this file does read cells by position, the course rows have no
+ * header to bind to, every row is validated in `transcript.ts` before it is
  * believed.
  */
 export function extractTranscript(doc: Document): {

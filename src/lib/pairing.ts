@@ -3,14 +3,14 @@ import type { EncryptionSetup } from "@/lib/crypto";
 /**
  * The pairing code a phone gets, which is not the one a laptop gets.
  *
- * The extension and the desktop apps only ever *add* — they count sites and
+ * The extension and the desktop apps only ever *add*, they count sites and
  * apps and post them, and the pairing screen says so in as many words:
  * pairing grants the ability to add, never to read. That is only true because
  * a device token cannot reach anything encrypted.
  *
  * A phone is a different thing. It shows you your own data and lets you log
- * from bed, so it needs the key. The obvious way to give it one — an endpoint
- * that hands out key material to a bearer token — would quietly make that
+ * from bed, so it needs the key. The obvious way to give it one, an endpoint
+ * that hands out key material to a bearer token, would quietly make that
  * sentence false for every device, and would mean a stolen token could pull
  * down the wrapped key and grind at the password offline.
  *
@@ -20,7 +20,7 @@ import type { EncryptionSetup } from "@/lib/crypto";
  * gets exactly what it got before: the ability to add.
  *
  * None of what's inside is a secret on its own. A salt is public by design and
- * the wrapped key is useless without the password — which is not in here, and
+ * the wrapped key is useless without the password, which is not in here, and
  * never leaves the student's head. But the code is long and it is worth
  * treating as private, so the UI says to paste it once and not to share it.
  */
@@ -34,7 +34,7 @@ export type PhonePairing = {
   setup: EncryptionSetup;
 };
 
-/// Base64url, so it survives being pasted into anything — no padding to lose,
+/// Base64url, so it survives being pasted into anything, no padding to lose,
 /// no characters a text field will helpfully autocorrect.
 export function encodePhonePairing(pairing: PhonePairing): string {
   const json = JSON.stringify(pairing);

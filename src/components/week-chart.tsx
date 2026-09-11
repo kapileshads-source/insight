@@ -9,7 +9,7 @@ import type { DayBar } from "@/lib/insights";
  *
  * One measure, one axis. Study minutes and test scores are the two things a
  * student most wants to see together, and putting them on one chart would need
- * two y-scales — which is the single most reliable way to make a chart lie.
+ * two y-scales, which is the single most reliable way to make a chart lie.
  * Sleep and scores live in their own cards.
  *
  * Bars rather than a line: days are discrete, and a line drawn across a day
@@ -56,7 +56,7 @@ export function WeekChart({ days }: { days: DayBar[] }) {
                 weekday: "short",
                 month: "short",
                 day: "numeric",
-              })} — ${
+              })}, ${
                 active.minutes === 0
                   ? "nothing logged"
                   : `${formatMinutes(active.minutes)}, ${active.sessions} session${

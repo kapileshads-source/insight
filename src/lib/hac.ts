@@ -8,7 +8,7 @@
  * a word. Nothing throws. Nothing looks broken. The numbers are just wrong.
  *
  * So this binds to the header labels, and when there is no header row it says
- * so rather than guessing quietly — `usedFallback` is part of the result and
+ * so rather than guessing quietly, `usedFallback` is part of the result and
  * the caller is expected to care.
  *
  * Split in two on purpose. Everything here is pure and takes strings, so the
@@ -29,7 +29,7 @@ export type HacTable = {
   /// Data rows, each already reduced to trimmed cell text.
   rows: string[][];
   /// The assignment name per row, taken from the row's link rather than a
-  /// cell — a row without a link is a totals row and is not an assignment.
+  /// cell, a row without a link is a totals row and is not an assignment.
   names: (string | null)[];
 };
 
@@ -39,7 +39,7 @@ export type HacAssignment = {
   category: string | null;
   assignedOn: string | null;
   dueOn: string | null;
-  /// Null when there is no numeric score — which includes an ungraded
+  /// Null when there is no numeric score, which includes an ungraded
   /// assignment, an excused one, and a missing one. Those are different
   /// things and `status` keeps them apart.
   score: number | null;
@@ -55,10 +55,10 @@ export type HacStatus =
   | "UNGRADED"
   /// HAC prints "M" for missing.
   | "MISSING"
-  /// "Z" — excused, exempt, or dropped depending on the campus. Either way it
+  /// "Z", excused, exempt, or dropped depending on the campus. Either way it
   /// does not belong in an average.
   | "EXCUSED"
-  /// "INS" — handed in, not yet worth a mark. Distinct from UNGRADED, which
+  /// "INS", handed in, not yet worth a mark. Distinct from UNGRADED, which
   /// means the teacher has not looked at it at all.
   | "INCOMPLETE";
 
@@ -90,7 +90,7 @@ const normalise = (s: string) => s.toLowerCase().replace(/[\s_]+/g, " ").trim();
 /**
  * Which column holds a field, by label.
  *
- * Returns -1 when the header row exists but says nothing matching — which is
+ * Returns -1 when the header row exists but says nothing matching, which is
  * a real answer, not a failure: a table without a Category column should
  * produce assignments with no category, not assignments with a wrong one.
  */

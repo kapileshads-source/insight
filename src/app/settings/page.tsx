@@ -12,7 +12,7 @@ import { BlocklistEditor } from "@/components/blocklist-editor";
 import { RecoveryKeyCard } from "@/components/recovery-key-card";
 import { recoveryKeyStatus } from "@/app/actions/crypto";
 
-export const metadata = { title: "Settings — Insight" };
+export const metadata = { title: "Settings, Insight" };
 
 export default async function SettingsPage() {
   const user = await getOrCreateUser();

@@ -135,7 +135,7 @@ export async function saveOutcome(
 /// Everything the browser needs to compute insights, in one round trip.
 ///
 /// All of it is ciphertext. The server is handing over data it cannot read,
-/// for the client to decrypt and analyse — which is the whole shape of the
+/// for the client to decrypt and analyse, which is the whole shape of the
 /// application now.
 export async function fetchEncryptedRecords() {
   const user = await getOrCreateUser();
@@ -206,7 +206,7 @@ export async function fetchEncryptedRecords() {
 /**
  * Which mornings and evenings already have an answer.
  *
- * Only the dates come back — the numbers themselves are encrypted and the
+ * Only the dates come back, the numbers themselves are encrypted and the
  * server has no business reading them to decide whether to ask a question.
  * Row existence is plaintext by design, and this is exactly the kind of thing
  * that rule was written for.
@@ -258,7 +258,7 @@ export async function routineStatus(): Promise<{
  * The percentages arrive already encrypted: the browser read the gradebook
  * rows, decrypted them, worked out what was new, and sealed the result. The
  * server's job is only to file them against the right assignment, which is the
- * one thing it can check — `assignmentId` is unique on `Outcome`, so the
+ * one thing it can check, `assignmentId` is unique on `Outcome`, so the
  * database itself refuses to record the same test twice even if a second tab
  * tries at the same moment.
  */
@@ -400,7 +400,7 @@ export async function resolveGradeConflict(input: unknown): Promise<LogResult> {
   });
   if (!assignment) return { ok: false, error: "That assignment isn't yours." };
 
-  // Another outcome already claims this assignment — the question has been
+  // Another outcome already claims this assignment, the question has been
   // answered elsewhere, and `assignmentId` is unique.
   const taken = await db.outcome.findUnique({
     where: { assignmentId: assignment.id },

@@ -4,8 +4,8 @@
  * Shared, because it does two different jobs. On the landing page it is the
  * hero: the one image this app has that nobody else does, stating the whole
  * product before a word is read. In onboarding it appears beside the password
- * step, which is the most expensive thing Insight asks for — a second
- * password, unrecoverable — and used to be asked with nothing on screen to
+ * step, which is the most expensive thing Insight asks for, a second
+ * password, unrecoverable, and used to be asked with nothing on screen to
  * justify it.
  *
  * The points are coloured by which side of *this student's own average* they
@@ -22,7 +22,7 @@ export function ScatterCard() {
   // effect planted in `src/lib/demo-data.ts`, not an invention for this page.
   // Deliberately noisy. An earlier version stepped the scores up in order and
   // produced a near-perfect diagonal, which reads as a drawn line rather than
-  // as measurements — and a study app illustrating itself with data too clean
+  // as measurements, and a study app illustrating itself with data too clean
   // to be real is the wrong first impression to make.
   const points: [number, number][] = [
     [4.6, 68], [4.8, 55], [5.2, 71], [5.3, 62], [5.4, 59], [5.9, 74],
@@ -99,7 +99,7 @@ export function ScatterCard() {
           ))}
 
           {/* The split. Everything left of this line is a short night *for this
-              student* — which is the comparison the engine makes, and the
+              student*, which is the comparison the engine makes, and the
               reason the page never says "eight hours". */}
           <line
             x1={px(mean)}
@@ -109,7 +109,7 @@ export function ScatterCard() {
             stroke="var(--line-hi)"
             strokeDasharray="4 4"
           />
-          {/* Above the top gridline, not level with it — set at T + 4 the words
+          {/* Above the top gridline, not level with it, set at T + 4 the words
               sat directly on the 100 rule and read as part of it. */}
           <text
             x={px(mean) + 6}

@@ -1,4 +1,4 @@
-// Insight — data model
+// Insight, data model
 //
 // ---------------------------------------------------------------------------
 // A note on encryption, because it shapes nearly every model below.
@@ -9,8 +9,8 @@
 // The rule applied throughout is: STRUCTURE IS PLAINTEXT, CONTENT IS NOT.
 // Row existence, foreign keys, and the timestamps needed for ordering,
 // pagination and de-duplication stay readable. Everything a student would
-// consider private — how long they slept, what they studied, what they scored,
-// how stressed they were — lives inside `payloadCipher`.
+// consider private, how long they slept, what they studied, what they scored,
+// how stressed they were, lives inside `payloadCipher`.
 //
 // Each row carries one encrypted JSON blob rather than a column per encrypted
 // field. That means one decrypt per row instead of many, and adding a new
@@ -54,7 +54,7 @@ enum DayType {
   B
 }
 
-/// What times those classes run. Deliberately separate from DayType — a late
+/// What times those classes run. Deliberately separate from DayType, a late
 /// arrival A day is both an A day and a modified schedule, and folding the two
 /// into one enum multiplies its cases every time a new variant appears.
 enum ScheduleVariant {
@@ -138,7 +138,7 @@ model Term {
 ///
 /// A/B assignment cannot be computed by alternating from a start date. One
 /// irregular day desynchronizes the rest of the year silently, and a student
-/// being shown the wrong class is the kind of bug nobody reports — they just
+/// being shown the wrong class is the kind of bug nobody reports, they just
 /// stop trusting the app. So every date is stored explicitly, extracted from
 /// the district's published calendar.
 model DistrictCalendarDay {
@@ -152,7 +152,7 @@ model DistrictCalendarDay {
   note String?
 
   /// The extractor read this day from the published PDF but could not resolve
-  /// it cleanly — a Monday it missed, or alternation breaking next to a
+  /// it cleanly, a Monday it missed, or alternation breaking next to a
   /// late-arrival day. Flagged so `/admin/schedules` can list it for a human,
   /// and cleared the moment one confirms it.
   ///
@@ -235,7 +235,7 @@ model User {
 
   /// The transcript: finished semesters and the district's own GPA.
   ///
-  /// Encrypted like everything else — it is the most sensitive academic record
+  /// Encrypted like everything else, it is the most sensitive academic record
   /// a student has, and the server has no more business reading it than it has
   /// reading their sleep. Stored rather than fetched on demand because it only
   /// changes twice a year, and re-reading HAC on every dashboard load would be
@@ -280,7 +280,7 @@ model User {
 /// year of study data.
 ///
 /// The password itself never reaches this server, which also means it cannot
-/// be reset. Losing it loses the data — permanently and by design.
+/// be reset. Losing it loses the data, permanently and by design.
 model EncryptionKey {
   id     String @id @default(cuid())
   userId String @unique
@@ -288,7 +288,7 @@ model EncryptionKey {
 
   kdf        String @default("PBKDF2-SHA256")
   iterations Int    @default(600000)
-  /// Base64. Public by design — a salt is not a secret.
+  /// Base64. Public by design, a salt is not a secret.
   salt       String
 
   /// The data key, encrypted under the key derived from the password.
@@ -302,7 +302,7 @@ model EncryptionKey {
 
   /// A second wrapping of the same data key, under a recovery code held only
   /// by the student. This is the only reason a forgotten password is
-  /// survivable — and it is still not an escrow, because the code was
+  /// survivable, and it is still not an escrow, because the code was
   /// generated in their browser, shown once, and never sent here.
   ///
   /// Nullable because accounts created before recovery existed have none, and
@@ -316,7 +316,7 @@ model EncryptionKey {
   recoveryVerifierIv     String?
 
   /// When the current recovery key was issued. Shown in settings so a student
-  /// can tell whether the paper in their drawer is the current one — reissuing
+  /// can tell whether the paper in their drawer is the current one, reissuing
   /// retires the old code, and nothing else would say so.
   recoveryCreatedAt DateTime?
 
@@ -352,7 +352,7 @@ model ParentConsent {
 /// a heavier one than the Canvas token.** A Canvas token is scoped, revocable
 /// and expires in 90 days; a HAC password is the student's school identity and
 /// is often the same one behind their district Google account. Storing it is a
-/// deliberate trade, made because the alternative — the browser extension —
+/// deliberate trade, made because the alternative, the browser extension,
 /// only exists on desktop Chrome, so a student on a phone had no way to see
 /// their real gradebook at all.
 ///
@@ -369,7 +369,7 @@ model ParentConsent {
 ///
 /// The server still cannot read the gradebook it fetches. It has no encryption
 /// key, so the page it pulls is handed to the student's own browser to be
-/// encrypted before storage — the same round trip Canvas takes.
+/// encrypted before storage, the same round trip Canvas takes.
 model HacConnection {
   id     String @id @default(cuid())
   userId String @unique
@@ -454,7 +454,7 @@ model Assignment {
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   /// Which gradebook this row came from. The two stay separate rows even when
-  /// they describe the same assignment — see `AssignmentLink`.
+  /// they describe the same assignment, see `AssignmentLink`.
   source AssignmentSource @default(CANVAS)
 
   /// Canvas's id, and null for a HAC row. HAC has no stable assignment id at
@@ -462,8 +462,8 @@ model Assignment {
   /// nothing in the markup to key on.
   ///
   /// Deliberately *no* server-side fingerprint of a HAC row's contents. A hash
-  /// of "Ch 5 Quiz" is guessable by anyone holding the database — the space of
-  /// real assignment names is small enough to enumerate — so storing one would
+  /// of "Ch 5 Quiz" is guessable by anyone holding the database, the space of
+  /// real assignment names is small enough to enumerate, so storing one would
   /// quietly undo the encryption for the very field it protects.
   /// De-duplication happens in the browser instead, where the plaintext
   /// already is, on the way in.
@@ -480,7 +480,7 @@ model Assignment {
   /// because the *server* has to act on it. The evening reminder counts what
   /// is due tomorrow, and a student who has ticked three things off and is
   /// told "3 due tomorrow" anyway will conclude the app is broken and turn the
-  /// reminder off — which costs more than this leaks.
+  /// reminder off, which costs more than this leaks.
   ///
   /// What it reveals is that a row was ticked and when. Not what the work is,
   /// which stays in `payloadCipher`. The server already knows a due date and
@@ -508,7 +508,7 @@ model Assignment {
   @@index([userId, source])
   /// Declared late. The migration that added `completedAt` created this index
   /// directly in SQL and never wrote it into the model, so every subsequent
-  /// `migrate dev` wanted to drop it as drift — which would have quietly
+  /// `migrate dev` wanted to drop it as drift, which would have quietly
   /// deleted it inside whatever migration happened to be generated next. It
   /// is the index behind "what is still open", which is the assignments panel
   /// on the dashboard.
@@ -519,8 +519,8 @@ model Assignment {
 ///
 /// None of this is student content: an endpoint is a URL at Apple's or
 /// Google's push service, and the keys encrypt the message on its way there.
-/// Storing it in the clear is consistent with the rule — structure is
-/// plaintext, content is not — and the messages themselves carry no data
+/// Storing it in the clear is consistent with the rule, structure is
+/// plaintext, content is not, and the messages themselves carry no data
 /// either, because the server has none to put in them. "Log last night's
 /// sleep" is the whole payload.
 ///
@@ -548,7 +548,7 @@ model PushSubscription {
   /// entirely reasonable.
   dueWorkNudge    Boolean @default(true)
 
-  /// Cleared when a push is rejected as gone — a browser that has been
+  /// Cleared when a push is rejected as gone, a browser that has been
   /// uninstalled or had permission revoked returns 404 or 410, and retrying
   /// forever would be both useless and rude.
   failedAt DateTime?
@@ -587,7 +587,7 @@ model RejectedPairing {
 /// A link rather than a merge, and that is the whole design. `assignment-match`
 /// exists because a wrong merge is far worse than a missed one: it silently
 /// averages two different tests into one grade and nobody ever notices.
-/// Merging rows would make that mistake unrecoverable — the other row would be
+/// Merging rows would make that mistake unrecoverable, the other row would be
 /// gone. A link is reversible, so a bad guess costs one click.
 ///
 /// It is also what lets the middle confidence band exist. Above the threshold
@@ -620,7 +620,7 @@ model AssignmentLink {
 
   /// Set when the student confirms a suggestion. Null on an automatic link.
   ///
-  /// Rejections deliberately live elsewhere — see `RejectedPairing`. Storing a
+  /// Rejections deliberately live elsewhere, see `RejectedPairing`. Storing a
   /// refusal here would occupy both unique slots, so saying "these two are not
   /// the same" would permanently stop *either* row pairing with anything else,
   /// including the row it really belongs to.
@@ -645,7 +645,7 @@ model Outcome {
   userId   String
   user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   /// Optional, because a score can be entered by hand long before Canvas is
-  /// connected — and for a student who never connects it, there is no Course
+  /// connected, and for a student who never connects it, there is no Course
   /// row to point at. The subject then lives in the encrypted payload
   /// alongside the score, which is where it belongs anyway.
   courseId String?
@@ -918,7 +918,7 @@ enum InsightCategory {
 /// A computed, sample-size-gated correlation.
 ///
 /// Computed in the browser now, since the server can't read the data it would
-/// need. Still produced entirely by statistics — no model is involved in
+/// need. Still produced entirely by statistics, no model is involved in
 /// finding a pattern, only in phrasing one that already passed the gates.
 model Insight {
   id     String @id @default(cuid())

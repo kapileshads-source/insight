@@ -105,7 +105,7 @@ export function BirthDateStep() {
         </button>
       </form>
 
-      <SkipForNow note="Insight can still track your studying. It just won't know which period you were in until you tell it — and once you do, it labels everything you've already logged." />
+      <SkipForNow note="Insight can still track your studying. It just won't know which period you were in until you tell it, and once you do, it labels everything you've already logged." />
     </OnboardingShell>
   );
 }
@@ -123,13 +123,13 @@ export function TooYoungStep({ minimumAge }: { minimumAge: number }) {
     <OnboardingShell
       step="TOO_YOUNG"
       title="Not yet, sorry."
-      intro={`Insight is for students ${minimumAge} and over. That's a rule about privacy law rather than about you — collecting anything from someone younger needs a parent's verified permission, and doing that properly is more than this project can promise right now.`}
+      intro={`Insight is for students ${minimumAge} and over. That's a rule about privacy law rather than about you, collecting anything from someone younger needs a parent's verified permission, and doing that properly is more than this project can promise right now.`}
     >
       <div className="rounded-lg border border-line bg-surface p-6">
         <p className="text-[15px] leading-relaxed text-text-muted">
           Nothing was collected. Your date of birth is the only thing stored,
           and it exists so you aren&rsquo;t asked again. No study data, no
-          school, no encryption key — those steps never ran.
+          school, no encryption key, those steps never ran.
         </p>
         <p className="mt-4 text-[15px] leading-relaxed text-text-muted">
           Come back when you turn {minimumAge}. If the date was a typo, write to{" "}
@@ -156,7 +156,7 @@ export function ParentConsentStep({ sentTo }: { sentTo?: string | null }) {
       title={sent ? "Waiting on your parent." : "We need a parent first."}
       intro={
         sent
-          ? `We emailed ${sentTo}. Nothing about you gets collected until they click the link — this page will move on by itself once they do.`
+          ? `We emailed ${sentTo}. Nothing about you gets collected until they click the link, this page will move on by itself once they do.`
           : "Because you're under 13, a parent or guardian has to say yes before we collect anything at all. Give us their email and we'll ask them."
       }
     >
@@ -197,7 +197,7 @@ export function PasswordStep() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   /// Set once the key exists. While it holds a code, this step shows the code
-  /// instead of the form — the account is already made, and the only thing
+  /// instead of the form, the account is already made, and the only thing
   /// left is to get the recovery key onto paper.
   const [issuedCode, setIssuedCode] = useState<string | null>(null);
 
@@ -225,7 +225,7 @@ export function PasswordStep() {
         // they set ten seconds ago.
         await adopt(dek, false);
         // Not `router.refresh()` yet. The recovery code exists only in this
-        // variable — it was never sent anywhere and cannot be fetched back —
+        // variable, it was never sent anywhere and cannot be fetched back,
         // so navigating away here would destroy it silently.
         setIssuedCode(code);
       } catch (e) {
@@ -255,9 +255,9 @@ export function PasswordStep() {
     >
       {/* What the password is for, shown rather than described.
       
-          This is the most expensive thing Insight asks anyone to do — invent a
+          This is the most expensive thing Insight asks anyone to do, invent a
           second password, permanently unrecoverable, and tick a box confirming
-          they accept that — and until now it was asked on a screen with
+          they accept that, and until now it was asked on a screen with
           nothing on it. The cost was concrete and the benefit was abstract,
           which is the wrong way round at the highest drop-off point in the
           product.
@@ -270,7 +270,7 @@ export function PasswordStep() {
         <ScatterCard />
         <p className="mt-3 text-[13px] leading-relaxed text-text-faint">
           What Insight builds once it has a few weeks of your logs. This one is
-          a made-up student — yours would be readable only by you.
+          a made-up student, yours would be readable only by you.
         </p>
       </div>
 
@@ -321,14 +321,14 @@ export function PasswordStep() {
         {/* Still blunt, still unskippable, and now accurate.
         
             This used to say "if you forget this, your data is gone", full
-            stop, because it was true — there was no recovery key. There is
+            stop, because it was true, there was no recovery key. There is
             one now, handed over on the next screen, and leaving the old
             wording would have taught students that the paper they are about
             to be given does not matter. */}
         <div className="mt-7 rounded-md border border-down/40 bg-down/10 p-4">
           <p className="text-[15px] leading-relaxed">
             We never receive this password, so there is nothing on our end to
-            reset — if you forget it, the only way back in is the recovery key
+            reset, if you forget it, the only way back in is the recovery key
             on the next screen. Write the password down somewhere real, and
             keep that key.
           </p>
@@ -460,7 +460,7 @@ export function SchoolStep({ schools }: { schools: SchoolOption[] }) {
 /**
  * "Skip for now", on the two steps that ask for something recoverable.
  *
- * Deliberately quiet — a link, not a second button — because it is the lesser
+ * Deliberately quiet, a link, not a second button, because it is the lesser
  * path, not an equal one. But it is present, and it is present because five
  * compulsory screens before a student had seen anything was costing more
  * signups than either answer was worth.
@@ -559,7 +559,7 @@ export function DevicesStep() {
             { value: "ANDROID", label: "Android" },
             { value: "NONE", label: "None" },
           ]}
-          note="On iPhone, screen time comes from a screenshot you upload — Apple doesn't allow an app to read it. Android can do it automatically."
+          note="On iPhone, screen time comes from a screenshot you upload, Apple doesn't allow an app to read it. Android can do it automatically."
         />
 
         <div>

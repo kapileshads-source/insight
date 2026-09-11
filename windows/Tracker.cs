@@ -11,7 +11,7 @@ namespace Insight;
 /// keeps to its rules:
 ///
 ///   - Nothing is recorded when no session is running. Not recorded and then
-///     discarded — the timer simply does not accumulate.
+///     discarded, the timer simply does not accumulate.
 ///   - App names only, never window titles. See <see cref="Native"/>.
 ///   - No encryption key here, ever. What this posts lands in a staging table
 ///     the server can read, and the student's browser encrypts and deletes it
@@ -35,14 +35,14 @@ internal sealed class Tracker : IDisposable
     private static readonly TimeSpan MaxSlice = TimeSpan.FromHours(6);
 
     /// Re-focusing a blocked app shouldn't file a fresh block event every
-    /// second — that would fill the batch with 200 identical rows and push out
+    /// second, that would fill the batch with 200 identical rows and push out
     /// the real ones.
     private static readonly TimeSpan BlockCooldown = TimeSpan.FromSeconds(30);
 
     /// Activity is batched every minute, but session state is asked for four
     /// times as often. Focus Mode is switched on at the website, and a student
     /// who flips it and then watches nothing happen for a minute concludes the
-    /// app is broken — which, from where they're standing, it is.
+    /// app is broken, which, from where they're standing, it is.
     private const int FlushEverySeconds = 60;
     private const int PollEverySeconds = 15;
 
@@ -127,7 +127,7 @@ internal sealed class Tracker : IDisposable
         Changed?.Invoke();
     }
 
-    /// Unpairing leaves nothing behind — including whatever was counted and
+    /// Unpairing leaves nothing behind, including whatever was counted and
     /// not yet sent.
     internal void Unpair()
     {
@@ -148,7 +148,7 @@ internal sealed class Tracker : IDisposable
     /// Close out the app currently in front and add its seconds to the tally.
     /// </summary>
     /// <param name="endAt">
-    /// When the slice really ended, which is not always now — time spent idle
+    /// When the slice really ended, which is not always now, time spent idle
     /// ended the slice at the last keypress, not at the moment we noticed.
     /// </param>
     private void CloseSlice(DateTime? endAt = null)
@@ -270,13 +270,13 @@ internal sealed class Tracker : IDisposable
     /// Push a blocked app out of the way, and say why.
     ///
     /// Closed, not minimised. Minimising was the first attempt and it is
-    /// toothless — one Alt-Tab and you're back where you were, which makes
+    /// toothless, one Alt-Tab and you're back where you were, which makes
     /// Focus Mode a suggestion rather than a decision.
     ///
     /// `CloseMainWindow` is the polite close, the same message the X button
     /// sends: an app with unsaved work still puts up its save dialog and still
     /// wins the argument. Nothing is destroyed silently, which is the line
-    /// worth holding — the point is to make going back deliberate, not to
+    /// worth holding, the point is to make going back deliberate, not to
     /// punish. Where an app refuses or has no window to close, minimising is
     /// the fallback so something still happens.
     /// </summary>
@@ -418,7 +418,7 @@ internal sealed class Tracker : IDisposable
         // Close the open slice *before* Session is reassigned. CloseSlice
         // returns early when Session is null, so doing this afterwards threw
         // away everything counted since the last flush every time a session
-        // ended — which is every session. The comment below has always
+        // ended, which is every session. The comment below has always
         // described the intent; the ordering defeated it.
         if (changed) CloseSlice();
 

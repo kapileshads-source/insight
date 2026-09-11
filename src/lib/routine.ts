@@ -2,7 +2,7 @@
  * Asking for last night's sleep in the morning, and today's phone time at night.
  *
  * These two numbers are the whole basis of four of the seven insight factors,
- * and both have to be typed in by hand — nothing measures them for us. A
+ * and both have to be typed in by hand, nothing measures them for us. A
  * student who logs them for a fortnight and then stops leaves the engine with
  * a dataset that quietly stops meaning anything, because the days that are
  * missing are not the same kind of day as the days that are there. Someone who
@@ -22,7 +22,7 @@
  *
  * The escalation stops there deliberately. A tracker that locks a student out
  * of their own study timer until they answer a question is a tracker that gets
- * uninstalled in a bad week — and then it measures nothing at all, which is
+ * uninstalled in a bad week, and then it measures nothing at all, which is
  * worse than a few missing nights.
  *
  * Everything here is pure and takes `now` explicitly, because "is it morning?"
@@ -34,7 +34,7 @@ export type RoutineKind = "SLEEP" | "SCREEN_TIME";
 
 export type RoutineTask = {
   kind: RoutineKind;
-  /// The date the entry belongs to — last night for sleep, today for phone
+  /// The date the entry belongs to, last night for sleep, today for phone
   /// time. Not the date it's being asked on.
   forDate: string;
   /// How many earlier days are also missing. Zero means this is the first ask.
@@ -127,7 +127,7 @@ export type RoutineInputs = {
 };
 
 /**
- * What to ask for right now — nothing, or one thing.
+ * What to ask for right now, nothing, or one thing.
  *
  * Never both: the two windows don't overlap, and that is deliberate rather
  * than incidental. Two questions at once is a form to fill in, and a form gets
@@ -135,7 +135,7 @@ export type RoutineInputs = {
  * actually known.
  *
  * 1 AM asks about phone time and not about sleep, because the night hasn't
- * happened yet — the sleep window opens at 4 AM for exactly that reason.
+ * happened yet, the sleep window opens at 4 AM for exactly that reason.
  */
 export function routineDue(inputs: RoutineInputs): RoutineTask[] {
   const { now, timezone } = inputs;
@@ -146,7 +146,7 @@ export function routineDue(inputs: RoutineInputs): RoutineTask[] {
 
   const tasks: RoutineTask[] = [];
 
-  // Sleep belongs to the night just past, which we file under today's date —
+  // Sleep belongs to the night just past, which we file under today's date,
   // the same convention the sleep log itself uses.
   if (inWindow(hour, SLEEP_WINDOW) && !sleep.has(today)) {
     const missedDays = countMissed(sleep, today);
@@ -178,7 +178,7 @@ export function routineDue(inputs: RoutineInputs): RoutineTask[] {
 /**
  * What the card says.
  *
- * Kept here rather than in the component so the escalation is testable — the
+ * Kept here rather than in the component so the escalation is testable, the
  * whole point of "slightly forced" is that the wording firms up without ever
  * becoming a telling-off, and that is a rule worth pinning down in tests
  * rather than leaving to whoever edits the JSX next.
@@ -191,7 +191,7 @@ export function routineWording(task: RoutineTask): {
     if (task.missedDays === 0) {
       return {
         title: "How did you sleep?",
-        detail: "Last night, roughly. A guess is fine — it's the pattern that matters.",
+        detail: "Last night, roughly. A guess is fine, it's the pattern that matters.",
       };
     }
     return {

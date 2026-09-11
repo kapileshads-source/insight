@@ -16,7 +16,7 @@ import { ScatterCard } from "@/components/scatter-card";
  * The fix was not more restraint. It was to find the one image this app has
  * that nobody else does, and build the page on it:
  *
- *   **Insight is about a correlation, so the hero is a scatter plot** — real
+ *   **Insight is about a correlation, so the hero is a scatter plot**, real
  *   axes, twenty-six points, split into the two groups the engine actually
  *   compares. It states the entire product before a word is read, it cannot
  *   be lifted by anyone selling something else, and it is honest, because it
@@ -34,14 +34,14 @@ import { ScatterCard } from "@/components/scatter-card";
  * - **Ornament is a ruled grid**, which means "measured" rather than "we had a
  *   gradient available".
  *
- * Every figure quoted is real and traceable — 600,000 PBKDF2 iterations
+ * Every figure quoted is real and traceable, 600,000 PBKDF2 iterations
  * (`src/lib/crypto.ts`), 1,000 shuffles and seven factors
  * (`src/lib/insights.ts`), five clients. Nothing is a marketing round number,
  * because a judge who reads the source will check.
  */
 
 export const metadata = {
-  title: "Insight — study habits, against real grades",
+  title: "Insight, study habits, against real grades",
   description:
     "See which of your own habits line up with your test scores. Encrypted in your browser, so nobody else can read any of it.",
 };
@@ -74,7 +74,7 @@ const PLATFORMS = [
   },
   {
     name: "Android",
-    detail: "Apps and sites both — the sites through a local DNS filter.",
+    detail: "Apps and sites both, the sites through a local DNS filter.",
     tag: "Kotlin",
   },
   {
@@ -98,7 +98,7 @@ const STEPS = [
   {
     n: "03",
     head: "Two questions a day",
-    body: "Sleep in the morning, phone time at night — the only two things the app can't measure for itself. Skipped on days you've already answered.",
+    body: "Sleep in the morning, phone time at night, the only two things the app can't measure for itself. Skipped on days you've already answered.",
   },
   {
     n: "04",
@@ -130,7 +130,7 @@ export default function Home() {
 
             <p className="mt-7 max-w-lg text-[17px] leading-relaxed text-on-light-muted sm:text-[19px]">
               Insight logs when you study, where, for how long, and on how much
-              sleep — then checks which of it lines up with your grades. All of
+              sleep, then checks which of it lines up with your grades. All of
               it is encrypted in your browser, so nobody else can read a word.
               Not us either.
             </p>
@@ -177,7 +177,7 @@ export default function Home() {
               <span className="text-text">
                 28 of the 65 findings had no effect built into the data at all
               </span>{" "}
-              — and one arrived with the sign backwards.
+             , and one arrived with the sign backwards.
             </p>
             <p className="mt-4 max-w-2xl text-[17px] leading-relaxed text-text-muted">
               So before Insight says anything, it shuffles which of your scores
@@ -216,7 +216,7 @@ export default function Home() {
               hideTopRule
             />
             <p className="pb-4 text-[14px] leading-relaxed text-text-faint">
-              An eleven-point gap, and still not shown — chance produced one
+              An eleven-point gap, and still not shown, chance produced one
               that big in 19% of shuffles. This is the whole idea.
             </p>
           </div>
@@ -225,7 +225,7 @@ export default function Home() {
         <p className="mt-8 max-w-2xl text-[15px] leading-relaxed text-text-faint">
           Every statement says <em>came before</em>, never <em>caused</em>, and
           there are tests that fail the build if that slips. Comparisons are
-          against your own average — never against eight hours, or a study tip
+          against your own average, never against eight hours, or a study tip
           off the internet.
         </p>
       </section>
@@ -295,7 +295,7 @@ export default function Home() {
             <div className="border-t border-on-light/15 pt-5">
               <h3 className="h3 text-[17px]">And there is no reset</h3>
               <p className="mt-3 text-[15px] leading-relaxed text-on-light-muted">
-                Forget the password and the data is gone — we cannot recover
+                Forget the password and the data is gone, we cannot recover
                 what we cannot read. Said here rather than in a support article,
                 because it is the price of the two paragraphs above.
               </p>
@@ -303,7 +303,7 @@ export default function Home() {
           </div>
 
           <p className="mt-12 max-w-2xl text-[15px] leading-relaxed text-on-light-muted">
-            Reminders carry no data either — the server can tell that Tuesday
+            Reminders carry no data either, the server can tell that Tuesday
             night is unlogged without knowing what you would have written. So a
             lock screen never shows your grades to whoever picks up the phone.
           </p>
@@ -329,7 +329,7 @@ export default function Home() {
           <p className="max-w-2xl self-end text-[17px] leading-relaxed text-text-muted">
             Install whichever you actually use. Each one counts app and site
             time in the background, and can block what you name while a session
-            is running — with a three-second override that gets recorded, rather
+            is running, with a three-second override that gets recorded, rather
             than a hard lock you&rsquo;d have uninstalled by Thursday.
           </p>
         </div>
@@ -369,7 +369,7 @@ export default function Home() {
             Downloads and setup
           </Link>
           <span className="text-[14px] text-text-faint">
-            Nothing is required — the web app logs on its own.
+            Nothing is required, the web app logs on its own.
           </span>
         </div>
       </section>
@@ -383,7 +383,7 @@ export default function Home() {
           </h2>
           <p className="mt-6 max-w-lg text-[17px] leading-relaxed text-text-muted">
             It takes a few weeks of logging before anything clears the gates.
-            That wait is the point — but you can see what the far end looks like
+            That wait is the point, but you can see what the far end looks like
             right now.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-3">

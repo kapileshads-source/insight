@@ -33,7 +33,7 @@ import kotlinx.coroutines.delay
  * What a blocked app is replaced with.
  *
  * This is the one thing Android does better than iPhone: no entitlement, no
- * approval, no company behind it — a blocked app really is replaced, by this.
+ * approval, no company behind it, a blocked app really is replaced, by this.
  *
  * The override is deliberately available and deliberately slow. The plan calls
  * for a soft commitment rather than a hard lock, because a hard lock gets the
@@ -41,8 +41,8 @@ import kotlinx.coroutines.delay
  * interrupts the reflex without becoming a punishment, and it is the same
  * three seconds the extension and both desktop apps use.
  *
- * Back is disabled. Not to trap anyone — "Back to work" is right there and
- * sends you home — but because a back press would drop you straight into the
+ * Back is disabled. Not to trap anyone, "Back to work" is right there and
+ * sends you home, but because a back press would drop you straight into the
  * app that was just blocked, which makes the block look broken rather than
  * merciful.
  */

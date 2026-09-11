@@ -64,7 +64,7 @@ GET /v1/projects?cursor=clx7abc123&limit=10
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `cursor` | string | — | Opaque cursor from `nextCursor` |
+| `cursor` | string |, | Opaque cursor from `nextCursor` |
 | `limit` | number | 100 | Maximum items per page |
 
 Continue fetching while `pagination.hasMore` is `true`, using `pagination.nextCursor` as the `cursor` parameter.
@@ -92,7 +92,7 @@ All errors follow this shape:
 | 404 | `resource-not-found` | Resource does not exist or is not accessible |
 | 422 | `validation-error` | Request body failed validation |
 | 429 | `rate-limit-exceeded` | Too many requests |
-| 500 | `internal-server-error` | Server error — retry after a delay |
+| 500 | `internal-server-error` | Server error, retry after a delay |
 
 ### Self-correction patterns
 

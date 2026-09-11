@@ -4,7 +4,7 @@ import SwiftUI
 ///
 /// The tone is the design. This lands at the exact moment someone feels caught,
 /// and a screen that tells them off is one they'll delete the automation to
-/// avoid — which protects them from nothing. So: what happened, how far into
+/// avoid, which protects them from nothing. So: what happened, how far into
 /// the session they are, and out of the way. The same reasoning as the
 /// three-second countdown on the desktop apps.
 struct BounceView: View {
@@ -20,7 +20,7 @@ struct BounceView: View {
                 .foregroundStyle(Theme.text)
 
             if let app {
-                Text("You just opened \(app), and your phone brought you here instead. That was your own doing — you set it up.")
+                Text("You just opened \(app), and your phone brought you here instead. That was your own doing, you set it up.")
                     .font(.system(size: 18))
                     .foregroundStyle(Theme.textMuted)
             } else {
@@ -52,7 +52,7 @@ struct BounceView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
 
-            Text("This is an interruption, not a wall — iOS only lets software Apple has vetted actually block an app. Delete the automation in Shortcuts whenever you want; no password, no waiting.")
+            Text("This is an interruption, not a wall, iOS only lets software Apple has vetted actually block an app. Delete the automation in Shortcuts whenever you want; no password, no waiting.")
                 .font(.system(size: 13))
                 .foregroundStyle(Theme.textFaint)
         }

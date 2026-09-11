@@ -150,7 +150,7 @@ console.log("\npairing up two whole gradebooks");
   ok("the quiz pairs correctly",
     result.linked.some((p) => p.canvasId === "c1" && p.hacId === "h1"));
   ok("what only Canvas knows survives", result.canvasOnly.includes("c3"));
-  ok("what only HAC knows survives — the point of the exercise",
+  ok("what only HAC knows survives, the point of the exercise",
     result.hacOnly.includes("h3"));
   ok("nothing is both matched and left over",
     !result.canvasOnly.includes("c1") && !result.hacOnly.includes("h1"));
@@ -176,7 +176,7 @@ console.log("\none assignment is never spent twice");
 
 console.log("\na semester of two teachers typing the same things");
 {
-  // Precision was never the problem — the retake and Unit 3/Unit 4 traps were
+  // Precision was never the problem, the retake and Unit 3/Unit 4 traps were
   // always caught. Recall was: four of nine real assignments went unmatched,
   // and the course name was the culprit every time. "Alg II H" was vetoed
   // against "Algebra II Honors" because "h" and "honors" read as different

@@ -15,13 +15,13 @@ import {
  *
  * The two numbers Insight can't measure have to be typed in, and the dashboard
  * can only ask someone who opens it. This is the part that reaches a phone
- * nobody is looking at — one question in the morning, one in the evening, and
+ * nobody is looking at, one question in the morning, one in the evening, and
  * only on days something is actually missing.
  *
  * Asking for notification permission unprompted is the fastest way to get it
  * denied forever, so this explains itself first and only calls
  * `Notification.requestPermission()` from a click. A denial is final in most
- * browsers — there is no second chance — which is why the button never appears
+ * browsers, there is no second chance, which is why the button never appears
  * on its own.
  */
 
@@ -84,7 +84,7 @@ export function NudgeOptIn() {
 
   useEffect(() => {
     // `look` awaits a round trip before it touches state, so there is no
-    // cascading render for the rule to see — and the data arrives as
+    // cascading render for the rule to see, and the data arrives as
     // ciphertext, so this cannot happen anywhere but the client.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void look();
@@ -175,7 +175,7 @@ export function NudgeOptIn() {
  * The card, with no browser APIs in it, so it can be rendered and read.
  *
  * What matters here is that a student can tell what they are agreeing to
- * before they agree — a denied notification permission is permanent in most
+ * before they agree, a denied notification permission is permanent in most
  * browsers, and there is no asking again.
  */
 export function NudgeCard({
@@ -202,7 +202,7 @@ export function NudgeCard({
         <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
           Your browser is set to refuse notifications from Insight, and it
           won&rsquo;t ask again. You can change it in your browser&rsquo;s site
-          settings — everything else works without it.
+          settings, everything else works without it.
         </p>
       </section>
     );
@@ -217,7 +217,7 @@ export function NudgeCard({
         </p>
 
         {/* Two switches rather than one, because "stop asking about my phone
-            but keep asking about sleep" is a reasonable thing to want — and
+            but keep asking about sleep" is a reasonable thing to want, and
             all-or-nothing is how someone turns off the one they'd have
             answered. */}
         <div className="mt-4 space-y-2">
@@ -228,7 +228,7 @@ export function NudgeCard({
               onChange={() => onToggle?.("sleepNudge")}
               className="tick"
             />
-            Mornings — how did you sleep?
+            Mornings, how did you sleep?
           </label>
           <label className="flex items-center gap-3 text-[15px] text-text-muted">
             <input
@@ -237,7 +237,7 @@ export function NudgeCard({
               onChange={() => onToggle?.("screenTimeNudge")}
               className="tick"
             />
-            Evenings — phone time today?
+            Evenings, phone time today?
           </label>
           <label className="flex items-center gap-3 text-[15px] text-text-muted">
             <input
@@ -246,7 +246,7 @@ export function NudgeCard({
               onChange={() => onToggle?.("dueWorkNudge")}
               className="tick"
             />
-            After school — what&rsquo;s due tomorrow
+            After school, what&rsquo;s due tomorrow
           </label>
         </div>
 
@@ -267,7 +267,7 @@ export function NudgeCard({
       <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
         Sleep and phone time are the only two things Insight can&rsquo;t measure
         for itself, and they feed four of the seven patterns it looks for. So it
-        asks once in the morning and once at night — and never on a day
+        asks once in the morning and once at night, and never on a day
         you&rsquo;ve already answered.
       </p>
       <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
@@ -284,7 +284,7 @@ export function NudgeCard({
       </button>
       <p className="mt-4 text-[13px] leading-relaxed text-text-faint">
         The reminders carry no data about you. Insight can see that a night is
-        unlogged and that a due date is tomorrow — never what you slept, and
+        unlogged and that a due date is tomorrow, never what you slept, and
         never what the work is.
       </p>
     </section>

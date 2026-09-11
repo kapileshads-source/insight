@@ -1,4 +1,4 @@
-# XcodeGen spec. The .xcodeproj is generated rather than committed — a pbxproj
+# XcodeGen spec. The .xcodeproj is generated rather than committed, a pbxproj
 # is unreadable in a diff and merges badly, and this file says the same thing
 # in twenty lines.
 #
@@ -41,7 +41,7 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UIUserInterfaceStyle: Dark
-        # insight://bounce?app=Instagram — what a Shortcuts automation opens
+        # insight://bounce?app=Instagram, what a Shortcuts automation opens
         # the moment a student opens something they meant to avoid. iOS won't
         # let any app block another one, so the phone bounces out and lands
         # here instead.

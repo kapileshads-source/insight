@@ -103,7 +103,7 @@ console.log("classes with nothing to say are not shown");
   ]);
   ok("a class with a mark leads", out[0].course === "AP Biology");
   // Every class is still returned. Filtering here made the whole grades
-  // section vanish in September, when every class can be empty — which looked
+  // section vanish in September, when every class can be empty, which looked
   // like the feature had been deleted. The card decides what to draw.
   ok("empty classes are still reported", out.length === 2);
   ok("but flagged as having nothing", !hasSomethingToShow(out[1]));
@@ -137,7 +137,7 @@ console.log("\none card per class, not one per system");
 {
   // A real account showed Chemistry twice: HAC's SCI22200A - 6 Chemistry Adv S1
   // at 83.00% and Canvas's Chemistry Adv YR (Whitt, Austin) at 80.02%. Not two
-  // classes and not two grades — the same class from two places, fetched at
+  // classes and not two grades, the same class from two places, fetched at
   // different moments.
   const courses = [
     { course: "SCI22200A - 6 Chemistry Adv S1", fromHac: true, reportedGrade: "83.00", rows: [], gradedCount: 4 },
@@ -151,7 +151,7 @@ console.log("\none card per class, not one per system");
   ok("so does the district shell", !kept.includes("Frisco ISD 1forAll Student Course 26-27"));
   ok("exactly one card left", kept.length === 1);
 
-  // Before any HAC sync, nothing is dropped — the failure this codebase keeps
+  // Before any HAC sync, nothing is dropped, the failure this codebase keeps
   // repeating is a filter that empties the screen on first use.
   const noHac = oneCardPerClass([
     { course: "Chemistry Adv YR (Whitt, Austin)", fromHac: false, reportedGrade: "80.02", rows: [], gradedCount: 0 },

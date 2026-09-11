@@ -9,7 +9,7 @@ import { getOrCreateUser } from "@/lib/user";
 /**
  * Writing a term of sample data.
  *
- * The payloads arrive already encrypted — the generator runs in the browser
+ * The payloads arrive already encrypted, the generator runs in the browser
  * because that is where the key is, the same as every other write here. The
  * server's part is only to file rows against dates it can see.
  *
@@ -59,7 +59,7 @@ export async function seedDemoData(input: unknown): Promise<DemoResult> {
   if (!parsed.success) return { ok: false, error: "That data didn't look right." };
 
   // The one guard that matters. An account with real logs must not be filled
-  // with invented ones — the two become indistinguishable the moment they're
+  // with invented ones, the two become indistinguishable the moment they're
   // encrypted, and every insight afterwards would be drawn from both.
   const [existingSessions, existingOutcomes] = await Promise.all([
     db.studySession.count({ where: { userId: user.id } }),
@@ -70,7 +70,7 @@ export async function seedDemoData(input: unknown): Promise<DemoResult> {
     return {
       ok: false,
       error:
-        "This account already has sessions or scores in it. Sample data only goes into an empty account — make a separate one for the demo.",
+        "This account already has sessions or scores in it. Sample data only goes into an empty account, make a separate one for the demo.",
     };
   }
 

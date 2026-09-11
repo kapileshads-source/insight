@@ -18,7 +18,7 @@ function createClient() {
   // An explicit pool rather than letting the adapter build one from a config
   // object. Two reasons: the limits below are ours to set rather than
   // defaults, and handing the adapter a real pool keeps checkout behaviour
-  // predictable when several requests are in flight at once — which is what
+  // predictable when several requests are in flight at once, which is what
   // produces node-postgres's "client is already executing a query" warning.
   const pool =
     globalForPrisma.pgPool ??

@@ -14,8 +14,8 @@ import { getOrCreateUser } from "@/lib/user";
  *
  * `updatedAt` is the closest thing to a "graded at" timestamp we have. HAC and
  * Canvas both give a row no such field, so the moment a sync rewrote it is the
- * only evidence that something changed. It is plaintext already — it is a
- * server-side bookkeeping column, not student content — so ordering by it costs
+ * only evidence that something changed. It is plaintext already, it is a
+ * server-side bookkeeping column, not student content, so ordering by it costs
  * nothing and reveals nothing beyond the fact that a row moved.
  */
 export async function fetchGradebook() {
@@ -65,7 +65,7 @@ export async function fetchGradebook() {
 /**
  * Tick an assignment off, or un-tick it.
  *
- * Scoped to the caller's own rows, like every other write here — an id from
+ * Scoped to the caller's own rows, like every other write here, an id from
  * somewhere else must not be able to mark a stranger's homework done.
  *
  * `completedAt` is plaintext, which is a deliberate exception documented on the

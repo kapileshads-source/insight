@@ -46,7 +46,7 @@ type Stats = ReturnType<typeof basicStats>;
 
 /// What one session's devices actually saw, app by app.
 ///
-/// The numbers this feeds already existed — a single distracted total, folded
+/// The numbers this feeds already existed, a single distracted total, folded
 /// into the weekly recap and a sample-size-gated insight. That meant a student
 /// who paired a laptop and studied for an hour saw no evidence whatsoever that
 /// it had worked, which is indistinguishable from broken and was reported as
@@ -62,7 +62,7 @@ type DeviceReadout = {
  * One decrypt of the study log, shared by everything that reads it.
  *
  * This used to be a single 550-line `StudyPanel` that fetched, decrypted,
- * analysed and rendered — the timer, the quick-log form, the weekly recap and
+ * analysed and rendered, the timer, the quick-log form, the weekly recap and
  * chart, what the devices saw, the wellbeing alerts, the advice and the
  * insight list. All of it on the dashboard, in one column.
  *
@@ -213,7 +213,7 @@ export function StudyDataProvider({ children }: { children: React.ReactNode }) {
               noise: p.noise,
               stress: p.stress,
               wasCram: p.wasCram,
-              // Undefined rather than zero when nothing was measured — a
+              // Undefined rather than zero when nothing was measured, a
               // session studied without the extension is unknown, not focused.
               distractedMinutes: distractedBySession.has(s.id)
                 ? Math.round((distractedBySession.get(s.id) ?? 0) / 60)
@@ -222,7 +222,7 @@ export function StudyDataProvider({ children }: { children: React.ReactNode }) {
           }),
       );
 
-      // The most recent session a device reported on — which is usually the one
+      // The most recent session a device reported on, which is usually the one
       // that just ended, and is the only one a student wants to check.
       const withDevice = sessions
         .filter((s) => appsBySession.has(s.id))
@@ -370,13 +370,13 @@ export function StudyDataProvider({ children }: { children: React.ReactNode }) {
       ]);
     } catch {
       // Failing to decrypt is not the same as having no data, and must never
-      // be shown as an empty dashboard — that would read as data loss.
+      // be shown as an empty dashboard, that would read as data loss.
       setFailed(true);
     }
   }, [reveal, status, collectPendingDeviceData]);
 
   useEffect(() => {
-    // The rule can't see that `load` awaits before it touches state — every
+    // The rule can't see that `load` awaits before it touches state, every
     // setState in it happens after a network round trip, so there is no
     // cascading render to avoid. This genuinely has to be an effect: the data
     // arrives as ciphertext and can only be decrypted on the client, so a

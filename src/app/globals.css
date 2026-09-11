@@ -9,7 +9,7 @@
    The old palette was Apple's aluminium finishes: Midnight blue, Sky Blue,
    Starlight. It was coherent, it was also every developer tool ever built, and
    after a year of looking at it the app read as generic. Notably the design
-   database consulted for this pass recommended slate, indigo and Inter —
+   database consulted for this pass recommended slate, indigo and Inter,
    which is the same thing again. Confirmation, not a recommendation.
 
    The replacement rotates off blue entirely and gives up the old set's central
@@ -21,11 +21,11 @@
    carry real chroma and still sit at a middle lightness; what makes an
    interface read as a gaming peripheral is a fluorescent accent glowing off a
    pure-black void. So the ground is a soft near-black rather than #000, and
-   every accent is mixed at a mid lightness — vivid in the way a printed ink is
+   every accent is mixed at a mid lightness, vivid in the way a printed ink is
    vivid, not in the way an LED is.
 
      --accent  emerald. The action to take now, and links. One per screen.
-     --alert   vermilion. Attention — missing work, a mark that needs a look.
+     --alert   vermilion. Attention, missing work, a mark that needs a look.
                Never a button, so it cannot be confused with the emerald.
      --ember   cobalt. The second temperature, marketing surfaces only.
 
@@ -35,12 +35,12 @@
 
    TYPE. Three faces where there was one, each with a job:
 
-     Space Grotesk — headings. Modern, geometric, with enough drawing in it
+     Space Grotesk, headings. Modern, geometric, with enough drawing in it
                  (the flat-topped a, the cut terminals) to be recognisable.
-     Manrope   — body and UI. Rounder and quieter than the headings, and it is
+     Manrope  , body and UI. Rounder and quieter than the headings, and it is
                  deliberately the least interesting face here, because it is
                  the one carrying the sentences.
-     JetBrains Mono — every figure. A GPA, a percentage, a score out of fifty.
+     JetBrains Mono, every figure. A GPA, a percentage, a score out of fifty.
                  Numbers in this app are measurements, and a mono face says so
                  in a way a proportional one cannot. It also means a column of
                  them aligns without `tabular-nums` being remembered.
@@ -55,7 +55,7 @@
 
    The marketing/app split, kept from the previous system: marketing surfaces
    get atmosphere because there is nothing else on them to look at yet. Those
-   utilities are prefixed `mk-`, and the split is enforced by name — if `mk-`
+   utilities are prefixed `mk-`, and the split is enforced by name, if `mk-`
    appears anywhere under /dashboard, the line has been crossed.
 
    And the amendment that is still load-bearing: the app's interior is not
@@ -66,7 +66,7 @@
 --------------------------------------------------------------------------- */
 
 :root {
-  /* Soft near-black. Not #000 — a pure-black ground is what makes a saturated
+  /* Soft near-black. Not #000, a pure-black ground is what makes a saturated
      accent glow, and glow is the gaming tell. Not tinted either: any cast at
      all pulls the whole set back towards the slate it just left. */
   --bg: #131316;
@@ -92,15 +92,15 @@
   --on-light: #1b1b20;
   --on-light-muted: #625f58;
 
-  /* Direction of a measured change. Up borrows the accent's hue on purpose —
-     good is good — while down is the vermilion, so the two are told apart by
+  /* Direction of a measured change. Up borrows the accent's hue on purpose,
+     good is good, while down is the vermilion, so the two are told apart by
      hue rather than by remembering which green meant what. */
   --up: #3fbf8f;
   --down: #e2563f;
   --flat: #9c9ca8;
 
   /* Attention: due soon, needs a look. The same vermilion as --down, because
-     they mean the same thing to a student. Never a button — that is what
+     they mean the same thing to a student. Never a button, that is what
      keeps it distinguishable from the emerald. */
   --alert: #e2563f;
 
@@ -161,7 +161,7 @@ body {
 }
 
 /* Headings are Space Grotesk. Tracking tightens as size grows, the way it does
-   on a well-set page — a 64px headline needs it, a 20px subhead doesn't. */
+   on a well-set page, a 64px headline needs it, a 20px subhead doesn't. */
 .h1 {
   font-family: var(--font-display), system-ui, sans-serif;
   font-weight: 600;
@@ -184,7 +184,7 @@ body {
 }
 
 /* Figures that carry meaning: a GPA, a percentage, a score out of fifty.
-   The mono face is the whole point — a number in this app is a measurement,
+   The mono face is the whole point, a number in this app is a measurement,
    and a proportional one reads as a headline instead. Light, because
    JetBrains Mono at 500 and 60px is a slab. */
 .figure {
@@ -270,7 +270,7 @@ body {
 
    The problem it fixes is monotony rather than dullness. A column of
    identical flat rectangles on a flat ground gives the eye nothing to catch,
-   so a dashboard of eight panels reads as one grey wall — and no amount of
+   so a dashboard of eight panels reads as one grey wall, and no amount of
    good typography inside them fixes that from the outside. */
 .panel {
   border: 1px solid var(--line);
@@ -286,13 +286,13 @@ body {
    The tick.
 
    Ticking a piece of work off is the only thing in this app a student does
-   purely for the satisfaction of it — every other control reports a fact.
+   purely for the satisfaction of it, every other control reports a fact.
    It was `accent-color: accent` on a native checkbox, which meant the OS drew it:
    a blue-grey box on macOS, something else on Windows, and on none of them did
    it feel like anything.
 
-   So it is drawn here. The input keeps its own semantics — it is still a real
-   checkbox, still keyboard-reachable, still announced — and only its painting
+   So it is drawn here. The input keeps its own semantics, it is still a real
+   checkbox, still keyboard-reachable, still announced, and only its painting
    is taken over. The check is a rotated box-shadow-free pseudo-element rather
    than an SVG mask so it costs nothing and scales with the control.
 
@@ -374,7 +374,7 @@ body {
    The rule this follows: motion is for orientation, never for decoration. A
    panel that fades in tells you it just arrived; a panel that slides, bounces
    and scales tells you the developer found the easing menu. So there are three
-   things here and no more — content arriving, a card noticing the cursor, and
+   things here and no more, content arriving, a card noticing the cursor, and
    a number changing.
 
    Durations are 120-260ms. Below 100ms nothing registers as movement; above
@@ -405,7 +405,7 @@ body {
     animation: rise-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  /* A figure that changes while you watch — the GPA as a try-out grade is
+  /* A figure that changes while you watch, the GPA as a try-out grade is
      typed. Brief and colourless: the point is "this number just moved", not a
      celebration. */
   @keyframes tick-up {
@@ -433,7 +433,7 @@ body {
   }
 }
 
-/* Interactive panels lift slightly. Only the ones that are actually links —
+/* Interactive panels lift slightly. Only the ones that are actually links,
    a printed card that moves under the cursor is a lie about what it does. */
 .panel-link:hover {
   border-color: var(--line-hi);
@@ -461,7 +461,7 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
-   Marketing surfaces only — see the note at the top of this file.
+   Marketing surfaces only, see the note at the top of this file.
 
    Everything below is `mk-` prefixed, and nothing under /dashboard may use it.
    These are for the pages someone sees before they have any data: the landing
@@ -469,7 +469,7 @@ body {
    else on those pages to look at yet.
 --------------------------------------------------------------------------- */
 
-/* The hero field. Three offset radial pools rather than a linear gradient — a
+/* The hero field. Three offset radial pools rather than a linear gradient, a
    linear one reads as a CSS default, and pools of light read as a lit surface.
    Sized in vmax so the composition holds from a phone to a wide monitor. */
 .mk-aurora {
@@ -477,7 +477,7 @@ body {
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  /* Positions are percentages of this element, which is as tall as the hero —
+  /* Positions are percentages of this element, which is as tall as the hero,
      so they are kept in the top third deliberately. Spread evenly down a
      1,400px section, each pool is stretched past the point where it reads as
      light at all. */
@@ -514,7 +514,7 @@ body {
 }
 
 /* Graph paper. The hero sits on this rather than on a colour field, because
-   the honest image for this app is a plot — and a faint ruled grid says
+   the honest image for this app is a plot, and a faint ruled grid says
    "measured" without a single word of copy.
 
    Masked at the edges: a grid that runs into the viewport edge looks like a
@@ -596,7 +596,7 @@ body {
 /* Scroll reveal with no JavaScript. Note the direction of the @supports: the
    default is *visible*, and only a browser that can actually drive the
    timeline is allowed to hide anything. Written the other way round, every
-   browser without view() — and every crawler — gets a blank page. */
+   browser without view(), and every crawler, gets a blank page. */
 @keyframes mk-rise {
   from {
     opacity: 0;

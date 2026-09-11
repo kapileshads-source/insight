@@ -41,7 +41,7 @@ function formatToday(date: Date, timezone: string) {
   }).format(date);
 }
 
-/// The "right now" panel. Real data — the period comes from the campus bell
+/// The "right now" panel. Real data, the period comes from the campus bell
 /// schedule and the A/B assignment from the stored district calendar.
 async function RightNow({ schoolId }: { schoolId: string }) {
   const state = await getSchoolDayState(schoolId);
@@ -49,7 +49,7 @@ async function RightNow({ schoolId }: { schoolId: string }) {
 
   // Prominence tracks usefulness, which it did not used to.
   //
-  // All three states rendered the same full-bleed Sky slab with an h1 in it —
+  // All three states rendered the same full-bleed Sky slab with an h1 in it,
   // so "no school today" arrived as the loudest thing on the dashboard, a
   // screen-height block of pale blue announcing that nothing was happening. It
   // was the first thing anyone saw and the least worth seeing, and it pushed
@@ -120,7 +120,7 @@ function FinishSetup({
     },
     {
       title: "Your usual week",
-      body: "Sleep and wake times, and where you usually study — the baseline everything else is measured against.",
+      body: "Sleep and wake times, and where you usually study, the baseline everything else is measured against.",
       done: hasBaseline,
       href: "/baseline",
     },
@@ -197,7 +197,7 @@ export default async function Dashboard() {
               Both halves of this used to be somewhere else: the date and school
               were a grey footnote at the very bottom of the page, and "which
               class am I in" was a full-bleed slab at the top. Neither placement
-              matched what the information is worth — one is orientation, which
+              matched what the information is worth, one is orientation, which
               belongs at the top and belongs small. */}
           <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[14px]">
             <span className="text-text">
@@ -224,7 +224,7 @@ export default async function Dashboard() {
 
               This screen used to carry the full grades list, the full
               assignments list, the week chart, the findings, the gathering
-              list and the chat — everything the app knows, in one column,
+              list and the chat, everything the app knows, in one column,
               on the page opened twenty times a day. Now it answers "where am
               I" at a glance and every follow-up has one obvious destination. */}
           <div className="mt-6">
@@ -244,7 +244,7 @@ export default async function Dashboard() {
           </div>
 
           {/* Setup, last. It is finite, mostly done, and disappears when
-              finished — a checklist above the content is how one gets ignored. */}
+              finished, a checklist above the content is how one gets ignored. */}
           <div className="mt-10">
             <FinishSetup
               hasCanvas={canvas.connected}

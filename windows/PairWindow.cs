@@ -8,7 +8,7 @@ namespace Insight;
 /// The same two fields as the extension's popup, and the same rule: the code
 /// is verified against the server before it is saved. A code that is saved
 /// without being checked produces an app that looks connected, records
-/// nothing, and gives a student no way to tell — which is worse than a dialog
+/// nothing, and gives a student no way to tell, which is worse than a dialog
 /// that says no.
 ///
 /// Everything is stacked in a <see cref="TableLayoutPanel"/> rather than
@@ -113,7 +113,7 @@ internal sealed class PairWindow : Form
         layout.Controls.Add(_error);
         layout.Controls.Add(Footnote(
             "This computer never receives your encryption password, and never reads "
-            + "window titles — only which apps were in front."));
+            + "window titles, only which apps were in front."));
 
         Controls.Add(layout);
 
@@ -195,7 +195,7 @@ internal sealed class PairWindow : Form
             PollResult result = await _tracker.VerifyAsync(apiBase, token);
 
             // Each failure is named separately. Grouping them blames a bad
-            // code on the network and sends you looking at the wrong thing —
+            // code on the network and sends you looking at the wrong thing,
             // the same mistake as any error message that guesses.
             switch (result.Status)
             {

@@ -9,7 +9,7 @@ export type ConsentResult = { ok: true } | { ok: false; error: string };
 /// Look up a consent record by the raw token from the emailed link.
 ///
 /// Only the hash is stored, so this is the one place the raw token is turned
-/// back into a record — and a database leak still hands out no working links.
+/// back into a record, and a database leak still hands out no working links.
 export async function findConsentByToken(token: string) {
   if (!token || token.length > 256) return null;
   const tokenHash = createHash("sha256").update(token).digest("hex");
@@ -40,7 +40,7 @@ export async function confirmConsent(token: string): Promise<ConsentResult> {
 }
 
 /// Withdraw consent. Under COPPA a parent can do this at any time, and it has
-/// to be as easy as granting it was — hence the same link, no login.
+/// to be as easy as granting it was, hence the same link, no login.
 export async function revokeConsent(token: string): Promise<ConsentResult> {
   const consent = await findConsentByToken(token);
   if (!consent) return { ok: false, error: "This link isn't valid." };

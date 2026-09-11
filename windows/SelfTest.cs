@@ -43,11 +43,11 @@ internal static class SelfTest
     {
         // A WinExe has no console of its own. Guarded so these same files can
         // be compiled for the host and run on the machine they were written
-        // on — a Mac, in the first instance — which is the only way this test
+        // on, a Mac, in the first instance, which is the only way this test
         // gets run before a Windows machine is in the room.
         if (OperatingSystem.IsWindows()) Native.AttachToParentConsole();
 
-        Console.WriteLine("Insight for Windows — logic tests\n");
+        Console.WriteLine("Insight for Windows, logic tests\n");
 
         ReportTests();
         BlocklistTests();
@@ -118,7 +118,7 @@ internal static class SelfTest
             !Apps.IsBlocked("youtube.com", new List<string>()));
 
         // The server now sends app names in the same list as hostnames, which
-        // is what finally makes a game blockable — it is its own executable
+        // is what finally makes a game blockable, it is its own executable
         // and has no website to match on.
         var withApps = new List<string> { "valorant", "minecraft", "youtube.com" };
 

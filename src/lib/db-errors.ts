@@ -5,7 +5,7 @@ import "server-only";
  *
  * Next.js strips error messages from production builds so they can't leak, and
  * a hosting log list truncates what's left. The result is a wall of
- * "PrismaClientKnownRequestError" with the one useful part — the code — cut
+ * "PrismaClientKnownRequestError" with the one useful part, the code, cut
  * off. This puts the code at the front of the line, where it survives.
  */
 
@@ -20,8 +20,8 @@ type PrismaLike = {
 const MEANINGS: Record<string, string> = {
   P2002: "unique constraint violated",
   P2003: "foreign key constraint violated",
-  P2021: "table does not exist — migrations not applied to this database",
-  P2022: "column does not exist — schema is behind the code",
+  P2021: "table does not exist, migrations not applied to this database",
+  P2022: "column does not exist, schema is behind the code",
   P2025: "record not found",
 };
 

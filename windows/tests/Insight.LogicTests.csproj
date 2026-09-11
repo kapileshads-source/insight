@@ -5,7 +5,7 @@
 
     The app itself targets net8.0-windows and cannot run on a Mac, which would
     otherwise mean the logic tests only run once a Windows machine is in the
-    room — and this whole app was written on a Mac. So the pure files are
+    room, and this whole app was written on a Mac. So the pure files are
     linked into a plain net8.0 console app instead. It found a real bug the
     first time it ran, which is the argument for it existing.
 

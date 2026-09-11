@@ -7,7 +7,7 @@ import {
 
 /// iOS won't let anything but Shortcuts set a Focus, so the handshake is a
 /// shortcut the student names by hand. If the web app and the iPhone app ever
-/// disagree about that name, the buttons open Shortcuts and find nothing —
+/// disagree about that name, the buttons open Shortcuts and find nothing,
 /// and a student who set it up once would reasonably decide the feature is
 /// broken rather than that two files drifted apart.
 

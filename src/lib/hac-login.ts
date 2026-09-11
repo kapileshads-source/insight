@@ -19,7 +19,7 @@ import {
  * ## Why this exists at all, given the extension
  *
  * The browser extension reads HAC with the session the student already has, and
- * needs no password — which is strictly better, and stays the recommended path.
+ * needs no password, which is strictly better, and stays the recommended path.
  * It only exists on desktop Chrome. A student on a phone therefore had no way
  * to see their real gradebook, which for a Frisco student is most of the point
  * of the app.
@@ -48,7 +48,7 @@ const LOGIN_URL = `${ORIGIN}/HomeAccess/Account/LogOn?ReturnUrl=%2fHomeAccess%2f
  * **The content URL comes first now, and that reordering is the point.** What
  * a browser shows at `/HomeAccess/Classes/Classwork` is a wrapper around an
  * iframe; the tables live at `Content/Student/Assignments.aspx`. Fetching the
- * wrapper server-side returns a shell with no gradebook in it — a perfectly
+ * wrapper server-side returns a shell with no gradebook in it, a perfectly
  * valid 200 containing nothing to parse.
  *
  * The previous order took the first 200 it got, which was always the shell. So
@@ -89,7 +89,7 @@ export type HacLoginResult =
       /// HAC's own words, when it gave any. Quoted to the student because the
       /// school's wording names the person to ask; never acted on.
       detail?: string;
-      /// What each address actually returned. Carries no student data — a
+      /// What each address actually returned. Carries no student data, a
       /// status, a size, and whether the markers the parser needs were
       /// present. Reported because "which page did we get" has been the answer
       /// three times running, and every round of guessing it instead cost a
@@ -160,7 +160,7 @@ async function fetchThrough(
   if (isStillLoginPage(html)) return null;
   if (looksRight(html)) return html;
 
-  // One hop, never recursive — following frames repeatedly turns a fetch into
+  // One hop, never recursive, following frames repeatedly turns a fetch into
   // a crawler.
   const frame = frameSource(html, hint);
   if (!frame) return null;
@@ -198,7 +198,7 @@ export async function fetchTranscript(
 
   const tried = session.tried;
 
-  // The wrapper first, exactly as with the classwork page — and for the same
+  // The wrapper first, exactly as with the classwork page, and for the same
   // reason, which I had already been shown and applied in only one place.
   //
   // A browser sits at `/HomeAccess/Grades/Transcript`; the content path
@@ -287,7 +287,7 @@ async function signIn(username: string, password: string): Promise<Session> {
         Origin: ORIGIN,
         // In the header *as well as* the body. Both are required; sending only
         // the form field fails. This was here, then removed in favour of Origin
-        // on the assumption it was belt-and-braces — it is not, and that
+        // on the assumption it was belt-and-braces, it is not, and that
         // assumption is a strong candidate for why a verified login stopped
         // returning anything.
         __RequestVerificationToken: token,
@@ -315,7 +315,7 @@ async function signIn(username: string, password: string): Promise<Session> {
   //
   // Two things were wrong here, both of them invisible. The POST answers 302
   // and `redirect: "manual"` meant that redirect was never followed, so the
-  // session was left half-established — and every subsequent request was made
+  // session was left half-established, and every subsequent request was made
   // with a cookie jar that had not finished being filled. A working
   // implementation of this same login does exactly this GET, and treats *its*
   // URL as the proof of success rather than the POST's status.

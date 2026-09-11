@@ -1,6 +1,6 @@
 ---
 name: prisma-driver-adapter-implementation
-description: Required reference for Prisma v7 driver adapter work. Use when implementing or modifying adapters, adding database drivers, or touching SqlDriverAdapter/Transaction interfaces. Contains critical contract details not inferable from code examples — including the transaction lifecycle protocol, error mapping requirements, and verification checklist. Existing implementations do not replace this skill.
+description: Required reference for Prisma v7 driver adapter work. Use when implementing or modifying adapters, adding database drivers, or touching SqlDriverAdapter/Transaction interfaces. Contains critical contract details not inferable from code examples, including the transaction lifecycle protocol, error mapping requirements, and verification checklist. Existing implementations do not replace this skill.
 license: MIT
 metadata:
   author: Tyler Benfield
@@ -44,7 +44,7 @@ This skill provides everything needed to implement a Prisma ORM v7 driver adapte
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Transaction                              │
 │  Extends SqlQueryable + commit() + rollback() + options         │
-│  (lifecycle hooks only — Prisma sends SQL via executeRaw)       │
+│  (lifecycle hooks only, Prisma sends SQL via executeRaw)       │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -246,13 +246,13 @@ class MyTransaction extends MyQueryable<TClient> implements Transaction {
   }
 
   commit(): Promise<void> {
-    // DO NOT issue COMMIT SQL here — Prisma does it via executeRaw
+    // DO NOT issue COMMIT SQL here, Prisma does it via executeRaw
     this.#release(); // Release connection/resources
     return Promise.resolve();
   }
 
   rollback(): Promise<void> {
-    // DO NOT issue ROLLBACK SQL here — Prisma does it via executeRaw
+    // DO NOT issue ROLLBACK SQL here, Prisma does it via executeRaw
     this.#release();
     return Promise.resolve();
   }

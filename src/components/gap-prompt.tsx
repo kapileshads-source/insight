@@ -8,7 +8,7 @@ import { markPrompted, shouldPrompt } from "@/app/actions/prompt";
 ///
 /// Asks once a block at high schools and once every two periods at middle
 /// schools, and only during the school day. Dismissing counts the same as
-/// answering — being asked is what advances the counter, so saying "no" once
+/// answering, being asked is what advances the counter, so saying "no" once
 /// doesn't get you asked again ten minutes later.
 export function GapPrompt() {
   const [state, setState] = useState<
@@ -50,8 +50,8 @@ export function GapPrompt() {
       </h2>
       <p className="mt-3 max-w-lg text-[16px] leading-relaxed text-text-muted">
         {postTerm
-          ? "Last chance to add anything from this term that never made it in — a paper score, a quiz, a late night. After this we'll stop asking until next semester."
-          : "Quizzes handed back on paper, scores read out in class, work set verbally — none of that reaches Canvas. Add it and it counts the same as everything else."}
+          ? "Last chance to add anything from this term that never made it in, a paper score, a quiz, a late night. After this we'll stop asking until next semester."
+          : "Quizzes handed back on paper, scores read out in class, work set verbally, none of that reaches Canvas. Add it and it counts the same as everything else."}
       </p>
       <div className="mt-5 flex flex-wrap gap-3">
         <Link

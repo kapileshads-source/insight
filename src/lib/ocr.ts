@@ -1,7 +1,7 @@
 /**
  * Reading a screen-time total out of a screenshot.
  *
- * Runs entirely in the browser. The image is never uploaded — only the number,
+ * Runs entirely in the browser. The image is never uploaded, only the number,
  * and only after the student has confirmed it. That is a claim the privacy
  * page makes, so it has to stay true: nothing in this file sends anything
  * anywhere.

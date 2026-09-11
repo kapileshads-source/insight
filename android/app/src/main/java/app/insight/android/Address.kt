@@ -12,7 +12,7 @@ import java.net.URI
  * habit is not making an informed choice about that.
  *
  * Android also refuses cleartext by default at the platform level, so an http
- * address to the open internet would fail anyway — but as "couldn't reach",
+ * address to the open internet would fail anyway, but as "couldn't reach",
  * which sends someone to check their wifi over a problem no wifi will fix.
  */
 object Address {
@@ -32,7 +32,7 @@ object Address {
 
         if (isLocal(host)) return null
 
-        return "That address isn't secure. Use https:// — over plain http your " +
+        return "That address isn't secure. Use https://, over plain http your " +
             "pairing code and everything this app records could be read by " +
             "anyone else on the network."
     }

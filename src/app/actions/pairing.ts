@@ -9,8 +9,8 @@ import { getOrCreateUser } from "@/lib/user";
 /**
  * Recording which Canvas assignment and which HAC assignment are the same thing.
  *
- * The matching itself happens in the browser — it compares titles, and titles
- * are encrypted — so the server only files the answer. What it does enforce is
+ * The matching itself happens in the browser, it compares titles, and titles
+ * are encrypted, so the server only files the answer. What it does enforce is
  * the part a browser can't: that one assignment is never in two pairings, and
  * that both sides belong to the person asking.
  */
@@ -27,7 +27,7 @@ const linkSchema = z.object({
         /// False when the student was shown it and agreed.
         autoLinked: z.boolean(),
         /// True when the student said these are not the same thing. Recorded
-        /// as a refusal rather than a link — see `RejectedPairing` — so each
+        /// as a refusal rather than a link, see `RejectedPairing`, so each
         /// row stays free to pair with the one it really belongs to.
         rejected: z.boolean().default(false),
       }),
@@ -80,7 +80,7 @@ export async function saveAssignmentLinks(
     }
 
     // Either side already spoken for. Both columns are unique, so this would
-    // fail anyway — checking first keeps one bad row from ending the batch.
+    // fail anyway, checking first keeps one bad row from ending the batch.
     const taken = await db.assignmentLink.findFirst({
       where: {
         OR: [

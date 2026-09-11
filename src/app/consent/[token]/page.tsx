@@ -3,8 +3,8 @@ import { findConsentByToken } from "./actions";
 import { ConsentForm } from "./consent-form";
 
 export const metadata = {
-  title: "Permission for your child — Insight",
-  // The token in this URL is the credential — possession of it is what
+  title: "Permission for your child, Insight",
+  // The token in this URL is the credential, possession of it is what
   // authorises consent. Suppress the Referer header so it can never ride
   // along to another site, and keep it out of search results.
   referrer: "no-referrer" as const,
@@ -26,7 +26,7 @@ export default async function ConsentPage(props: PageProps<"/consent/[token]">) 
           This link doesn&rsquo;t work.
         </h1>
         <p className="mt-4 text-[17px] leading-relaxed text-text-muted">
-          It may have been replaced by a newer one — if your child asked again,
+          It may have been replaced by a newer one, if your child asked again,
           check for a more recent email. Otherwise write to{" "}
           <a
             href="mailto:kapilesh.rajaravi@gmail.com"
@@ -53,7 +53,7 @@ export default async function ConsentPage(props: PageProps<"/consent/[token]">) 
       <p className="mt-5 text-[17px] leading-relaxed text-text-muted">
         <span className="text-text">{consent.user.email}</span> signed up for
         Insight, a study tool for Frisco ISD students. They&rsquo;re under 13,
-        so the law requires your permission before we collect anything —{" "}
+        so the law requires your permission before we collect anything,{" "}
         <span className="text-text">
           and until you give it, we have collected nothing.
         </span>
@@ -77,7 +77,7 @@ export default async function ConsentPage(props: PageProps<"/consent/[token]">) 
           </li>
           <li>
             <span className="text-text">Nothing is sold or advertised.</span>{" "}
-            We couldn&rsquo;t sell it if we wanted to — we can&rsquo;t read it.
+            We couldn&rsquo;t sell it if we wanted to, we can&rsquo;t read it.
           </li>
           <li>
             <span className="text-text">You can change your mind</span> at any

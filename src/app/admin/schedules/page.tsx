@@ -8,7 +8,7 @@ import {
   PeriodEditor,
 } from "@/components/schedule-editor";
 
-export const metadata = { title: "Schedules — Insight admin" };
+export const metadata = { title: "Schedules, Insight admin" };
 
 export default async function AdminSchedulesPage(
   props: PageProps<"/admin/schedules">,
@@ -123,7 +123,7 @@ export default async function AdminSchedulesPage(
           <h2 className="h2 text-[1.5rem]">Worth double-checking</h2>
           <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-text-muted">
             The extractor read these from the published PDF but couldn&rsquo;t
-            resolve them cleanly — two Mondays it missed entirely, and three
+            resolve them cleanly, two Mondays it missed entirely, and three
             places where alternation broke next to a late-arrival day. Check
             each against the district calendar and save it above, right or
             wrong: saving is what takes it off this list.

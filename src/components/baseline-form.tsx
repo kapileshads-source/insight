@@ -24,7 +24,7 @@ const FIELD =
 /**
  * The baseline every later comparison is made against.
  *
- * The insight engine never uses a general target — "eight hours" appears
+ * The insight engine never uses a general target, "eight hours" appears
  * nowhere in it. Every statement it makes is against the student's own usual,
  * and until that usual is written down it has to infer one from whatever has
  * been logged so far, which takes weeks and is wrong early on.
@@ -63,7 +63,7 @@ export function BaselineForm({ profile }: { profile: SealedProfile }) {
       if (p.usualLocation) setLocation(p.usualLocation);
       if (p.usualNoise) setNoise(p.usualNoise);
     } catch {
-      // Never leave the form blank *and* silent — on an app that can't reset
+      // Never leave the form blank *and* silent, on an app that can't reset
       // passwords, an empty box where your answers were reads as data loss.
       setError("Couldn't read what you saved before. Filling this in again replaces it.");
     } finally {
@@ -74,7 +74,7 @@ export function BaselineForm({ profile }: { profile: SealedProfile }) {
   useEffect(() => {
     // Same exception as study-panel, for the same reason: every setState in
     // `load` happens after an await, so there is no cascading render to
-    // avoid — and this has to be an effect, because what's saved arrives as
+    // avoid, and this has to be an effect, because what's saved arrives as
     // ciphertext and can only be decrypted here.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
@@ -132,7 +132,7 @@ export function BaselineForm({ profile }: { profile: SealedProfile }) {
       <section className="rounded-lg border border-line bg-surface p-6">
         <h2 className="h3 text-[17px]">A usual night</h2>
         <p className="mt-2 text-[15px] leading-relaxed text-text-muted">
-          Not last night — the time you normally go to sleep and normally wake
+          Not last night, the time you normally go to sleep and normally wake
           up on a school day. Insight compares each night against this rather
           than against any general idea of enough sleep.
         </p>

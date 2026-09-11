@@ -14,7 +14,7 @@ export { courseScore } from "./canvas-sync";
  *
  * Timestamps come back ISO 8601 in UTC. Everything schedule-related in Insight
  * runs in America/Chicago, so due dates are converted at the point of display
- * rather than assumed — "due Thursday" is wrong near midnight otherwise.
+ * rather than assumed, "due Thursday" is wrong near midnight otherwise.
  */
 
 export class CanvasAuthError extends Error {
@@ -46,7 +46,7 @@ export type CanvasAssignment = {
   name: string;
   due_at: string | null;
   /// When it became available, and when the teacher made it. Canvas sends both
-  /// and we ignored both — they are the only signal it gives for work with no
+  /// and we ignored both, they are the only signal it gives for work with no
   /// due date, which is otherwise a pile with no order to it.
   unlock_at?: string | null;
   created_at?: string | null;
@@ -131,12 +131,12 @@ export async function verifyToken(opts: FetchOptions): Promise<{ name: string }>
 export async function fetchCourses(opts: FetchOptions): Promise<CanvasCourse[]> {
   // `include[]=total_scores` is what attaches the student's own current score
   // to each course, in `enrollments[].computed_current_score`. Without it the
-  // course grade is simply absent — which is why the GPA estimate showed
+  // course grade is simply absent, which is why the GPA estimate showed
   // nothing at all for anyone who had connected Canvas but not HAC: every
   // course had a name and no grade, so there was nothing to average.
   //
   // Canvas returns the score only for the caller's own enrolment, and only when
-  // the teacher has not hidden totals — so it is legitimately null sometimes,
+  // the teacher has not hidden totals, so it is legitimately null sometimes,
   // and a null must stay a null rather than becoming a zero.
   return getAll<CanvasCourse>(
     opts,
@@ -159,7 +159,7 @@ export async function fetchAssignments(
 }
 
 /// Map Canvas's submission shape onto our enum. Canvas distinguishes states
-/// we don't need, and conflates a couple we do — `missing` and `late` are
+/// we don't need, and conflates a couple we do, `missing` and `late` are
 /// flags rather than states, so they're checked before workflow_state.
 export function submissionState(
   a: CanvasAssignment,
@@ -177,7 +177,7 @@ export function submissionState(
 /// assignments are in it?" arrive together rather than one request per module.
 ///
 /// Modules are optional in Canvas and plenty of teachers never make any, so a
-/// failure here is not a failed sync — the caller treats it as "no answer".
+/// failure here is not a failed sync, the caller treats it as "no answer".
 export async function fetchModules(
   opts: FetchOptions,
   courseId: string,

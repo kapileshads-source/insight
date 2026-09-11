@@ -57,7 +57,7 @@ console.log("ready never promises a finding");
   const r = readiness(GATES.minSessions, OUTCOMES_FLOOR);
   ok("ready at exactly the floors", r.ready === true);
   // Clearing the floors buys a comparison, not a result. Most comparisons
-  // fail the permutation test, and that is the point of it — so the copy must
+  // fail the permutation test, and that is the point of it, so the copy must
   // not say a pattern is coming.
   const said = `${r.headline} ${r.detail}`.toLowerCase();
   ok("does not say it will tell you something", !said.includes("will tell you"));

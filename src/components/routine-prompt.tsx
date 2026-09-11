@@ -11,13 +11,13 @@ import { routineDue, routineWording, type RoutineTask } from "@/lib/routine";
  *
  * Sleep and phone time are the only two numbers nothing can measure for us,
  * and four of the seven insight factors rest on them. A student who stops
- * logging doesn't leave a smaller dataset — they leave a biased one, because
+ * logging doesn't leave a smaller dataset, they leave a biased one, because
  * the nights that go unlogged are not a random sample of nights.
  *
  * So it sits at the top and it comes back. What it never does is block:
  * the timer, the session, the whole app stays usable around it. "Not tonight"
  * is one tap, and tomorrow it asks again with the count gone up. That is the
- * whole of the force, and it stops there on purpose — a tracker that holds a
+ * whole of the force, and it stops there on purpose, a tracker that holds a
  * student's own study timer hostage is one that gets deleted in a bad week,
  * and then it measures nothing at all.
  */
@@ -53,7 +53,7 @@ export function RoutinePrompt() {
 
   useEffect(() => {
     // `refresh` awaits a round trip before it touches state, so there is no
-    // cascading render for the rule to see — and the data arrives as
+    // cascading render for the rule to see, and the data arrives as
     // ciphertext, so this cannot happen anywhere but the client.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (status === "unlocked") void refresh();
@@ -108,7 +108,7 @@ export function RoutinePrompt() {
     try {
       window.localStorage.setItem(skipKey(task), "1");
     } catch {
-      // Nothing to do — it'll ask again on the next load, which is the
+      // Nothing to do, it'll ask again on the next load, which is the
       // behaviour we'd have chosen anyway.
     }
     setTask(null);
@@ -132,7 +132,7 @@ export function RoutinePrompt() {
  *
  * Split out so it can be rendered against a made-up task and looked at. The
  * panel above needs an unlocked key and the right hour of the day, which makes
- * the one thing worth checking — how firm does this actually read? — the one
+ * the one thing worth checking, how firm does this actually read?, the one
  * thing hardest to see.
  */
 export function RoutineCard({
@@ -213,7 +213,7 @@ export function RoutineCard({
 
       {!isSleep && (
         <p className="mt-4 text-[13px] leading-relaxed text-text-faint">
-          Settings → Screen Time on your phone. A screenshot works too — the
+          Settings → Screen Time on your phone. A screenshot works too, the
           dashboard reads it without the image leaving your device.
         </p>
       )}

@@ -7,7 +7,7 @@ import Foundation
 /// re-signed binary looked like a stranger to its own keychain item.
 ///
 /// **The password is not here, and the key derived from it is not here.** The
-/// key lives in memory only, so closing the app locks it again — which is the
+/// key lives in memory only, so closing the app locks it again, which is the
 /// same bargain the browser makes, and the reason a lost phone is a lost
 /// phone rather than a lost diary.
 ///
@@ -88,7 +88,7 @@ final class Config {
 
         // Kept out of iCloud backups. The wrapped key in here is useless
         // without the password, but a backup is a copy that leaves the phone
-        // and sits somewhere neither the student nor we control — and an
+        // and sits somewhere neither the student nor we control, and an
         // offline copy is exactly what makes grinding at a password worth
         // someone's time. The cost is re-pairing after restoring a phone,
         // which is a minute, and arguably the right default anyway.

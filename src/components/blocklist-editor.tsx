@@ -140,7 +140,7 @@ export function BlocklistEditor({ prefs }: { prefs: BlocklistPrefs }) {
           Block something else
         </label>
         <p className="mt-1 text-[14px] leading-relaxed text-text-faint">
-          A website, or the name of an app on your computer — whatever the app
+          A website, or the name of an app on your computer, whatever the app
           calls itself, like <span className="text-text-muted">Minecraft</span>.
         </p>
         <div className="mt-2 flex gap-2">
@@ -190,7 +190,7 @@ export function BlocklistEditor({ prefs }: { prefs: BlocklistPrefs }) {
           Always allow
         </label>
         <p className="mt-1 text-[14px] leading-relaxed text-text-faint">
-          For anything on a list above that you genuinely need — a YouTube
+          For anything on a list above that you genuinely need, a YouTube
           channel your teacher sets, or an app like VLC you watch lessons in.
           Exceptions beat everything else.
         </p>

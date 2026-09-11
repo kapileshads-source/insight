@@ -2,7 +2,7 @@
  * Client-side encryption.
  *
  * Everything in this file runs in the browser. The password never leaves the
- * device, which is the entire point — and also why there is no password reset.
+ * device, which is the entire point, and also why there is no password reset.
  *
  * Two-key design:
  *
@@ -17,7 +17,7 @@
  */
 
 /// OWASP's floor for PBKDF2-SHA256 as of 2023. Costs roughly half a second on
-/// a mid-range laptop, which is the point — it is what makes a short
+/// a mid-range laptop, which is the point, it is what makes a short
 /// password expensive to attack offline.
 export const PBKDF2_ITERATIONS = 600_000;
 export const KDF_NAME = "PBKDF2-SHA256";
@@ -30,7 +30,7 @@ const VERIFIER_PLAINTEXT = "insight-verifier-v1";
 /// a plain-http LAN address does not, which is exactly how someone testing
 /// from their phone on the school wifi would hit it. Without this check the
 /// failure is `crypto.subtle is undefined` thrown from inside key derivation
-/// and surfaced as a generic "something went wrong" — the student retypes
+/// and surfaced as a generic "something went wrong", the student retypes
 /// their password five times and concludes the app is broken.
 export function cryptoAvailable(): boolean {
   return (
@@ -42,7 +42,7 @@ export function cryptoAvailable(): boolean {
 export class UnsupportedBrowserError extends Error {
   constructor() {
     super(
-      "This browser can't encrypt your data. Insight needs a secure connection — open it over https, or use localhost rather than an IP address.",
+      "This browser can't encrypt your data. Insight needs a secure connection, open it over https, or use localhost rather than an IP address.",
     );
     this.name = "UnsupportedBrowserError";
   }
@@ -152,7 +152,7 @@ export async function createEncryptionSetup(password: string): Promise<{
 }
 
 /// Non-extractable so that once unlocked, no script can read the key material
-/// back out — it can only be used to encrypt and decrypt.
+/// back out, it can only be used to encrypt and decrypt.
 async function importDek(raw: Uint8Array): Promise<CryptoKey> {
   return crypto.subtle.importKey(
     "raw",
@@ -210,7 +210,7 @@ export async function unlock(
  *
  * This is what makes "I forgot my password" survivable. Without it the honest
  * answer is that the data is gone, because the server genuinely cannot read
- * it — that is the whole architecture, not a missing feature. The usual fix is
+ * it, that is the whole architecture, not a missing feature. The usual fix is
  * for the provider to keep an escrow copy of the key, which would mean Insight
  * could read a student's gradebook whenever it liked, and the privacy pages
  * say in as many words that it cannot.
@@ -290,7 +290,7 @@ export function normalizeRecoveryCode(input: string): string {
  * Wrap the data key under a fresh recovery code.
  *
  * Takes the raw key bytes rather than a `CryptoKey`, because the imported DEK
- * is deliberately non-extractable — there is no way to read it back out of an
+ * is deliberately non-extractable, there is no way to read it back out of an
  * unlocked session. So this is called at two moments only, both of which have
  * the bytes in hand: creating an account, and recovering with an old code.
  */
@@ -348,7 +348,7 @@ export async function createRecoveryKey(
  *
  * The old code is retired in the same step. A recovery key that still worked
  * after being used would sit in a screenshot or a notes app indefinitely, and
- * the student has no way to tell whether anyone else read it — which is
+ * the student has no way to tell whether anyone else read it, which is
  * precisely the situation they are in when they reach for it.
  */
 export async function recoverWithKey(
@@ -482,7 +482,7 @@ export async function changePassword(
 // --- payload sealing --------------------------------------------------------
 
 /// Encrypt a value into the ciphertext/iv pair every table stores.
-/// A fresh IV per row, which AES-GCM requires — reusing one would leak.
+/// A fresh IV per row, which AES-GCM requires, reusing one would leak.
 export async function seal(dek: CryptoKey, value: unknown): Promise<Sealed> {
   const iv = randomBytes(12);
   const cipher = await crypto.subtle.encrypt(
@@ -511,7 +511,7 @@ export type PasswordCheck = {
 };
 
 /// A deliberately plain check. This password cannot be reset, so the failure
-/// mode we care about is "too weak to protect a year of data" — and the copy
+/// mode we care about is "too weak to protect a year of data", and the copy
 /// has to say that to a fifteen-year-old without lecturing.
 export function checkPassword(p: string): PasswordCheck {
   const trimmed = p.trim();

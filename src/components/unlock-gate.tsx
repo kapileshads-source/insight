@@ -29,11 +29,11 @@ function UnlockScreen() {
         await unlock(password, remember);
       } catch (err) {
         // A wrong password is an expected, recoverable state. Reporting it as
-        // one — rather than as a generic failure — is the difference between
+        // one, rather than as a generic failure, is the difference between
         // "I mistyped" and "this app is broken".
         setError(
           err instanceof WrongPasswordError
-            ? "That password doesn't match. Nothing is lost — try again."
+            ? "That password doesn't match. Nothing is lost, try again."
             : "Couldn't unlock. Check your connection and try again.",
         );
         setPassword("");
@@ -86,7 +86,7 @@ function UnlockScreen() {
           <span>
             Stay unlocked on this device
             <span className="mt-0.5 block text-[14px] text-text-faint">
-              Don&rsquo;t use this on a school or shared computer — anyone who
+              Don&rsquo;t use this on a school or shared computer, anyone who
               opens the browser after you would see your data.
             </span>
           </span>
@@ -102,8 +102,8 @@ function UnlockScreen() {
       </form>
 
       {/* The way out, which used to be a paragraph explaining that there
-          wasn't one. There still is no reset in the ordinary sense — nothing
-          here can be emailed to you — but a recovery key opens the same data,
+          wasn't one. There still is no reset in the ordinary sense, nothing
+          here can be emailed to you, but a recovery key opens the same data,
           and a student staring at this screen needs the link, not the
           architecture lesson. */}
       <div className="mt-8 border-t border-line pt-5">
@@ -115,7 +115,7 @@ function UnlockScreen() {
         </Link>
         <p className="mt-2 text-[14px] leading-relaxed text-text-faint">
           Your recovery key opens your data and lets you set a new password.
-          There is no reset we can send you — the password never reaches us —
+          There is no reset we can send you, the password never reaches us,
           so the key is the way back.
         </p>
       </div>
@@ -126,7 +126,7 @@ function UnlockScreen() {
 /// Renders children only once the data key is in memory.
 ///
 /// Everything that touches encrypted data sits behind this, so no component
-/// downstream has to handle a null key — being mounted is the guarantee.
+/// downstream has to handle a null key, being mounted is the guarantee.
 export function UnlockGate({ children }: { children: React.ReactNode }) {
   const { status } = useCrypto();
 
@@ -148,7 +148,7 @@ export function UnlockGate({ children }: { children: React.ReactNode }) {
           Couldn&rsquo;t reach the server.
         </h1>
         <p className="mt-4 text-[17px] leading-relaxed text-text-muted">
-          Your data is fine — this is a connection problem, not a lost key.
+          Your data is fine, this is a connection problem, not a lost key.
           Nothing has been changed or deleted.
         </p>
         <button

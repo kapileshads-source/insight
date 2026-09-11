@@ -22,8 +22,8 @@ Use this skill when:
 
 Do **not** use this skill when:
 
-- Setting up CI/CD preview databases — use `prisma-postgres-cicd`
-- Building multi-tenant database provisioning into an app — use `prisma-postgres-integrator`
+- Setting up CI/CD preview databases, use `prisma-postgres-cicd`
+- Building multi-tenant database provisioning into an app, use `prisma-postgres-integrator`
 - Working with a database that already exists and is connected (schema/migration tasks are standard Prisma CLI)
 
 ## Prerequisites
@@ -34,7 +34,7 @@ Do **not** use this skill when:
 
 ## UX Guidelines
 
-When presenting choices to the user (region selection, project deletion, etc.), **use your platform's interactive selection mechanism** (e.g., `ask` tool in Claude Code, structured prompts in other agents). Do not print static tables and ask the user to type a value — present selectable options so the user can pick with minimal effort.
+When presenting choices to the user (region selection, project deletion, etc.), **use your platform's interactive selection mechanism** (e.g., `ask` tool in Claude Code, structured prompts in other agents). Do not print static tables and ask the user to type a value, present selectable options so the user can pick with minimal effort.
 
 ## Workflow
 
@@ -46,7 +46,7 @@ You need a service token. Try these methods in order:
 
 **1a. Token in the user's prompt**
 
-Check if the user included a service token in their initial message (e.g., "Set up Prisma Postgres with token eyJ..."). If so, use it **exactly as provided** — do not truncate, re-encode, or round-trip it through a file. Store it in a shell variable for subsequent calls.
+Check if the user included a service token in their initial message (e.g., "Set up Prisma Postgres with token eyJ..."). If so, use it **exactly as provided**, do not truncate, re-encode, or round-trip it through a file. Store it in a shell variable for subsequent calls.
 
 **1b. Token in the environment**
 
@@ -74,7 +74,7 @@ curl -s -H "Authorization: Bearer $PRISMA_SERVICE_TOKEN" \
 
 The response contains an array of regions with `id`, `name`, and `status`. Only present regions where `status` is `available`.
 
-**Present the regions as an interactive menu** — let the user pick from options rather than typing a region ID manually.
+**Present the regions as an interactive menu**, let the user pick from options rather than typing a region ID manually.
 
 Read `references/endpoints.md` for the full response shape.
 
@@ -95,11 +95,11 @@ Use the current directory name as the project name by default.
 
 The response is wrapped in `{ "data": { ... } }`. Extract:
 
-- `data.id` — the project ID (prefixed with `proj_`)
-- `data.database.id` — the database ID (prefixed with `db_`)
-- `data.database.connections[0].endpoints.direct.connectionString` — the direct PostgreSQL connection string
+- `data.id`, the project ID (prefixed with `proj_`)
+- `data.database.id`, the database ID (prefixed with `db_`)
+- `data.database.connections[0].endpoints.direct.connectionString`, the direct PostgreSQL connection string
 
-Use the **direct** connection string (`endpoints.direct.connectionString`). Do not use the pooled or accelerate endpoints — those are for legacy Accelerate setups and not needed for new projects.
+Use the **direct** connection string (`endpoints.direct.connectionString`). Do not use the pooled or accelerate endpoints, those are for legacy Accelerate setups and not needed for new projects.
 
 If the response status is `provisioning`, wait a few seconds and poll `GET /v1/databases/<database-id>` until `status` is `ready`.
 
@@ -129,13 +129,13 @@ npm install prisma @prisma/client @prisma/adapter-pg pg dotenv
 ```
 
 All five packages are required:
-- `prisma` — CLI for migrations, schema push, client generation
-- `@prisma/client` — the generated query client
-- `@prisma/adapter-pg` — Prisma 7 driver adapter for direct PostgreSQL connections
-- `pg` — Node.js PostgreSQL driver (used by the adapter)
-- `dotenv` — loads `.env` variables for `prisma.config.ts`
+- `prisma`, CLI for migrations, schema push, client generation
+- `@prisma/client`, the generated query client
+- `@prisma/adapter-pg`, Prisma 7 driver adapter for direct PostgreSQL connections
+- `pg`, Node.js PostgreSQL driver (used by the adapter)
+- `dotenv`, loads `.env` variables for `prisma.config.ts`
 
-2. Write the direct connection string to `.env`. **Append** to the file if it already exists — do not overwrite existing entries:
+2. Write the direct connection string to `.env`. **Append** to the file if it already exists, do not overwrite existing entries:
 
 ```
 DATABASE_URL="<direct-connection-string>"
@@ -180,9 +180,9 @@ export default defineConfig({
 
 If the schema already has models, skip to pushing. Otherwise, **present these options as an interactive menu**:
 
-1. **"I'll define my schema manually"** — Tell the user to edit `prisma/schema.prisma` and come back when ready. Wait for them before proceeding.
-2. **"Give me a starter schema"** — Add a Blog starter schema (User, Post, Comment with relations) to `prisma/schema.prisma`. Show the user what was added and ask if they want to adjust it before pushing.
-3. **"I'll describe what I need"** — Ask the user to describe their data model in natural language (e.g., "I'm building a task manager with projects, tasks, and team members"). Generate a schema from the description, show it, and ask for confirmation before pushing.
+1. **"I'll define my schema manually"**, Tell the user to edit `prisma/schema.prisma` and come back when ready. Wait for them before proceeding.
+2. **"Give me a starter schema"**, Add a Blog starter schema (User, Post, Comment with relations) to `prisma/schema.prisma`. Show the user what was added and ask if they want to adjust it before pushing.
+3. **"I'll describe what I need"**, Ask the user to describe their data model in natural language (e.g., "I'm building a task manager with projects, tasks, and team members"). Generate a schema from the description, show it, and ask for confirmation before pushing.
 
 Once the schema has models and the user is ready, create a migration and generate the client:
 
@@ -196,7 +196,7 @@ Only use `npx prisma db push` if the user explicitly asks for prototyping-only m
 
 ### Step 7: Verify the connection
 
-After generating the client, create and run a quick verification script to confirm everything works end-to-end. This is **critical** — do not skip this step.
+After generating the client, create and run a quick verification script to confirm everything works end-to-end. This is **critical**, do not skip this step.
 
 Create a file named `test-connection.ts`:
 
@@ -228,15 +228,15 @@ npx tsx test-connection.ts
 - Create a `pg.Pool` with the `DATABASE_URL` connection string
 - Wrap it in a `PrismaPg` adapter
 - Pass `{ adapter }` to the `PrismaClient` constructor
-- Do **not** use `datasourceUrl` — that option does not exist in Prisma 7
-- Do **not** use `new PrismaClient()` with no arguments — it will throw
+- Do **not** use `datasourceUrl`, that option does not exist in Prisma 7
+- Do **not** use `new PrismaClient()` with no arguments, it will throw
 
 After verification succeeds, delete `test-connection.ts`.
 
 Then share links for the user to explore their database:
 
-- **Prisma Studio (CLI):** `npx prisma studio` — opens a visual data browser locally
-- **Console:** `https://console.prisma.io/<workspaceId>/<projectId>/<databaseId>/dashboard` — strip the prefixes (`wksp_`, `proj_`, `db_`) from the IDs returned in Step 3 to build this URL
+- **Prisma Studio (CLI):** `npx prisma studio`, opens a visual data browser locally
+- **Console:** `https://console.prisma.io/<workspaceId>/<projectId>/<databaseId>/dashboard`, strip the prefixes (`wksp_`, `proj_`, `db_`) from the IDs returned in Step 3 to build this URL
 
 Read `references/prisma7-client.md` for the full client instantiation reference.
 
@@ -256,8 +256,8 @@ Read `references/api-basics.md` for the full error reference. Key self-correctio
 Detailed API and usage information is in:
 
 ```
-references/auth.md             — Service token creation and usage
-references/api-basics.md       — Base URL, envelope, IDs, errors, pagination
-references/endpoints.md        — Endpoint details for projects, databases, connections, regions
-references/prisma7-client.md   — Prisma 7 client instantiation and usage patterns
+references/auth.md            , Service token creation and usage
+references/api-basics.md      , Base URL, envelope, IDs, errors, pagination
+references/endpoints.md       , Endpoint details for projects, databases, connections, regions
+references/prisma7-client.md  , Prisma 7 client instantiation and usage patterns
 ```

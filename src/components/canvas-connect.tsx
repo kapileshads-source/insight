@@ -87,7 +87,7 @@ export function CanvasConnect({ status }: { status: CanvasStatus }) {
 
           {status.disconnected && (
             <p className="mt-3 text-[15px] leading-relaxed text-down">
-              Your token stopped working — Canvas expires them every 90 days.
+              Your token stopped working, Canvas expires them every 90 days.
               Paste a new one below. The time since it died is recorded as
               missing data, not as a week where nothing was due.
             </p>
@@ -118,7 +118,7 @@ export function CanvasConnect({ status }: { status: CanvasStatus }) {
 
           {cryptoStatus !== "unlocked" && (
             <p className="mt-3 text-[14px] text-text-faint">
-              Unlock first — the sync has to be encrypted on this device before
+              Unlock first, the sync has to be encrypted on this device before
               it can be saved.
             </p>
           )}
@@ -149,7 +149,7 @@ export function CanvasConnect({ status }: { status: CanvasStatus }) {
           <li>
             <span className="text-text">3.</span> Put &ldquo;Insight&rdquo; as
             the purpose, and set the expiry date as far ahead as Canvas lets
-            you — FISD caps it at 90 days.
+            you, FISD caps it at 90 days.
           </li>
           <li>
             <span className="text-text">4.</span> Copy the token. Canvas shows

@@ -8,7 +8,7 @@ import UIKit
 /// and a Shortcut can turn one on.
 ///
 /// So Insight runs the student's shortcut when a session starts and again when
-/// it ends. It's friction rather than a lock — which is what Focus Mode has
+/// it ends. It's friction rather than a lock, which is what Focus Mode has
 /// always been here: the desktop apps give three seconds and a way through,
 /// because a hard lock gets uninstalled.
 ///

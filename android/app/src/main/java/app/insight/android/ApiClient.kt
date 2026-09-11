@@ -49,7 +49,7 @@ class ApiClient {
      * the endpoint's author intended for the native apps.
      *
      * Returns false on anything but a clean success, and the caller keeps its
-     * tally — a dropped connection should delay the data, not destroy it.
+     * tally, a dropped connection should delay the data, not destroy it.
      */
     fun postActivity(
         base: String,
@@ -122,7 +122,7 @@ class ApiClient {
         }
 
         /// `toISOString()` always has milliseconds, but a parser that only
-        /// accepts them fails silently — and a bad start time reads as a
+        /// accepts them fails silently, and a bad start time reads as a
         /// session that began just now, making every "started N minutes ago"
         /// wrong.
         private fun parseIso(value: String): Long {

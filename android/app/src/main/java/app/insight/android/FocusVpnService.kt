@@ -34,7 +34,7 @@ import kotlin.concurrent.thread
  *
  *  - **It runs only while a session is running with Focus Mode on.** The
  *    tracker starts it and stops it; there is no state where it lingers.
- *  - **Only DNS goes through it.** The tunnel routes one address — the
+ *  - **Only DNS goes through it.** The tunnel routes one address, the
  *    resolver we advertise. Web traffic, messages and everything else never
  *    enter this process.
  *  - **Nothing is recorded.** Blocked names are counted as block events like
@@ -42,7 +42,7 @@ import kotlin.concurrent.thread
  *
  * The honest limitation: a browser using DNS-over-HTTPS never asks us. Chrome
  * turns Secure DNS off while a VPN is active in most configurations, but not
- * all — so this is friction rather than a wall, like everything else here.
+ * all, so this is friction rather than a wall, like everything else here.
  */
 class FocusVpnService : VpnService() {
 
@@ -53,7 +53,7 @@ class FocusVpnService : VpnService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // A foreground service, because Android refuses to *start* a
-        // background one while the app is in the background — which is
+        // background one while the app is in the background, which is
         // always, for a tracker. That refusal used to crash the app; then it
         // was swallowed, and site blocking simply never happened. Neither is
         // acceptable, so the service is one Android will allow.
@@ -95,7 +95,7 @@ class FocusVpnService : VpnService() {
         if (running) {
             // The tracker re-sends this every poll. Leaving the last crumb
             // behind meant a working tunnel reported "8. establishing" for the
-            // rest of the session — a breadcrumb trail that outlived the walk.
+            // rest of the session, a breadcrumb trail that outlived the walk.
             config.siteBlockingProblem = failure
         } else {
             connect()
@@ -110,11 +110,11 @@ class FocusVpnService : VpnService() {
 
     override fun onRevoke() {
         // The student turned the VPN off from Settings, which is their right
-        // and needs no argument from us — but "another VPN took the slot"
+        // and needs no argument from us, but "another VPN took the slot"
         // lands here too, and looks identical from the outside.
         Log.i(TAG, "onRevoke")
         Config(this).siteBlockingProblem =
-            "Android withdrew the tunnel — another VPN may have taken over."
+            "Android withdrew the tunnel, another VPN may have taken over."
         teardown()
         super.onRevoke()
     }
@@ -125,8 +125,8 @@ class FocusVpnService : VpnService() {
             .addAddress(TUNNEL_ADDRESS, 32)
             .addDnsServer(TUNNEL_DNS)
             // The single most important line: only the resolver we advertise
-            // is routed into this process. Nothing else the phone does —
-            // pages, messages, video — passes through Insight.
+            // is routed into this process. Nothing else the phone does,
+            // pages, messages, video, passes through Insight.
             .addRoute(TUNNEL_DNS, 32)
             .setBlocking(true)
             .setConfigureIntent(
@@ -208,7 +208,7 @@ class FocusVpnService : VpnService() {
      * Read queries, refuse the blocked ones, forward the rest.
      *
      * Every forwarded query gets its own socket and its own thread. The first
-     * version shared one socket and handled queries strictly in turn — send,
+     * version shared one socket and handled queries strictly in turn, send,
      * block until *a* reply arrives, assume it belongs to the query we just
      * sent. Android's resolver asks for A and AAAA at once, several hostnames
      * per page, so replies interleave. Each one was then delivered to the port
@@ -356,7 +356,7 @@ class FocusVpnService : VpnService() {
      * The resolver the phone would have used anyway.
      *
      * Sending everything to a public resolver instead would quietly move every
-     * lookup a student makes to a company they didn't choose — a bigger change
+     * lookup a student makes to a company they didn't choose, a bigger change
      * to their privacy than the blocking is worth.
      */
     private fun upstreamResolver(): InetAddress {
@@ -377,7 +377,7 @@ class FocusVpnService : VpnService() {
             // Worth saying out loud rather than falling back quietly: every
             // lookup this session goes somewhere the student didn't pick.
             Config(this).siteBlockingProblem =
-                "Using a public resolver — the phone's own couldn't be read."
+                "Using a public resolver, the phone's own couldn't be read."
         }
 
         return system ?: InetAddress.getByName(FALLBACK_DNS)
@@ -409,13 +409,13 @@ class FocusVpnService : VpnService() {
 
             if (prepare(context) != null) {
                 config.siteBlockingProblem =
-                    "Insight needs the VPN permission again — allow it above."
+                    "Insight needs the VPN permission again, allow it above."
                 return
             }
 
             // Starting a service is refused when the app is in the background,
             // which is most of the time for a tracker. The caller is a
-            // foreground service so this is normally allowed — normally is not
+            // foreground service so this is normally allowed, normally is not
             // a good enough reason to risk the process.
             try {
                 config.siteBlockingProblem = "2. starting the service"

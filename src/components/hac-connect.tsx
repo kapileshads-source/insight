@@ -12,13 +12,13 @@ import {
  *
  * **This is now the only path.** The extension used to read the same gradebook
  * using the session a student already had, without ever seeing a password,
- * which was strictly better — but it only worked on desktop Chrome, and
+ * which was strictly better, but it only worked on desktop Chrome, and
  * keeping two fetch paths meant finding every HAC bug twice. What is left is
  * the one that works on a phone, at the cost of holding the password.
  *
  * The honesty here is the feature. A student is about to hand over the password
  * that is probably also behind their school email, so this says plainly what is
- * stored, what we can see, and how to undo it — before the fields, not after.
+ * stored, what we can see, and how to undo it, before the fields, not after.
  * Anything less and the app is asking for a credential on the strength of a
  * privacy page it is quietly contradicting.
  */
@@ -54,7 +54,7 @@ export function HacConnect({
 
   // Only a *working* connection hides the form. A password that has stopped
   // working needs replacing, and the first draft said "reconnect below" above
-  // a card with no fields under it — a dead end, and the exact moment a
+  // a card with no fields under it, a dead end, and the exact moment a
   // student most needs the form.
   if (connected && !disconnected) {
     return (
@@ -85,8 +85,8 @@ export function HacConnect({
 
       <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-text-muted">
         {disconnected
-          ? `The saved password for ${username} stopped working — most likely you changed it. Sign in again and grades start updating.`
-          : "This is how Insight reads your real grades — the ones your school posts, rather than what Canvas happens to hold."}
+          ? `The saved password for ${username} stopped working, most likely you changed it. Sign in again and grades start updating.`
+          : "This is how Insight reads your real grades, the ones your school posts, rather than what Canvas happens to hold."}
       </p>
 
       {/* Said before the fields, not after. A student is about to hand over the
@@ -99,7 +99,7 @@ export function HacConnect({
           <span className="text-text">
             That means Insight can read your gradebook
           </span>{" "}
-          — the only part of the app where that is true. Everything else stays
+         , the only part of the app where that is true. Everything else stays
           encrypted with a key we don&rsquo;t have.
         </p>
         <p className="mt-3 text-[14px] leading-relaxed text-text-muted">

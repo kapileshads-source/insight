@@ -7,14 +7,14 @@ import { useState } from "react";
  *
  * "Once" is the whole design, not a limitation. If this could be fetched again
  * later then the server would have to hold something that opens the data, and
- * the entire privacy argument — that Insight cannot read a student's gradebook
- * — would be false. So the code lives in one React state variable, in one tab,
+ * the entire privacy argument, that Insight cannot read a student's gradebook
+ *, would be false. So the code lives in one React state variable, in one tab,
  * and when this screen closes it is gone.
  *
  * Which makes the job of this screen unusually specific: it has to get 25
  * characters out of the browser and onto something durable, in the ten seconds
- * before a teenager clicks past it. Hence three routes off the screen — copy,
- * download, or read it off the page — and a confirmation that cannot be
+ * before a teenager clicks past it. Hence three routes off the screen, copy,
+ * download, or read it off the page, and a confirmation that cannot be
  * satisfied by clicking, only by typing part of the code back.
  *
  * The typed confirmation is the part that matters. Every "I have saved this"
@@ -26,7 +26,7 @@ export function RecoveryCodeScreen({
   code,
   onDone,
   heading = "Your recovery key",
-  intro = "This is the only way back into your data if you forget your password. Save it now — we cannot show it again, and we do not have a copy.",
+  intro = "This is the only way back into your data if you forget your password. Save it now, we cannot show it again, and we do not have a copy.",
 }: {
   code: string;
   onDone: () => void;
@@ -130,7 +130,7 @@ export function RecoveryCodeScreen({
           onClick={onDone}
           className="btn-primary mt-6 px-7 py-3.5 text-[16px] disabled:opacity-50"
         >
-          Saved it — continue
+          Saved it, continue
         </button>
       </div>
     </main>

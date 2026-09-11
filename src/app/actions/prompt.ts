@@ -14,8 +14,8 @@ export type PromptState =
 /// Should the "anything else not in Canvas?" prompt appear right now?
 ///
 /// The interval is per campus: high schools ask once a block, middle schools
-/// once every two periods. Those land close together in practice — a 90-minute
-/// block against two 47-minute periods — which is why one rule covers both.
+/// once every two periods. Those land close together in practice, a 90-minute
+/// block against two 47-minute periods, which is why one rule covers both.
 export async function shouldPrompt(): Promise<PromptState> {
   const user = await getOrCreateUser();
   if (!user?.schoolId) return { show: false };
@@ -34,7 +34,7 @@ export async function shouldPrompt(): Promise<PromptState> {
       }),
       db.districtCalendarDay.findUnique({ where: { date: today } }),
     // The term containing today, or the most recent one if the year has
-    // ended — the post-term prompt needs an end date to compare against.
+    // ended, the post-term prompt needs an end date to compare against.
       db.term.findFirst({
         where: { schoolId: school.id, startDate: { lte: today } },
         orderBy: { startDate: "desc" },
@@ -100,7 +100,7 @@ export async function shouldPrompt(): Promise<PromptState> {
 }
 
 /// Record that the prompt was shown, so it doesn't reappear until the interval
-/// has passed. Called whether the student answers or dismisses — being asked
+/// has passed. Called whether the student answers or dismisses, being asked
 /// is what counts, not what they did about it.
 export async function markPrompted(
   kind: "PERIODIC" | "POST_TERM",

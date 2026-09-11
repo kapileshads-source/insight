@@ -2,7 +2,7 @@
  * A term of plausible study data, for a demo account.
  *
  * The insight engine has never met a human, which makes it impossible to show
- * anyone what the app is *for* — an empty dashboard demonstrates nothing. This
+ * anyone what the app is *for*, an empty dashboard demonstrates nothing. This
  * generates a student who studies the way students actually do, so the engine
  * can be pointed at something and the result looked at.
  *
@@ -13,13 +13,13 @@
  * Deleting the demo account afterwards is the whole cleanup.
  *
  * It runs in the browser, because everything it writes is encrypted with a key
- * only the browser has. That is not a workaround — it is the same constraint
+ * only the browser has. That is not a workaround, it is the same constraint
  * every other write in this app is under, and a demo generator that could run
  * server-side would mean the encryption wasn't real.
  *
  * **The pattern is planted deliberately**, not random: this student scores
  * worse after late nights and short sleep. That is what makes the demo
- * meaningful — you can check whether the engine finds what was put there, and
+ * meaningful, you can check whether the engine finds what was put there, and
  * whether it stays quiet about the factors that were left as noise.
  */
 
@@ -56,7 +56,7 @@ export type DemoData = {
 
 // Three, not four. The engine matches sessions to a test by subject, so
 // spreading a term across more classes leaves two or three sessions behind
-// each score — too thin for any comparison to clear its gates.
+// each score, too thin for any comparison to clear its gates.
 const SUBJECTS = ["AP Biology", "Algebra II", "World History"];
 const LOCATIONS: Location[] = ["HOME", "LIBRARY", "CLASSROOM", "OTHER"];
 const NOISES: NoiseLevel[] = ["SILENT", "QUIET", "SOME", "LOUD"];
@@ -80,8 +80,8 @@ const dateKey = (d: Date) => {
  * Build a term.
  *
  * `weeks` back from `endingOn`. Twelve is enough for the engine's gates to
- * pass — it wants eight sessions behind a comparison and the pattern holding
- * across more than one week — without inventing a year of history.
+ * pass, it wants eight sessions behind a comparison and the pattern holding
+ * across more than one week, without inventing a year of history.
  */
 export function buildDemoData({
   endingOn = new Date(),
@@ -190,7 +190,7 @@ export function buildDemoData({
     const hours = sleepByDay.get(dateKey(date)) ?? meanSleep;
 
     // The two planted effects, plus real noise. Kept large enough to survive
-    // the permutation test — a demo where nothing surfaces demonstrates
+    // the permutation test, a demo where nothing surfaces demonstrates
     // nothing.
     const percentage =
       88 +

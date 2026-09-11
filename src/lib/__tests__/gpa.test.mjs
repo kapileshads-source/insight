@@ -65,7 +65,7 @@ console.log("\nreproducing a real transcript");
   // Within a twentieth of the printed 4.6940. The residual is which courses
   // are really Advanced, not the formula.
   ok("weighted lands near the real 4.6940", Math.abs(out.weighted - 4.694) < 0.05);
-  // Within a twentieth of the printed 3.7780 — where the per-percent rule was
+  // Within a twentieth of the printed 3.7780, where the per-percent rule was
   // out by more than half a point.
   ok("unweighted lands near the real 3.7780", Math.abs(out.unweighted - 3.778) < 0.05);
   ok("and the two scales differ", out.weighted > out.unweighted);
@@ -118,7 +118,7 @@ console.log("\nHAC is the roll of what you actually take");
   ok("the district shell goes", !kept.includes("Frisco ISD 1forAll Student Course 26-27"));
   ok("exactly one left", kept.length === 1);
 
-  // A class HAC matched onto an existing Canvas row is still on the roll — the
+  // A class HAC matched onto an existing Canvas row is still on the roll, the
   // sync marks it when it writes the grade. PLTW is this case, and reading it
   // wrong made a whole class vanish from a GPA.
   const matched = onlyEnrolled([

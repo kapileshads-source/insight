@@ -16,7 +16,7 @@ import { getChatAnswer } from "@/lib/llm";
  *
  * The zod schema is the enforcement, not documentation. Every field the model
  * can see is listed here with a bound on it, which means a future caller
- * cannot widen what gets sent by passing more — there is nowhere for it to go.
+ * cannot widen what gets sent by passing more, there is nowhere for it to go.
  */
 
 const factsSchema = z.object({

@@ -10,14 +10,14 @@ import { CanvasAutoSync } from "@/components/canvas-auto-sync";
 import { AssignmentPairing } from "@/components/assignment-pairing";
 import { GradeOutcomes } from "@/components/grade-outcomes";
 
-export const metadata = { title: "Work — Insight" };
+export const metadata = { title: "Work, Insight" };
 
 /**
  * What is outstanding and what has been marked, together.
  *
  * These are two views of the same term: the work you have not handed in, and
- * the work that came back. They were the two longest things on the dashboard —
- * a group per due-date bucket and a card per class — which is what made a
+ * the work that came back. They were the two longest things on the dashboard,
+ * a group per due-date bucket and a card per class, which is what made a
  * screen meant for a glance into a screen you scroll.
  *
  * The dashboard now shows two numbers from this page and links here.

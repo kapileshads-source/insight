@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { PageHero, SiteFooter, SiteNav } from "@/components/chrome";
 
-export const metadata = { title: "Privacy — Insight" };
+export const metadata = { title: "Privacy, Insight" };
 
 /// Plain language on purpose. COPPA requires that a parent can actually
 /// understand this, and so should a twelve-year-old. Every claim here is
-/// one the architecture actually makes true — nothing is aspirational.
+/// one the architecture actually makes true, nothing is aspirational.
 function Section({
   title,
   children,
@@ -46,274 +46,281 @@ export default function PrivacyPage() {
         .
       </p>
 
-      <Section title="Most of it, we can't read">
+      <p className="mt-2 text-[15px] text-text-faint">
+        Last updated 10 September 2026.
+      </p>
+
+      <Section title="Data we cannot read">
         <p>
-          Your study sessions, sleep, screen time and grades are encrypted on
-          your own device before they&rsquo;re sent to us. The key comes from
-          your password, and your password never leaves your browser.
+          Your study sessions, sleep records, screen time and grades are
+          encrypted on your own device before they are transmitted to us. The
+          encryption key is derived from your password, and your password never
+          leaves your browser.
         </p>
         <p>
-          This is not a promise about how carefully we behave. It&rsquo;s a
-          fact about how the system is built: we hold scrambled data and no way
-          to unscramble it.
+          This is a property of the system rather than a policy commitment. We
+          hold encrypted data and possess no means of decrypting it.
         </p>
         <p className="text-text">
-          You can test this. Forget your password and your data is unreadable —
-          including to us. If we could recover it for you, this page would be a
-          lie.
+          This is verifiable. If you forget your password, your data becomes
+          unreadable to you and to us alike. Were we able to recover it on your
+          behalf, this statement would be false.
         </p>
         <p>
-          Which is why you get a recovery key when you set your password: a
-          25-character code, generated in your browser, shown once, and never
-          sent to us. It opens a second copy of the same key. If you forget your
-          password, that code is the way back in — and if you lose the code as
-          well, there is genuinely nothing anyone can do, because we never had
-          either one. You can issue a new key from settings at any time, which
-          retires the old one.
+          For that reason, a recovery key is issued when you set your password.
+          It is a 25 character code, generated in your browser, displayed once,
+          and never transmitted to us. It unlocks a second copy of the same
+          encryption key. If you forget your password, that code is the only way
+          to regain access, and if you lose the code as well, no party can
+          restore your data, because we never held either credential. You may
+          issue a replacement key at any time from Settings, which invalidates
+          the previous one.
         </p>
         <p>
-          One honest caveat on that, if you sign in to Home Access Center with
-          your password rather than the extension: what we already stored stays
-          unreadable, but we would still be able to fetch a fresh copy of your
-          gradebook, because signing in doesn&rsquo;t need your Insight
-          password. That option is explained below, and disconnecting it ends
-          that.
+          One qualification applies if you sign in to Home Access Center using
+          your password rather than the browser extension. Data already stored
+          remains unreadable to us, but we would retain the ability to retrieve
+          a fresh copy of your gradebook, because signing in to Home Access
+          Center does not require your Insight password. This is described in
+          full below, and disconnecting the integration ends it.
         </p>
       </Section>
 
-      <Section title="What we can see">
-        <p>Being honest about the limits, because there are some:</p>
+      <Section title="Data we can see">
+        <p>The following are visible to us:</p>
         <ul className="ml-5 list-disc space-y-1.5">
           <li>That your account exists, and your email address</li>
-          <li>Which campus and grade you picked</li>
+          <li>The campus and grade level you selected</li>
           <li>Your date of birth</li>
           <li>
-            How many entries you have and when you wrote them — not what any of
-            them say
+            How many entries you have created and when, but not their contents
           </li>
           <li>
-            Which assignments you&rsquo;ve ticked off as done, and when — not
-            what they are
+            Which assignments you have marked as complete and when, but not what
+            those assignments are
           </li>
         </ul>
         <p>
-          That last one is new, and it is there so the evening reminder
-          doesn&rsquo;t tell you three things are due after you&rsquo;ve just
-          finished them.
+          The last of these exists so that evening reminders do not list work
+          you have already finished.
         </p>
-        <p>Three real exceptions, and this is the honest part of the page.</p>
+        <p>There are three exceptions, described in full below.</p>
         <p>
-          <strong className="text-text">Canvas.</strong>{" "}
-          If you connect it, we
-          hold your Canvas access token in a form our server can read, because
-          our server has to call Canvas for you. Disconnect Canvas at any time
-          and it&rsquo;s deleted.
+          <strong className="text-text">Canvas.</strong> If you connect Canvas,
+          we store your Canvas access token in a form our server can read,
+          because our server must call Canvas on your behalf. Disconnecting
+          Canvas deletes it.
+        </p>
+        <p>
+          <strong className="text-text">Home Access Center.</strong> Retrieving
+          your official grades requires your Home Access Center username and
+          password so that we can sign in on your behalf. A second method
+          previously existed, in which the browser extension read Home Access
+          Center using your existing browser session and never saw a password.
+          That method was more protective of your privacy, but it functioned
+          only on desktop computers, and it has been withdrawn.
+        </p>
+        <p className="text-text">
+          Consequently, if you connect Home Access Center, we store that
+          password in a form our server can read, which means{" "}
+          <strong>we are able to access your gradebook.</strong> This is the only
+          component of Insight for which that is true. Your study sessions,
+          sleep records and all other entries remain encrypted under a key we do
+          not hold; your Home Access Center gradebook does not.
+        </p>
+        <p>
+          The password is used solely to sign in, retrieve the classwork page,
+          and pass it to your browser, which parses and encrypts it before
+          anything is stored. It is never included in a web address and never
+          written to a log or error message. Nothing is saved unless the sign in
+          succeeds, and disconnecting deletes the stored credential entirely.
+        </p>
+        <p>
+          If your Home Access Center password is also your school email
+          password, as is frequently the case, we recommend changing one of them
+          before using this feature.
         </p>
         <p>
           <strong className="text-text">
-            Home Access Center, if you connect it.
+            The browser extension and desktop applications.
           </strong>{" "}
-          Bringing your real grades in means giving us your HAC username and
-          password so we can sign in for you. There used to be a second way —
-          the browser extension read HAC with the login you already had and
-          never saw a password — and it was better. It only worked on a
-          computer, so it was removed and this is what is left.
+          None of these can encrypt data, because encryption requires your
+          password and we do not supply it to them. This is deliberate: software
+          running continuously on your computer is not an appropriate place to
+          hold that key. While a session is active, they therefore transmit
+          website and application names in readable form, and these are held in
+          a staging area our server can read until you next open Insight. At
+          that point your browser encrypts them and the readable copy is
+          deleted. Records that are never collected expire after six hours and
+          are removed, both when a device next reports and once daily
+          regardless.
         </p>
         <p className="text-text">
-          So if you connect HAC, we store that password in a form our server can
-          read, and that means{" "}
-          <strong>we can open your gradebook.</strong> It is the only part of
-          Insight where that is true, and we are not going to bury it: your
-          study sessions, sleep and everything else stay encrypted with a key we
-          do not have, but your HAC gradebook does not.
-        </p>
-        <p>
-          What we do with it: sign in, fetch the classwork page, and hand it
-          straight to your browser, which reads it and encrypts it before
-          anything is stored. Your password is never put in a web address and
-          never written into a log or an error message, nothing is saved unless
-          the sign-in actually works, and disconnecting deletes it outright
-          rather than leaving an empty row behind.
-        </p>
-        <p>
-          If your HAC password is the same as your school email password —
-          which for a lot of people it is — change one of them before you use
-          this. Or use the extension, which never asks.
-        </p>
-        <p>
-          <strong className="text-text">
-            What the extension and the desktop apps send.
-          </strong>{" "}
-          None of them can encrypt anything, because encrypting needs your
-          password and we never give it to them — deliberately, since something
-          running on your laptop all day is the last place that key should live.
-          So while a session is running they send us plain site and app names,
-          and those sit in a holding area our server <em>can</em> read until the
-          next time you open Insight. At that point your browser encrypts them
-          and deletes the readable copy. Anything nobody collects expires after six
-          hours and is swept away — whenever a device next reports, and once a
-          day regardless.
-        </p>
-        <p className="text-text">
-          Which means: for a few hours, we can see that you had YouTube open for
-          twenty minutes during a session on Tuesday. Not what you watched, not
-          which video, and nothing at all from outside a session — but that much,
-          yes. It&rsquo;s the one place this design leaks, and you should hear it
-          from us rather than find it.
+          In practical terms, this means that for a period of several hours we
+          are able to see that a given website was open for a given number of
+          minutes during a session. We cannot see what you read or watched, and
+          we receive nothing at all from outside an active session. This is the
+          single point at which the design does not hold, and we prefer to state
+          it plainly.
         </p>
       </Section>
 
-      <Section title="Cookies and what's kept on your device">
+      <Section title="Cookies and local storage">
         <p>
-          Insight sets no advertising cookies, no analytics cookies, and no
-          tracking pixels. There is nothing here to consent to, because there
-          is nothing optional — which is also why you are not being shown a
-          banner. A cookie banner over four strictly necessary cookies is
-          theatre, and it trains people to click through the ones that matter.
-        </p>
-        <p>
-          What is actually set, all of it required for the site to work at all:
+          Insight sets no advertising cookies, no analytics cookies and no
+          tracking pixels. Every item described below is strictly necessary for
+          the service to function, and none is optional. For that reason no
+          consent banner is presented.
         </p>
         <ul className="mt-2 space-y-3">
           <li>
-            <strong className="text-text">Sign-in cookies</strong>, set by
-            Clerk, which handles logging in. They are what keep you signed in
-            between pages. Without them there is no way to know who is asking
-            for a page, and every screen would be a login screen.
+            <strong className="text-text">Authentication cookies</strong>, set
+            by Clerk, our sign in provider. These maintain your signed in
+            session between pages. Without them, no page could identify the
+            requesting user.
           </li>
           <li>
             <strong className="text-text">Your encryption key</strong>, if you
-            ticked &ldquo;stay unlocked on this device&rdquo;. It is held in
-            your browser&rsquo;s own database (IndexedDB), never in a cookie,
-            and never sent to us — a cookie is transmitted with every request,
-            which is precisely what this key must never be. Untick that box, or
-            press &ldquo;Lock this device&rdquo; in settings, and it is erased.
+            selected the option to stay unlocked on the device. It is held in
+            your browser&rsquo;s IndexedDB storage, never in a cookie, and never
+            transmitted to us. A cookie is sent with every request, which is
+            precisely why this key is not stored as one. Deselecting that option
+            or choosing Lock this device in Settings erases it.
           </li>
           <li>
-            <strong className="text-text">A few small preferences</strong>, in
-            local storage: when you last looked at your grades, which setup
-            prompts you dismissed, and when Canvas last synced. These stay on
-            the device that wrote them. Checking your grades on a laptop does
-            not clear the badge on your phone, and we could not read them even
-            if we wanted to.
+            <strong className="text-text">A small number of preferences</strong>{" "}
+            in local storage, recording when you last viewed your grades, which
+            setup prompts you dismissed, and when Canvas last synchronised.
+            These remain on the device that wrote them and are not readable by
+            us.
           </li>
         </ul>
         <p>
-          Clearing your browser data removes all of it. You will be signed out
-          and asked for your Insight password again — nothing is lost, because
-          none of it is your data.
+          Clearing your browser data removes all of the above. You will be
+          signed out and asked for your Insight password again. No data is lost,
+          as none of these items constitute your data.
         </p>
       </Section>
 
-      <Section title="What we never collect">
+      <Section title="Data we never collect">
         <ul className="ml-5 list-disc space-y-1.5">
           <li>
-            Your location. Choosing &ldquo;Library&rdquo; records the word
-            &ldquo;Library&rdquo; and nothing else. No GPS, ever.
+            Your location. Selecting &ldquo;Library&rdquo; records the word
+            &ldquo;Library&rdquo; and nothing further. No GPS data is collected
+            at any time.
           </li>
           <li>
-            Your browsing outside a study session. The extension records site
-            names only while a session is running, and nothing when one
-            isn&rsquo;t.
+            Your browsing outside a study session. The extension records website
+            names only while a session is running.
           </li>
           <li>
-            What&rsquo;s on your screen. The desktop app records how long an
-            app was in front, not what you typed or read.
+            The contents of your screen. The desktop application records how
+            long an application was in the foreground, not what was displayed or
+            typed.
           </li>
           <li>
-            Your screen time screenshot. It&rsquo;s read on your device and
-            never uploaded — only the number, after you confirm it.
+            Screen time screenshots. These are processed on your device and
+            never uploaded. Only the resulting figure is stored, after you
+            confirm it.
           </li>
         </ul>
       </Section>
 
       <Section title="The recommendation feature">
         <p>
-          Once a pattern has enough data behind it, Insight can send a short
-          summary to Groq, an outside AI service, to phrase it as a sentence of
-          advice.
+          Once a pattern has sufficient supporting data, Insight may send a short
+          summary to Groq, a third party service, in order to express it as a
+          sentence of advice.
         </p>
         <p>
-          What goes: the finished pattern, and the names and dates of upcoming
-          assignments. What doesn&rsquo;t: your name, your email, your school,
-          your grades, your sleep, or any individual session. You can turn it
-          off, and it never runs until you have a real pattern.
+          The summary contains the validated pattern and the names and dates of
+          upcoming assignments. It does not contain your name, email address,
+          school, grades, sleep records or any individual session. The feature
+          can be disabled, and it does not operate until a validated pattern
+          exists.
         </p>
       </Section>
 
-      <Section title="You have to be 13">
+      <Section title="Age requirement">
         <p>
-          We ask everyone&rsquo;s birth date, and that is the only thing it is
-          used for. Under 13 and the answer is no — the account stops there and
-          nothing else is collected.
+          Insight is available only to users aged 13 and over. We request each
+          user&rsquo;s date of birth, and it is used for no other purpose. Users
+          under 13 cannot proceed, and no further information is collected from
+          them.
         </p>
         <p>
-          That&rsquo;s a rule about privacy law rather than about you.
-          Collecting anything from someone under 13 needs a parent&rsquo;s
-          verified permission, and doing that properly — reaching a real parent
-          in a real inbox, every time — is more than this project can promise
-          today. We&rsquo;d rather say no than half-do it.
+          This reflects the requirements of privacy law rather than any judgment
+          about the user. Collecting information from a child under 13 requires
+          verifiable parental consent, and providing that reliably is beyond
+          what this project can undertake at present.
         </p>
         <p>
-          A parent of any student can still see everything we hold, have it
-          deleted, or close the account.
+          A parent of any student may request access to everything we hold,
+          request its deletion, or close the account.
         </p>
       </Section>
 
-      <Section title="Your choices">
+      <Section title="Your rights and choices">
         <ul className="ml-5 list-disc space-y-1.5">
-          <li>Export everything as a file</li>
-          <li>Delete single entries, or the whole account</li>
+          <li>Export all of your data as a file</li>
+          <li>Delete individual entries, or your entire account</li>
           <li>
-            Disconnect Canvas, remove the extension, or uninstall the app,
-            each on its own
+            Disconnect Canvas, disconnect Home Access Center, remove the
+            extension, or uninstall the desktop applications, independently of
+            one another
           </li>
-          <li>Mute any category of insight you find stressful</li>
+          <li>Disable any category of insight you do not wish to receive</li>
         </ul>
       </Section>
 
-      <Section title="How long we keep it">
+      <Section title="Data retention">
         <ul className="ml-5 list-disc space-y-1.5">
-          <li>While your account is open, we keep it</li>
-          <li>Delete your account and it&rsquo;s erased within 30 days, backups within 90</li>
+          <li>Data is retained for as long as your account remains open</li>
           <li>
-            We don&rsquo;t delete dormant accounts on a timer. If you graduate
-            or leave, delete the account yourself and it goes — we&rsquo;d
-            rather not promise a sweep we haven&rsquo;t built.
+            On deletion of your account, data is erased within 30 days, and from
+            backups within 90 days
+          </li>
+          <li>
+            Dormant accounts are not deleted automatically. If you no longer
+            wish to use Insight, please delete your account, which removes your
+            data. We do not wish to state a retention practice we have not
+            implemented.
           </li>
         </ul>
       </Section>
 
       <Section title="School records">
         <p>
-          Insight receives nothing from Frisco ISD. Anything from Canvas comes
-          through your own account, because you authorised it. Your school
-          can&rsquo;t see your Insight data, and FERPA — the law covering
-          school-held records — doesn&rsquo;t apply here, because the school
-          isn&rsquo;t giving us anything.
+          Insight receives no information from Frisco ISD. Data obtained from
+          Canvas or Home Access Center is retrieved through your own account,
+          with your authorisation. Your school cannot access your Insight data.
+          FERPA, which governs records held by educational institutions, does
+          not apply, as no institution transfers records to us.
         </p>
       </Section>
 
-      <Section title="Who else touches it">
+      <Section title="Third party services">
         <p>
-          Only services that run parts of Insight: hosting and database, sign-in
-          (Clerk), email delivery (Resend), and the AI service above. None may
-          use your data for their own purposes. We don&rsquo;t sell anything, we
-          don&rsquo;t advertise, and we don&rsquo;t train AI models on your data.
+          We use third party services only to operate Insight itself: hosting
+          and database provision, authentication (Clerk), email delivery
+          (Resend), and the recommendation service described above. None is
+          permitted to use your data for its own purposes. We do not sell data,
+          we do not display advertising, and we do not use your data to train
+          artificial intelligence models.
         </p>
       </Section>
 
-      <Section title="Questions">
+      <Section title="Contact">
         <p>
-          Write to{" "}
+          Enquiries may be directed to{" "}
           <a
             href="mailto:kapilesh.rajaravi@gmail.com"
             className="text-accent underline underline-offset-2"
           >
             kapilesh.rajaravi@gmail.com
           </a>
-          . If we change this page in a way that matters, we&rsquo;ll email you
-          first, and anyone under 13 will need a parent to consent again.
+          . If we make a material change to this policy, we will notify you by
+          email before it takes effect.
         </p>
       </Section>
       </div>

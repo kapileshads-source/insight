@@ -112,7 +112,7 @@ export async function requestParentConsent(
     token,
   );
   if (!sent.ok) {
-    // The record is already written, so the student isn't stuck — but they
+    // The record is already written, so the student isn't stuck, but they
     // need to know the parent won't see anything until this is retried.
     return {
       ok: false,
@@ -138,7 +138,7 @@ const encryptionSetupSchema = z.object({
 });
 
 /// The second wrapping, under the recovery code. Same shape as the password
-/// wrapping and equally inert on its own — the code that opens it was made in
+/// wrapping and equally inert on its own, the code that opens it was made in
 /// the browser and never sent here.
 const recoverySchema = z.object({
   recoverySalt: z.string().max(256),
@@ -165,7 +165,7 @@ export async function saveEncryptionSetup(
   }
 
   // Optional so an older client that does not send it still works, but every
-  // current path does — see `createEncryptionSetup`, which mints the recovery
+  // current path does, see `createEncryptionSetup`, which mints the recovery
   // key in the same call that makes the data key.
   const parsedRecovery = recovery ? recoverySchema.safeParse(recovery) : null;
   if (recovery && !parsedRecovery?.success) {

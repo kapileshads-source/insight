@@ -51,7 +51,7 @@ export async function saveProfile(payload: unknown): Promise<ProfileResult> {
   return { ok: true };
 }
 
-/// Whether anything has been saved at all — the only question about this the
+/// Whether anything has been saved at all, the only question about this the
 /// server is able to answer.
 export async function hasProfile(): Promise<boolean> {
   const user = await getOrCreateUser();

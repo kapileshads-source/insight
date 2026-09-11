@@ -9,8 +9,8 @@ import "server-only";
  * A model handed a study log will happily invent a correlation that isn't
  * there, and it will sound exactly as confident as a real one.
  *
- * So what crosses this boundary is a finished insight object — direction,
- * magnitude, sample size — plus upcoming assignment names. Never a session,
+ * So what crosses this boundary is a finished insight object, direction,
+ * magnitude, sample size, plus upcoming assignment names. Never a session,
  * never a grade, never anything identifying.
  *
  * Provider-agnostic on purpose: swapping Groq for Anthropic is an env var,
@@ -81,8 +81,8 @@ async function callGroq(
   const key = process.env.GROQ_API_KEY;
   if (!key) return { ok: false, error: "No Groq API key configured." };
 
-  // Groq retired every Llama model, and the old default here — the
-  // `llama-3.1-8b-instant` this shipped with — now 404s. That failed closed,
+  // Groq retired every Llama model, and the old default here, the
+  // `llama-3.1-8b-instant` this shipped with, now 404s. That failed closed,
   // so "Suggested this week" simply never appeared and looked like a feature
   // nobody had got round to rather than a broken one. Pinned to a model that
   // is actually on the account, and overridable so the next retirement is an
@@ -118,7 +118,7 @@ async function callGroq(
   if (!text) return { ok: false, error: "Groq returned nothing usable." };
 
   // A model that ran out of tokens stops mid-word, and the half-sentence was
-  // being shown as if it were the answer — "Your current weighted GPA is 4.694
+  // being shown as if it were the answer, "Your current weighted GPA is 4.694
   // and your". Reported rather than displayed: a visibly cut-off reply reads
   // as a broken app, and a silently cut-off one is worse.
   if (choice?.finish_reason === "length") {
@@ -164,7 +164,7 @@ async function callAnthropic(
 }
 
 /// Words that would mean the model ignored its instructions. Cheaper and more
-/// reliable than trusting the prompt alone — a causal claim about a teenager's
+/// reliable than trusting the prompt alone, a causal claim about a teenager's
 /// grades is exactly the output worth refusing to display.
 const CAUSAL = /\b(because|causes?|caused|causing|hurts?|harms?|boosts?|improves?|leads? to|results? in|due to)\b/i;
 

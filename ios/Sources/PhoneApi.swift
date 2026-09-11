@@ -35,7 +35,7 @@ struct PhoneApi {
         return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
     }
 
-    /// Starts one, or resumes the one already running — a student who left a
+    /// Starts one, or resumes the one already running, a student who left a
     /// session open on a laptop should not end up with two.
     func startSession() async -> SessionState? {
         guard let body = await post("/api/devices/session/start", body: [:]),

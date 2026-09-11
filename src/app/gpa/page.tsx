@@ -5,7 +5,7 @@ import { AppNav, PageTitle } from "@/components/chrome";
 import { GradebookProvider } from "@/components/gradebook-data";
 import { GpaWorkings } from "@/components/gpa-workings";
 
-export const metadata = { title: "GPA — Insight" };
+export const metadata = { title: "GPA, Insight" };
 
 /**
  * The GPA, with its working shown.

@@ -5,7 +5,7 @@ import { listDevices } from "@/app/actions/devices";
 import { DevicesPanel } from "@/components/devices-panel";
 import { NudgeOptIn } from "@/components/nudge-optin";
 
-export const metadata = { title: "Devices — Insight" };
+export const metadata = { title: "Devices, Insight" };
 
 export default async function DevicesPage() {
   const user = await getOrCreateUser();
@@ -22,7 +22,7 @@ export default async function DevicesPage() {
         <PageTitle
           eyebrow="Pairing"
           title="Devices"
-          lede="Pairing a device lets it record laptop time during a session. It can&rsquo;t read anything you&rsquo;ve already logged — pairing only grants the ability to add."
+          lede="Pairing a device lets it record laptop time during a session. It can&rsquo;t read anything you&rsquo;ve already logged, pairing only grants the ability to add."
         />
 
         <div className="mt-10">

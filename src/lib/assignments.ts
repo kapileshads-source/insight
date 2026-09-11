@@ -2,7 +2,7 @@
  * Turning a pile of Canvas rows into the list a student actually reads.
  *
  * Canvas shows everything a teacher ever posted, in course order, forever.
- * That is a filing cabinet, not an answer to "what do I need to do tonight" —
+ * That is a filing cabinet, not an answer to "what do I need to do tonight",
  * which is the only question worth asking of this data, and the reason these
  * rows have been syncing for weeks with nowhere to appear.
  *
@@ -64,7 +64,7 @@ export type AssignmentRow = {
  *
  * `EXCUSED` maps to graded because the question this answers is "is there
  * anything left to do?", and for excused work there isn't. It is not a score
- * either — `outcomes.ts` never sees it, because HAC gives no number.
+ * either, `outcomes.ts` never sees it, because HAC gives no number.
  */
 export function submissionStateFromHac(status: string): SubmissionState {
   switch (status) {
@@ -147,7 +147,7 @@ export function bucketFor(row: AssignmentRow, now: Date): Bucket | null {
 
   if (!row.dueAt) {
     // No due date is not "due never", and it is not a due date either. Work
-    // handed out in the last week is probably this week's — said as a guess,
+    // handed out in the last week is probably this week's, said as a guess,
     // in its own group, with the assigned date shown so a student can judge
     // it. Deliberately *not* written onto the row as a due date: a fabricated
     // one looks exactly like a real one, and the row we'd hide by acting on it
@@ -182,7 +182,7 @@ export type AssignmentGroup = {
  * Group and order the whole list.
  *
  * Within a group: by date, then by points, so a 100-point test outranks a
- * 5-point warm-up due the same day. Undated work sorts by points alone —
+ * 5-point warm-up due the same day. Undated work sorts by points alone,
  * there is nothing else to go on, and the big thing is the one worth seeing.
  */
 export function groupAssignments(
@@ -204,7 +204,7 @@ export function groupAssignments(
     else groups.set(bucket, [row]);
   }
 
-  // Driven by BUCKET_ORDER, which no longer contains UNDATED — so a row with
+  // Driven by BUCKET_ORDER, which no longer contains UNDATED, so a row with
   // no due date and nothing to place it is collected above and then never
   // rendered. Dropped rather than shown in a "No due date" pile: that group
   // filled up with the term's leftovers and pushed the dates a student

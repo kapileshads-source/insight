@@ -16,7 +16,7 @@ import { buildTranscript, officialGpa } from "@/lib/transcript";
  * Separate from the classwork sync because it answers a different question and
  * changes on a different clock. Classwork moves every time a teacher marks
  * something; a transcript moves twice a year, when a semester closes. So this
- * is a button rather than anything automatic — re-reading it on every dashboard
+ * is a button rather than anything automatic, re-reading it on every dashboard
  * load would be pointless work and a good way to find whatever rate limit HAC
  * has.
  *
@@ -48,7 +48,7 @@ export function TranscriptSync() {
         setState({
           kind: "problem",
           message:
-            "The transcript page loaded but had no years on it. If you're a first-year student that is expected — there is nothing on it until a semester closes.",
+            "The transcript page loaded but had no years on it. If you're a first-year student that is expected, there is nothing on it until a semester closes.",
         });
         return;
       }
@@ -84,7 +84,7 @@ export function TranscriptSync() {
       <h2 className="h3 text-[17px]">Your transcript</h2>
       <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-text-muted">
         Every semester you&rsquo;ve finished, and the GPA your school actually
-        calculated. That figure is the real one — everything else Insight shows
+        calculated. That figure is the real one, everything else Insight shows
         you is an estimate from marks that are still moving.
       </p>
 
@@ -114,7 +114,7 @@ export function TranscriptSync() {
       )}
 
       <p className="mt-4 text-[13px] leading-relaxed text-text-faint">
-        Worth doing once a semester — it only changes when one ends.
+        Worth doing once a semester, it only changes when one ends.
       </p>
     </section>
   );

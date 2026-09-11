@@ -17,8 +17,8 @@ async function requireUser() {
 
 /// Start a session.
 ///
-/// Only the start time is written now. Everything descriptive — subject,
-/// where they are, how loud it is — is encrypted in the browser and attached
+/// Only the start time is written now. Everything descriptive, subject,
+/// where they are, how loud it is, is encrypted in the browser and attached
 /// on stop, because the server has no key to encrypt it with.
 export async function startSession(): Promise<SessionResult> {
   const user = await requireUser();
@@ -35,7 +35,7 @@ export async function startSession(): Promise<SessionResult> {
   const created = await db.studySession.create({
     // Focus Mode starts with the session, per the plan. Making a student
     // switch it on separately means the one who most needs it is the one who
-    // won't bother — and a blocker nobody enables blocks nothing.
+    // won't bother, and a blocker nobody enables blocks nothing.
     data: { userId: user.id, startedAt: new Date(), focusModeActive: true },
   });
 
@@ -83,7 +83,7 @@ export async function stopSession(
 ///
 /// Deliberately reversible without ending the session. The alternative is a
 /// student who needs one blocked site stopping their timer to get at it, which
-/// loses the session data as well as the focus — a worse outcome on both
+/// loses the session data as well as the focus, a worse outcome on both
 /// counts than letting them switch it off.
 export async function setFocusMode(
   sessionId: string,
@@ -108,7 +108,7 @@ export async function setFocusMode(
 }
 
 /// Throw away a session without recording it. A student who started the timer
-/// by accident should be able to remove it — leaving a two-minute "session"
+/// by accident should be able to remove it, leaving a two-minute "session"
 /// in the data is worse than having no row at all.
 export async function discardSession(
   sessionId: string,

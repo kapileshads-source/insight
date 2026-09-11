@@ -20,7 +20,7 @@ import {
  *
  * The round trip is the interesting part: the server calls Canvas, hands back
  * plaintext, and this encrypts it here before storing it. That is why sync
- * can't be a cron — the server has no key, so it would have nowhere to put
+ * can't be a cron, the server has no key, so it would have nowhere to put
  * what it fetched.
  *
  * Renders nothing. A student who has to watch a spinner to get fresh homework
@@ -61,7 +61,7 @@ function writeStamp(key: string, at: number) {
   try {
     window.localStorage.setItem(key, String(at));
   } catch {
-    // As above — the sync still works, it just can't coordinate.
+    // As above, the sync still works, it just can't coordinate.
   }
 }
 
@@ -124,7 +124,7 @@ export function CanvasAutoSync() {
             name: c.name,
             shortName: c.shortName,
             currentModule: c.currentModule,
-            // Stored as a string so it matches the HAC path exactly — the
+            // Stored as a string so it matches the HAC path exactly, the
             // gradebook view and the GPA estimate read one field, not two.
             reportedGrade:
               c.reportedGrade === null ? null : String(c.reportedGrade),
@@ -157,7 +157,7 @@ export function CanvasAutoSync() {
       await refreshStatus();
     } catch {
       // Encryption failed, or the network went. Either way it is not worth
-      // interrupting a student over — the next tick will try again.
+      // interrupting a student over, the next tick will try again.
       writeStamp(FAILURE_KEY, Date.now());
     } finally {
       running.current = false;
@@ -167,7 +167,7 @@ export function CanvasAutoSync() {
   useEffect(() => {
     if (status !== "unlocked") return;
     // `refreshStatus` awaits a round trip before it touches state, so there is no
-    // cascading render for the rule to see — and the data arrives as
+    // cascading render for the rule to see, and the data arrives as
     // ciphertext, so this cannot happen anywhere but the client.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshStatus();
@@ -177,7 +177,7 @@ export function CanvasAutoSync() {
     if (status !== "unlocked" || !conditions?.connected) return;
 
     // `attempt` awaits a round trip before it touches state, so there is no
-    // cascading render for the rule to see — and the data arrives as
+    // cascading render for the rule to see, and the data arrives as
     // ciphertext, so this cannot happen anywhere but the client.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void attempt();

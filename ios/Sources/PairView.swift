@@ -20,7 +20,7 @@ struct PairView: View {
                     .font(.system(size: 28, weight: .semibold))
                     .foregroundStyle(Theme.text)
 
-                Text("On Insight, open Devices and generate a phone code. It's long — copy the whole thing and paste it here. It's shown once.")
+                Text("On Insight, open Devices and generate a phone code. It's long, copy the whole thing and paste it here. It's shown once.")
                     .font(.system(size: 16))
                     .foregroundStyle(Theme.textMuted)
 
@@ -51,7 +51,7 @@ struct PairView: View {
                         .foregroundStyle(Theme.bad)
                 }
 
-                Text("The code carries your encryption setup, which is useless without your password — and your password isn't in it, and never leaves your head. Paste it once and don't share it.")
+                Text("The code carries your encryption setup, which is useless without your password, and your password isn't in it, and never leaves your head. Paste it once and don't share it.")
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.textFaint)
             }
@@ -69,9 +69,9 @@ struct PairView: View {
             guard problem == nil else { return }
 
             // Cleared once it's been used. The code carries the wrapped key,
-            // and leaving it in a text field and on the system clipboard —
+            // and leaving it in a text field and on the system clipboard,
             // where any app can read it, and where Universal Clipboard hands
-            // it to every other Apple device on the account — outlives every
+            // it to every other Apple device on the account, outlives every
             // reason it existed.
             code = ""
             if UIPasteboard.general.string == pasted {

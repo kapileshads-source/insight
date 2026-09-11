@@ -149,7 +149,7 @@ struct StatusView: View {
 
     private var detail: String {
         guard let session = store.session else {
-            return "Start one here, or on any device — they're the same session."
+            return "Start one here, or on any device, they're the same session."
         }
 
         let minutes = max(0, Int(Date().timeIntervalSince(session.startedAt) / 60))
@@ -162,7 +162,7 @@ struct StatusView: View {
             return
         }
 
-        // The night before this morning — which is what a student means when
+        // The night before this morning, which is what a student means when
         // they open this at breakfast.
         let problem = await store.logSleep(hours: hours, date: Date())
         note = problem ?? "Saved."

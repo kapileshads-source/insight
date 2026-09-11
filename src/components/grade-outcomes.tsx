@@ -15,14 +15,14 @@ import { planOutcomes, type ExistingOutcome, type GradedAssignment, type Outcome
  *
  * Until this existed the two halves of the app never met: Canvas grades synced
  * every ten minutes, HAC grades arrived on request, and the engine could see
- * neither — every score it used had been typed in by hand. A student with a
+ * neither, every score it used had been typed in by hand. A student with a
  * connected gradebook still had to re-enter their own marks for any of it to
  * mean anything, which almost nobody would do.
  *
  * Runs quietly. Recording a score that already exists in Canvas is not news,
  * and a card announcing "added 14 scores" every ten minutes would be noise.
- * The one thing it does surface is a disagreement — where a student typed a
- * mark and the gradebook says something else — because that is the only case
+ * The one thing it does surface is a disagreement, where a student typed a
+ * mark and the gradebook says something else, because that is the only case
  * where the app genuinely does not know which number is right.
  */
 
@@ -147,7 +147,7 @@ export function GradeOutcomes() {
   useEffect(() => {
     if (status !== "unlocked") return;
     // `run` awaits a round trip before it touches state, so there is no
-    // cascading render for the rule to see — and the data arrives as
+    // cascading render for the rule to see, and the data arrives as
     // ciphertext, so this cannot happen anywhere but the client.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void run();
@@ -194,7 +194,7 @@ export function GradeOutcomes() {
 /**
  * The card, with no crypto and no fetching.
  *
- * Split out so it can be rendered against made-up conflicts and looked at —
+ * Split out so it can be rendered against made-up conflicts and looked at,
  * the panel above needs an unlocked key and a real disagreement to exist,
  * which makes the one thing worth checking (does this read as neutral, rather
  * than as an accusation?) the one thing hardest to see.
@@ -213,7 +213,7 @@ export function ConflictCard({
       <h2 className="h3 text-[17px]">Two different scores</h2>
       <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
         You logged one number and the gradebook says another. Insight
-        won&rsquo;t pick for you — whichever you choose is the one your insights
+        won&rsquo;t pick for you, whichever you choose is the one your insights
         are built on.
       </p>
 

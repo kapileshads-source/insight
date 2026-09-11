@@ -11,7 +11,7 @@ Service tokens authenticate server-to-server requests. They are scoped to a work
 1. Open https://console.prisma.io
 2. Navigate to **Workspace Settings** → **Service Tokens**
 3. Click **Create Token**
-4. Copy the token immediately — it is only shown once
+4. Copy the token immediately, it is only shown once
 
 ### Using a service token
 

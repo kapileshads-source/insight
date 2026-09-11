@@ -56,7 +56,7 @@ export async function connectCanvas(
       return {
         ok: false,
         error:
-          "Canvas didn't accept that token. Check you copied all of it — it's only shown once.",
+          "Canvas didn't accept that token. Check you copied all of it, it's only shown once.",
       };
     }
     return { ok: false, error: "Couldn't reach Canvas. Try again shortly." };
@@ -142,7 +142,7 @@ export type CanvasPull = {
     name: string;
     shortName: string | null;
     /// What the class is on now, when Canvas has modules for it. Null is the
-    /// common case — plenty of teachers never make any.
+    /// common case, plenty of teachers never make any.
     currentModule: CurrentModule | null;
     /// Canvas's own current percentage for this student. Null when the teacher
     /// hides totals, which is legitimate and must not become a zero.
@@ -165,7 +165,7 @@ export type CanvasPull = {
 /// Pull from Canvas and hand the result straight back to the browser.
 ///
 /// Nothing is written here. The server can read Canvas but cannot encrypt for
-/// this student, so it fetches, returns, and forgets — the browser encrypts
+/// this student, so it fetches, returns, and forgets, the browser encrypts
 /// and posts the ciphertext back through `storeCanvasData`. That round trip is
 /// the cost of the server not being able to read anything.
 export async function pullCanvas(): Promise<
@@ -230,7 +230,7 @@ export async function pullCanvas(): Promise<
           name: c.name,
           shortName: c.course_code ?? null,
           currentModule: modulesByCourse.get(c.id) ?? null,
-          // Canvas's own figure, quoted rather than derived — the same rule the
+          // Canvas's own figure, quoted rather than derived, the same rule the
           // HAC gradebook follows, and for the same reason: Canvas applies the
           // teacher's group weights, so anything averaged here would disagree
           // with what the student sees in Canvas itself. Null stays null; a
@@ -271,7 +271,7 @@ export async function pullCanvas(): Promise<
       return {
         ok: false,
         error:
-          "Canvas stopped accepting your token — they expire every 90 days. Reconnect and everything resumes.",
+          "Canvas stopped accepting your token, they expire every 90 days. Reconnect and everything resumes.",
       };
     }
 
@@ -361,7 +361,7 @@ export async function storeCanvasData(input: unknown): Promise<CanvasResult> {
  *
  * These rows have been syncing since the first Canvas connection and nothing
  * has ever read them back except export and delete. The server can't decrypt
- * them — names and points live in the blob — so it hands them over as they
+ * them, names and points live in the blob, so it hands them over as they
  * are and the browser does the rest, the same shape as every other record.
  *
  * `dueAt` is plaintext by design (see the schema), which is what lets this

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The password screen. Not a login — the account is already paired; this is
+/// The password screen. Not a login, the account is already paired; this is
 /// what turns ciphertext into your data, and it happens entirely on the phone.
 struct UnlockView: View {
     @EnvironmentObject private var store: Store
@@ -17,7 +17,7 @@ struct UnlockView: View {
                     .font(.system(size: 28, weight: .semibold))
                     .foregroundStyle(Theme.text)
 
-                Text("Your encryption password — the one you chose when you signed up. It never leaves this phone, and there's no way to reset it.")
+                Text("Your encryption password, the one you chose when you signed up. It never leaves this phone, and there's no way to reset it.")
                     .font(.system(size: 16))
                     .foregroundStyle(Theme.textMuted)
 
@@ -49,7 +49,7 @@ struct UnlockView: View {
                         .foregroundStyle(Theme.bad)
                 }
 
-                Text("Takes a second — the delay is deliberate, and it's what makes a short password expensive to attack.")
+                Text("Takes a second, the delay is deliberate, and it's what makes a short password expensive to attack.")
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.textFaint)
             }

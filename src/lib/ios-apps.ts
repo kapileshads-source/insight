@@ -4,7 +4,7 @@
  * Every other client is handed a blocklist and enforces it. An iPhone can't
  * be handed anything: the student builds one Shortcuts automation and selects
  * the apps themselves, out of a picker holding everything installed. So the
- * one thing we can usefully do is tell them exactly which names to look for —
+ * one thing we can usefully do is tell them exactly which names to look for,
  * from the same `BLOCK_CATEGORIES` the extension, both desktops and Android
  * enforce, so an iPhone blocks the same set as everything else rather than
  * whatever the student remembered on the day.
@@ -85,7 +85,7 @@ const CASING: Record<string, string> = {
  *
  * Storefronts, launchers, emulators and PC or console titles. Kept as an
  * exclusion rather than an iOS allowlist because the shared lists grow, and a
- * new mobile game appearing should reach this page on its own — the failure
+ * new mobile game appearing should reach this page on its own, the failure
  * we can afford is one extra name to scan, not a missing one.
  *
  * Matched by leading word rather than exactly, because the blocklist carries

@@ -2,7 +2,7 @@
  * The name of whatever app bounced a student here.
  *
  * It arrives in a query string that anyone can write, and it gets rendered
- * back to the reader — so it is treated as hostile text rather than as a
+ * back to the reader, so it is treated as hostile text rather than as a
  * label we chose. React escapes it, but a 4,000-character "app name" or one
  * full of newlines would still wreck the page, and a link dressed up as an
  * app name would be a neat way to make Insight's own domain deliver someone

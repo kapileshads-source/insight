@@ -3,8 +3,8 @@ import Foundation
 /// The only thing this app keeps: where Insight is, and the pairing token.
 ///
 /// Not the tally. Recorded time lives in memory and is sent every minute, so a
-/// machine that is switched off — or picked up by someone who isn't the
-/// student — has nothing on it saying which apps they used. That costs the
+/// machine that is switched off, or picked up by someone who isn't the
+/// student, has nothing on it saying which apps they used. That costs the
 /// last minute of a session if the app is killed, which is the right trade.
 ///
 /// ## Why not the keychain
@@ -13,7 +13,7 @@ import Foundation
 ///
 /// macOS binds a keychain item to the exact binary that created it, by code
 /// signature. This app is ad-hoc signed, because a Developer ID costs $99/yr
-/// and this project is free by design — and an ad-hoc signature is regenerated
+/// and this project is free by design, and an ad-hoc signature is regenerated
 /// on every build. So every rebuild looked like a different program asking for
 /// the old one's secret, and macOS challenged it with a password prompt. Always
 /// Allow either failed outright or bought exactly one build's worth of peace.
@@ -28,7 +28,7 @@ import Foundation
 ///
 /// What that's worth guarding is small and revocable on purpose: the token can
 /// post activity and ask whether a session is running. It cannot read anything
-/// a student wrote — that is all encrypted with a key this app never has — and
+/// a student wrote, that is all encrypted with a key this app never has, and
 /// revoking it from Devices kills it instantly.
 final class Config {
     var apiBase: String

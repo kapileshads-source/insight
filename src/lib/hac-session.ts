@@ -2,8 +2,8 @@
  * Reading HAC's login form, without touching the network.
  *
  * Separate from `hac-login.ts` purely so it is testable. That file is marked
- * `server-only`, which is correct — it handles a decrypted password and must
- * never be bundled for a browser — and also means a test runner cannot import
+ * `server-only`, which is correct, it handles a decrypted password and must
+ * never be bundled for a browser, and also means a test runner cannot import
  * it. These two functions are where the actual judgement lives, so they live
  * where they can be checked.
  */
@@ -31,7 +31,7 @@ export function isStillLoginPage(html: string): boolean {
     /class="[^"]*validation-summary-errors/i.test(html) ||
     // The exact string HAC renders on a rejected password. Checked because a
     // bad login answers 200 with the form re-rendered, so status alone says
-    // nothing — this is the one failure that silently breaks everything
+    // nothing, this is the one failure that silently breaks everything
     // downstream if it is read as success.
     /invalid user name or password/i.test(html)
   );
@@ -43,7 +43,7 @@ export function isStillLoginPage(html: string): boolean {
  * **A 200 is not the same as data.** What a browser shows at
  * `/HomeAccess/Classes/Classwork` is a wrapper around an iframe; the tables
  * live at `Content/Student/Assignments.aspx`. Fetched server-side, the wrapper
- * returns a perfectly valid page with no courses in it — so taking the first
+ * returns a perfectly valid page with no courses in it, so taking the first
  * 200 as success produced a login that worked, a sync that reported no error,
  * and zero classes read. That cost a day of looking in the wrong place.
  *
@@ -73,7 +73,7 @@ export function hasGradebook(html: string): boolean {
  * procedures and should not invent them.
  *
  * **Treated as data, never as instruction.** It is text from a page we do not
- * control, so tags are stripped, whitespace collapsed and the result capped —
+ * control, so tags are stripped, whitespace collapsed and the result capped,
  * it is quoted to the student as the school's words, and nothing acts on it.
  */
 export function loginErrorText(html: string): string | null {
@@ -98,7 +98,7 @@ export function loginErrorText(html: string): string | null {
  * Bound to the ASP.NET control ids the transcript parser reads, which are the
  * only thing on that page unique to it. Note the fragility tier this sits in:
  * `plnMain_*` ids are generated from the control tree and change when the page
- * is rebuilt — but they fail *loudly*, which is why binding to them is safe
+ * is rebuilt, but they fail *loudly*, which is why binding to them is safe
  * here in a way that positional cell indices never are.
  */
 export function hasTranscript(html: string): boolean {
@@ -120,7 +120,7 @@ export function hasTranscript(html: string): boolean {
  * So the page a student looks at is a shell, and the tables are one hop
  * further in. Fetching the wrapper gives a valid 200 with no courses on it,
  * and `Content/Student/Assignments.aspx` fetched directly returns a 5KB stub
- * rather than the content — which is how this looked like four different bugs
+ * rather than the content, which is how this looked like four different bugs
  * in a row.
  *
  * Named `sg-legacy-iframe`, but matched loosely: any frame is a candidate, and

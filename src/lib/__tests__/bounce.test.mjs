@@ -2,7 +2,7 @@ import { cleanAppName } from "../bounce.ts";
 
 /// The app name arrives in a query string anyone can write and is rendered
 /// straight back to the reader. React escapes it, so this isn't about script
-/// tags — it's about Insight's own page being used to show someone else's
+/// tags, it's about Insight's own page being used to show someone else's
 /// message, or a 4,000-character "app name" wrecking the layout.
 
 let pass = 0;

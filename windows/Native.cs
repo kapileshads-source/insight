@@ -8,7 +8,7 @@ namespace Insight;
 ///
 /// Note what is absent: <c>GetWindowText</c>. Reading window titles is one
 /// call away and would be the easiest way to learn what a student is actually
-/// doing — which document, which video, which conversation. Not importing it
+/// doing, which document, which video, which conversation. Not importing it
 /// is how "app names only" stays true by construction rather than by promise,
 /// the same way the extension truncates URLs at the hostname.
 /// </summary>
@@ -40,8 +40,8 @@ internal static class Native
     ///
     /// A laptop left open with a game in the foreground would otherwise bill a
     /// student for hours they were not at the desk. The browser extension has
-    /// no equivalent problem — a tab loses focus when they walk away from the
-    /// machine only in the sense that nothing changes — so this is the one
+    /// no equivalent problem, a tab loses focus when they walk away from the
+    /// machine only in the sense that nothing changes, so this is the one
     /// place the two implementations differ on purpose.
     /// </summary>
     internal static TimeSpan IdleFor()
@@ -66,7 +66,7 @@ internal static class Native
     ///
     /// Keyboard idle alone is not a safe signal. Measured on a real MacBook,
     /// the trackpad emits events by itself every few minutes with nobody near
-    /// it — well inside any threshold worth setting — so the idle rule there
+    /// it, well inside any threshold worth setting, so the idle rule there
     /// never fired once and an evening with the lid open counted as study
     /// time in full. Windows has no shortage of equivalents: a wireless mouse
     /// on an uneven desk, a presence sensor, a jiggler.
@@ -133,7 +133,7 @@ internal static class Native
     /// Full path of a process's executable.
     ///
     /// <c>Process.MainModule</c> throws for anything running at a higher
-    /// integrity level, which on a school laptop is a great deal — and the
+    /// integrity level, which on a school laptop is a great deal, and the
     /// symptom would be a student's most-used apps quietly missing from their
     /// figures. This asks for the least privilege that answers the question.
     /// </summary>

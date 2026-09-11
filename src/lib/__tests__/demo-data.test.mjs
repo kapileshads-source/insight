@@ -66,7 +66,7 @@ console.log("\nthe engine finds what was planted");
   // The whole point of a demo: it has to show something. An empty dashboard
   // demonstrates nothing.
   ok("something surfaces at all", surfaced.length > 0);
-  // Two effects were built in — late nights and short sleep. At least one has
+  // Two effects were built in, late nights and short sleep. At least one has
   // to survive the permutation test or the demo is just noise.
   ok("a planted factor is among them",
      surfaced.some((i) => i.category === "STUDY_TIMING" || i.category === "SLEEP"));

@@ -128,7 +128,7 @@ console.log("\na HAC course lands on the Canvas row for the same class");
   const id = courseIdFor("MTH34300A - 8 AP Pre Calculus S1 - C Lunch", stored, coursesMatch);
 
   // It does NOT match, and that is correct rather than a shortcoming: the
-  // course numbers disagree, and the matcher refuses rather than guessing —
+  // course numbers disagree, and the matcher refuses rather than guessing,
   // filing a grade against the wrong class is the mistake this area exists to
   // avoid. So HAC gets its own course row, which is why a real account ends up
   // with twelve classes rather than six.

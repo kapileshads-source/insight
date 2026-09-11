@@ -5,7 +5,7 @@ import { CryptoProvider } from "@/components/crypto-provider";
 import { ServiceWorker } from "@/components/service-worker";
 import "./globals.css";
 
-/* Three faces, each with a job — see the note at the top of `globals.css`. */
+/* Three faces, each with a job, see the note at the top of `globals.css`. */
 
 const display = Space_Grotesk({
   variable: "--font-display",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   other: {
     // Next emits the modern `mobile-web-app-capable`, which current Safari
     // honours. The Apple-prefixed one is deprecated and still the only thing
-    // older iOS reads — and a pilot runs on whatever phones students already
+    // older iOS reads, and a pilot runs on whatever phones students already
     // have, which includes hand-me-downs.
     "apple-mobile-web-app-capable": "yes",
   },
@@ -72,8 +72,8 @@ export default function RootLayout({
               // Dark themes have to invert it.
               colorNeutral: "white",
 
-              // These have to be literal hexes — Clerk renders inside its own
-              // tree and cannot read our custom properties — so they are the
+              // These have to be literal hexes, Clerk renders inside its own
+              // tree and cannot read our custom properties, so they are the
               // one place in the app where the palette is duplicated. If the
               // tokens in `globals.css` move, these move with them.
               colorBackground: "#17171c",
@@ -93,7 +93,7 @@ export default function RootLayout({
             },
           }}
         >
-          {/* Wraps everything so the key survives client-side navigation —
+          {/* Wraps everything so the key survives client-side navigation,
               notably from the signup password step straight to the dashboard,
               which would otherwise ask for the password a student just set. */}
           <CryptoProvider>{children}</CryptoProvider>

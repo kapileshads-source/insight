@@ -67,7 +67,7 @@ export function HacSync() {
     //
     // There used to be two. The extension read HAC using the session already
     // in the browser, which involved no password at all and was strictly
-    // better on privacy — but it only ever worked on desktop Chrome, and
+    // better on privacy, but it only ever worked on desktop Chrome, and
     // maintaining a second fetch path for the smaller half of the users meant
     // every HAC bug had to be diagnosed twice. It was removed deliberately;
     // the cost is that using HAC now requires handing over the password, which
@@ -92,7 +92,7 @@ export function HacSync() {
         // Describe the page rather than assuming why it was empty.
         //
         // This used to say "normal early in a grading period" and stop, which
-        // was a guess dressed as an explanation — and it was wrong: the page
+        // was a guess dressed as an explanation, and it was wrong: the page
         // being fetched was an iframe shell with no gradebook in it at all.
         // Three numbers separate the cases that actually occur: a shell (tiny
         // page, no courses), selectors that no longer match (large page, no
@@ -104,10 +104,10 @@ export function HacSync() {
           kind: "problem",
           message:
             courses > 0
-              ? `HAC gave ${courses} classes but no assignments in any of them — normal early in a grading period. (${size}KB from ${from}.)`
+              ? `HAC gave ${courses} classes but no assignments in any of them, normal early in a grading period. (${size}KB from ${from}.)`
               : size < 10
                 ? `That page was only ${size}KB and had no classes on it, so it is a wrapper rather than the gradebook. (From ${from}.)`
-                : `Read ${size}KB from ${from} but found no classes on it — HAC's page layout has probably changed, which needs a look at the parser.`,
+                : `Read ${size}KB from ${from} but found no classes on it, HAC's page layout has probably changed, which needs a look at the parser.`,
         });
         return;
       }
@@ -134,7 +134,7 @@ export function HacSync() {
             id: c.id,
             name: p.shortName || p.name || "",
             // Kept so rewriting the payload to add a grade cannot blank the
-            // name — a payload is replaced whole, not merged.
+            // name, a payload is replaced whole, not merged.
             payloadName: p.name,
             payloadShortName: p.shortName,
             reportedGrade: p.reportedGrade ?? null,
@@ -175,7 +175,7 @@ export function HacSync() {
       // yet" on an account whose HAC plainly showed 96.50% and 97.00%. Courses
       // HAC named but Insight had never seen were created here with only a
       // name, and the grade was written in a second pass that ran over
-      // *existing* rows only — so every course got its grade on the sync after
+      // *existing* rows only, so every course got its grade on the sync after
       // the one that created it. A first sync therefore produced a full set of
       // classes with no grades at all, which is exactly what a student sees the
       // first time they connect and the only time they are watching.
@@ -213,7 +213,7 @@ export function HacSync() {
           courseId: id,
           courseRef: ref,
           // Kept in the clear so the assignments card can sort without
-          // decrypting every row first — the same rule Canvas rows follow.
+          // decrypting every row first, the same rule Canvas rows follow.
           dueAt: row.dueOn ? new Date(`${row.dueOn}T23:59:00`).toISOString() : null,
           payload: await conceal(row),
         });
@@ -236,7 +236,7 @@ export function HacSync() {
       //
       // This is the second half of why an account showing 96.50% in HAC was
       // told it had no grades. `courseIdFor` deliberately matches a HAC course
-      // onto an existing *Canvas* row where it can — "MTH34300A - 8 AP Pre
+      // onto an existing *Canvas* row where it can, "MTH34300A - 8 AP Pre
       // Calculus S1 - C Lunch" and "AP Pre Calculus YR (SCHMIDT, AMANDA)" are
       // the same class. That row then keeps its Canvas name, and the grade was
       // being looked up by the stored name, which never appears in a HAC
@@ -262,7 +262,7 @@ export function HacSync() {
             //
             // "Came from HAC" cannot be read off the Canvas id, and assuming it
             // could made a real class vanish. When a HAC course matches an
-            // existing Canvas row — PLTW did — the grade is written onto that
+            // existing Canvas row, PLTW did, the grade is written onto that
             // row, which still has its Canvas id, so the de-duplication read it
             // as a Canvas duplicate and dropped it along with HAC's grade. The
             // student lost a whole class from their GPA.
@@ -353,7 +353,7 @@ export function HacSync() {
           {outcome.guessed && (
             <p className="text-[14px] leading-relaxed text-alert">
               HAC&rsquo;s table had no column headings, so the columns were read
-              by position. If any scores look wrong, that&rsquo;s why — tell us
+              by position. If any scores look wrong, that&rsquo;s why, tell us
               rather than trusting them.
             </p>
           )}

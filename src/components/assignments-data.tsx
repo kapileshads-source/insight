@@ -23,7 +23,7 @@ import {
  *
  * Third provider on the same argument as the other two: the dashboard wants a
  * count of what is due, `/work` wants the list, and every assignment row is
- * unwrapped individually — so two components each doing their own pass is
+ * unwrapped individually, so two components each doing their own pass is
  * twice the AES work for the same answer.
  *
  * The gather is unchanged from the version inside `AssignmentsPanel`. Ticking
@@ -133,7 +133,7 @@ export function AssignmentsProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     // `load` awaits a round trip before it touches state, so there is no
-    // cascading render for the rule to catch — and the data arrives as
+    // cascading render for the rule to catch, and the data arrives as
     // ciphertext, so this genuinely cannot happen on the server.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (status === "unlocked") void load();

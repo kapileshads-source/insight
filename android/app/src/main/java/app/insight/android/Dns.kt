@@ -7,7 +7,7 @@ import java.nio.ByteBuffer
  *
  * The phone's own browser can't run our extension, so the only way to block a
  * *site* rather than a whole app is to refuse the lookup. That means reading
- * DNS queries off a local VPN tunnel — which sounds invasive and is in fact
+ * DNS queries off a local VPN tunnel, which sounds invasive and is in fact
  * the least invasive option available: a hostname the phone was already
  * about to ask a public resolver for, seen only while a session is running,
  * and recorded only when it's one the student chose to block.

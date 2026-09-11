@@ -1,7 +1,7 @@
 /**
  * The nudge that asks for last night's sleep, and tonight's phone time.
  *
- * The dashboard already asks, but only if a student happens to open it — and
+ * The dashboard already asks, but only if a student happens to open it, and
  * the two numbers this needs are the ones nothing can measure for us. Someone
  * who forgets for a week doesn't leave a smaller dataset, they leave a biased
  * one: the nights that go unlogged are not a random sample of nights.
@@ -10,7 +10,7 @@
  *
  * **The server can decide who to ask without reading anything.** A sleep entry
  * for today either exists or it doesn't, and row existence is plaintext by
- * design. It never learns how long anyone slept — only that a row is missing.
+ * design. It never learns how long anyone slept, only that a row is missing.
  *
  * **The message carries no data**, because the server has none to put in it.
  * "How did you sleep?" is the whole payload, which also means a lock-screen
@@ -43,7 +43,7 @@ export function shouldNudge(a: NudgeAudience): boolean {
  * What the notification says.
  *
  * Short, because a lock screen truncates, and unhurried, because the point is
- * a number typed in — not guilt. The same rule as the dashboard card: it may
+ * a number typed in, not guilt. The same rule as the dashboard card: it may
  * say how long it has been, and it may say why that matters, but it never
  * tells anyone off.
  */
@@ -57,7 +57,7 @@ export function nudgeMessage(
       body:
         missedDays >= 2
           ? `${missedDays + 1} mornings unlogged. A rough number is plenty.`
-          : "Last night, roughly — it takes five seconds.",
+          : "Last night, roughly, it takes five seconds.",
     };
   }
 
@@ -75,13 +75,13 @@ export function nudgeMessage(
  *
  * **The count is of assignments due, not of work outstanding, and the wording
  * has to keep that distinction.** Whether something has been handed in lives in
- * the encrypted payload, so the server genuinely cannot tell — it can only see
+ * the encrypted payload, so the server genuinely cannot tell, it can only see
  * that a due date is tomorrow and that no grade has landed against it yet. For
  * work due tomorrow those are usually the same thing, but not always, and
  * "3 things you still need to do" would sometimes be a lie.
  *
  * "3 due tomorrow" is true either way. The app itself, which can decrypt, shows
- * the filtered list once opened — which is the point of the reminder.
+ * the filtered list once opened, which is the point of the reminder.
  */
 export function dueWorkMessage(
   dueTomorrow: number,
@@ -96,7 +96,7 @@ export function dueWorkMessage(
   if (overdue > 0) {
     return {
       title: `${overdue} past its due date`,
-      body: "Still worth handing in — have a look at what's outstanding.",
+      body: "Still worth handing in, have a look at what's outstanding.",
     };
   }
   return {

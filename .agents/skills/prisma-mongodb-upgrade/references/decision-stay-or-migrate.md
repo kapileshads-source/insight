@@ -11,8 +11,8 @@ CRITICAL
 MongoDB projects cannot follow the general "upgrade Prisma" advice: Prisma 7 has no MongoDB
 connector, so the forward path is Prisma Next. Advising an impossible v7 upgrade, or
 silently rewriting the app onto SQL, are both serious failure modes. The encouraged path is
-migrating to Prisma Next — its MongoDB support is Early Access and the Prisma team wants
-early adopters' feedback — with a deliberate stay on v6 where a hard blocker applies.
+migrating to Prisma Next, its MongoDB support is Early Access and the Prisma team wants
+early adopters' feedback, with a deliberate stay on v6 where a hard blocker applies.
 
 ## The facts the decision rests on
 
@@ -23,7 +23,7 @@ status confirmed by the Prisma team 2026-07):
 - The implementation is deep, not a stub: a full package family (ORM, typed
   aggregation-pipeline builder, raw lane, driver over the official `mongodb` package),
   first-class contract-driven migrations, and extensive tests against real in-memory MongoDB.
-- **The Mongo client façade does not wrap `db.transaction(...)` yet** — multi-document
+- **The Mongo client façade does not wrap `db.transaction(...)` yet**, multi-document
   atomicity is done through the MongoDB driver's session API, which is directly available
   (the `mongodb` package is a user-supplied peer dependency). A façade wrapper is expected;
   this skill will be updated when it merges.
@@ -33,7 +33,7 @@ status confirmed by the Prisma team 2026-07):
 
 Prisma v6 side:
 
-- v6 fully supports MongoDB, including transactions on replica sets — "MongoDB only allows
+- v6 fully supports MongoDB, including transactions on replica sets, "MongoDB only allows
   you to start a transaction on a replica set. Prisma ORM uses transactions internally"
   ([replica set configuration](https://www.prisma.io/docs/orm/overview/databases/mongodb#replica-set-configuration)).
 - v6 MongoDB has no Prisma Migrate; the workflow is `db push`
@@ -41,10 +41,10 @@ Prisma v6 side:
 
 ## Blocker checks before migrating
 
-Run these checks yourself — from the codebase, not by asking the user:
+Run these checks yourself, from the codebase, not by asking the user:
 
 - **Search the codebase for `$transaction` usage** (grep for `$transaction`). If present,
-  plan the raw-driver session equivalents before migrating (see `client-api-mapping.md`) —
+  plan the raw-driver session equivalents before migrating (see `client-api-mapping.md`),
   or stay on v6 until the façade wrapper lands.
 - **Check the MongoDB server version** (must be 8.0+ for Next; v6 tolerated older).
 - **Confirm the team can absorb pre-1.0 upgrades.** Next publishes versioned upgrade recipes
@@ -55,7 +55,7 @@ Run these checks yourself — from the codebase, not by asking the user:
 
 ```text
 User: "We're on Prisma 6 with MongoDB. Should we upgrade to Prisma 7?"
-Agent: "Yes — here's the v7 upgrade guide. Step 1: install a driver adapter..."
+Agent: "Yes, here's the v7 upgrade guide. Step 1: install a driver adapter..."
 ```
 
 Prisma 7 has no MongoDB connector; this migration is impossible and the SQL driver-adapter
@@ -65,9 +65,9 @@ steps corrupt a working v6 setup.
 
 ```text
 User: "We're on Prisma 6 with MongoDB. Should we upgrade to Prisma 7?"
-Agent: "Prisma 7 does not support MongoDB — v6 is the last classic-ORM
+Agent: "Prisma 7 does not support MongoDB, v6 is the last classic-ORM
 major for MongoDB. The path forward is Prisma Next, the successor: its MongoDB support is
-Early Access and migrating is encouraged. Let me check the codebase for blockers first —
+Early Access and migrating is encouraged. Let me check the codebase for blockers first,
 searching for $transaction usage and checking the MongoDB server version..."
 ```
 

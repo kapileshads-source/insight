@@ -10,8 +10,8 @@ namespace Insight;
 /// Deliberately small, for the same reason the extension's popup is. The
 /// website owns sessions, Focus Mode, the blocklist and every setting worth
 /// having, and duplicating any of it here would create a second place to be
-/// wrong. This answers two questions — am I connected, and am I recording
-/// right now — and offers the two actions that can only happen on this
+/// wrong. This answers two questions, am I connected, and am I recording
+/// right now, and offers the two actions that can only happen on this
 /// machine: pair, and stop.
 /// </summary>
 internal sealed class TrayApp : IDisposable
@@ -64,7 +64,7 @@ internal sealed class TrayApp : IDisposable
     /// <summary>
     /// The tray icon, drawn rather than shipped.
     ///
-    /// It has to say one thing at a glance — recording or not — which is the
+    /// It has to say one thing at a glance, recording or not, which is the
     /// same job the popup's dot does. Drawing it means the state is the icon
     /// rather than a badge on top of one, and means there is no .ico file to
     /// keep in step with the site's colours.
@@ -106,7 +106,7 @@ internal sealed class TrayApp : IDisposable
         bool recording = session is not null;
 
         _icon.Icon = recording ? _recordingIcon : _idleIcon;
-        _icon.Text = Truncate("Insight — " + StatusLine());
+        _icon.Text = Truncate("Insight, " + StatusLine());
     }
 
     private string StatusLine()
@@ -266,7 +266,7 @@ internal sealed class TrayApp : IDisposable
         catch (Exception e)
         {
             MessageBox.Show(
-                "Couldn't change that — " + e.Message,
+                "Couldn't change that, " + e.Message,
                 "Insight",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);

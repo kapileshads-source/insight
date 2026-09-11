@@ -5,7 +5,7 @@ import PackageDescription
 /// Insight for macOS.
 ///
 /// Built with SwiftPM rather than an Xcode project, so it builds from a
-/// terminal on a machine with only the Command Line Tools installed — which is
+/// terminal on a machine with only the Command Line Tools installed, which is
 /// what this one has. `build-app.sh` wraps the product in a .app bundle.
 ///
 /// There is no test target. The Windows app needed one because it targets

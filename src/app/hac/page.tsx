@@ -7,7 +7,7 @@ import { HacConnect } from "@/components/hac-connect";
 import { HacSync } from "@/components/hac-sync";
 import { TranscriptSync } from "@/components/transcript-sync";
 
-export const metadata = { title: "Home Access Center — Insight" };
+export const metadata = { title: "Home Access Center, Insight" };
 
 /**
  * Home Access Center, on its own page.
@@ -24,7 +24,7 @@ export const metadata = { title: "Home Access Center — Insight" };
  *
  * That trade is real and this page does not pretend otherwise. Using HAC now
  * means storing the password, which is the one place in the app where Insight
- * can read something of a student's — so the box that asks says so before the
+ * can read something of a student's, so the box that asks says so before the
  * fields rather than after.
  */
 export default async function HacPage() {
@@ -41,7 +41,7 @@ export default async function HacPage() {
         <PageTitle
           eyebrow="Gradebook"
           title="Home Access Center"
-          lede="Your real grades — the ones the school posts. Canvas has assignments and due dates; HAC has what you actually scored, so Insight wants both."
+          lede="Your real grades, the ones the school posts. Canvas has assignments and due dates; HAC has what you actually scored, so Insight wants both."
         />
 
         <div className="mt-10">
@@ -61,7 +61,7 @@ export default async function HacPage() {
           <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-text-muted">
             Your HAC password is stored, encrypted, so your gradebook can be
             fetched when you are not looking. That means Insight can open your
-            gradebook — the only part of the app where that is true. Everything
+            gradebook, the only part of the app where that is true. Everything
             else stays encrypted with a key we do not have.
           </p>
           <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-text-muted">

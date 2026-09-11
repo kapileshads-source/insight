@@ -51,8 +51,8 @@ class MainActivity : ComponentActivity() {
         // Started here, not only when pairing succeeds.
         //
         // That was the bug: the service was launched once, from the pairing
-        // callback, so a paired student who reinstalled the app — or simply
-        // rebooted — opened it to a status screen saying everything was fine
+        // callback, so a paired student who reinstalled the app, or simply
+        // rebooted, opened it to a status screen saying everything was fine
         // while nothing was running. Silence that looks like health is the
         // worst failure this app can have, because the missing time reads as
         // focused time later.
@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
             var canDrawOver by remember { mutableStateOf(Settings.canDrawOverlays(this)) }
 
             // Permissions still need the resume, because both are granted in
-            // Settings and the student walks back in — there is no callback.
+            // Settings and the student walks back in, there is no callback.
             var trackerQuiet by remember { mutableStateOf(false) }
             var lastCrash by remember { mutableStateOf(config.lastCrash) }
             var siteBlockingActive by remember { mutableStateOf(config.siteBlockingActive) }
@@ -89,7 +89,7 @@ class MainActivity : ComponentActivity() {
             // Everything here is written by a service on its own schedule: the
             // poll lands up to fifteen seconds after the app is opened, and the
             // tunnel comes up a moment after that. Reading once on resume meant
-            // the panel showed the state from before any of it happened — so a
+            // the panel showed the state from before any of it happened, so a
             // failure that *was* being recorded looked like a failure to record
             // it, which cost a round trip.
             LaunchedEffect(Unit) {
@@ -120,7 +120,7 @@ class MainActivity : ComponentActivity() {
                 canDrawOver = Settings.canDrawOverlays(this@MainActivity)
 
                 // Polls run every fifteen seconds, so two minutes of silence
-                // means it isn't running — not that the network is slow.
+                // means it isn't running, not that the network is slow.
                 val since = System.currentTimeMillis() - config.lastTickAt
                 trackerQuiet = config.paired && since > 120_000
 
@@ -325,7 +325,7 @@ private fun StatusScreen(
                     color = Insight.textMuted, fontSize = 15.sp,
                 )
                 Text(
-                    "It gives us app names and nothing else — never what's on screen, never " +
+                    "It gives us app names and nothing else, never what's on screen, never " +
                         "what you typed. And nothing at all is recorded unless a study session " +
                         "is running. You can take it back in the same place.",
                     color = Insight.textFaint, fontSize = 13.sp,
@@ -354,7 +354,7 @@ private fun StatusScreen(
                 Text("It hasn't checked in for a while", color = Insight.bad, fontSize = 17.sp)
                 Text(
                     "The tracker should reach Insight every fifteen seconds. If it " +
-                        "has been quiet for minutes, it isn't running — anything you " +
+                        "has been quiet for minutes, it isn't running, anything you " +
                         "studied meanwhile wasn't counted.",
                     color = Insight.textMuted, fontSize = 15.sp,
                 )
@@ -383,7 +383,7 @@ private fun StatusScreen(
                 Text(
                     "To put a screen in front of a blocked app, Android needs " +
                         "permission to draw over other apps. Without it, sessions are " +
-                        "still counted — nothing is blocked.",
+                        "still counted, nothing is blocked.",
                     color = Insight.textMuted, fontSize = 15.sp,
                 )
                 Text(
@@ -415,8 +415,8 @@ private fun StatusScreen(
                     color = Insight.textMuted, fontSize = 15.sp,
                 )
                 Text(
-                    "It carries nothing but those lookups — not your pages, messages " +
-                        "or video — and it only runs while a session with Focus Mode is " +
+                    "It carries nothing but those lookups, not your pages, messages " +
+                        "or video, and it only runs while a session with Focus Mode is " +
                         "going. Blocked names are recorded; the rest are forwarded to " +
                         "your usual provider and forgotten.",
                     color = Insight.textFaint, fontSize = 13.sp,
@@ -433,7 +433,7 @@ private fun StatusScreen(
         if (canBlockSites) {
             Text(
                 "Website blocking is on. If your browser has its own VPN or its own " +
-                    "secure DNS — Opera and Chrome both offer one — turn that off, or " +
+                    "secure DNS, Opera and Chrome both offer one, turn that off, or " +
                     "the lookups never reach us and blocked sites load anyway.",
                 color = Insight.textFaint, fontSize = 13.sp,
             )
@@ -442,7 +442,7 @@ private fun StatusScreen(
         if (lastCrash != null) {
             // Android tells a student "Insight keeps stopping" and tells us
             // nothing at all. A trace lives in logcat, which needs a cable and
-            // a laptop — so the app keeps its own and puts it where a
+            // a laptop, so the app keeps its own and puts it where a
             // screenshot will reach it.
             Column(
                 Modifier.fillMaxWidth()
@@ -452,7 +452,7 @@ private fun StatusScreen(
             ) {
                 Text("It crashed last time", color = Insight.bad, fontSize = 17.sp)
                 Text(
-                    "Send this to whoever is fixing it — a screenshot is enough.",
+                    "Send this to whoever is fixing it, a screenshot is enough.",
                     color = Insight.textMuted, fontSize = 14.sp,
                 )
                 Text(
@@ -468,13 +468,13 @@ private fun StatusScreen(
         }
 
         // Blocking has five preconditions and four of them are invisible. When
-        // any is missing, say which — "it isn't blocking" is otherwise
+        // any is missing, say which, "it isn't blocking" is otherwise
         // impossible to diagnose without someone else's phone in your hand.
         val blockingReady =
             hasUsageAccess && canDrawOver && sessionRunning && focusMode && blocklistSize > 0
 
-        // Android permits one VPN at a time, so a browser with its own — Opera
-        // ships one — takes the slot and ours never establishes. That looks
+        // Android permits one VPN at a time, so a browser with its own, Opera
+        // ships one, takes the slot and ours never establishes. That looks
         // identical to a bug from the outside, so it gets named here.
         val vpnBlockedBySomethingElse = canBlockSites && sessionRunning &&
             focusMode && blocklistSize > 0 && !siteBlockingActive
@@ -496,7 +496,7 @@ private fun StatusScreen(
             Check("Your blocklist reached us", blocklistSize > 0, "Nothing to block yet")
             Check("Can see which app is in front", hasUsageAccess, "Usage access, above")
             Check("Can put a screen in front of one", canDrawOver, "Drawing over apps, above")
-            Check("Allowed to block websites", canBlockSites, "Optional — needs the VPN")
+            Check("Allowed to block websites", canBlockSites, "Optional, needs the VPN")
             Check(
                 "Website blocking is running",
                 siteBlockingActive,
@@ -509,7 +509,7 @@ private fun StatusScreen(
                 Text(
                     siteBlockingProblem
                         ?: "Website blocking should be running and isn't, and the app " +
-                            "didn't record why — which is its own bug.",
+                            "didn't record why, which is its own bug.",
                     color = Insight.bad, fontSize = 13.sp,
                 )
             }

@@ -83,7 +83,7 @@ export function DemoSeeder() {
   if (status !== "unlocked") {
     return (
       <p className="mt-8 text-[15px] leading-relaxed text-text-muted">
-        Unlock your data first — the sample records are encrypted on the way in,
+        Unlock your data first, the sample records are encrypted on the way in,
         the same as real ones.
       </p>
     );
@@ -106,7 +106,7 @@ export function DemoSeeder() {
 
       {result?.ok && (
         <p className="mt-4 text-[15px] leading-relaxed text-text-muted">
-          Done — {result.sessions} sessions, {result.outcomes} scores,{" "}
+          Done, {result.sessions} sessions, {result.outcomes} scores,{" "}
           {result.sleep} nights.{" "}
           <a href="/dashboard" className="text-accent underline underline-offset-2">
             Open the dashboard

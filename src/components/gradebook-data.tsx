@@ -26,16 +26,16 @@ import {
  * One decrypt of the gradebook, shared by everything that needs it.
  *
  * This used to live inside `GradesPanel`, which was fine while the grades list
- * and the GPA were the same block of the page. The redesign separates them —
+ * and the GPA were the same block of the page. The redesign separates them,
  * the GPA is now the headline at the top of the dashboard and the list sits
- * further down — and two components cannot each own the same decrypt without
+ * further down, and two components cannot each own the same decrypt without
  * doing the work twice. Every assignment row is unwrapped individually, so
  * "twice" is measured in hundreds of AES operations, not two fetches.
  *
  * The gather itself is unchanged from the version that shipped in
  * `grades-panel.tsx`; it was moved, not rewritten. Nothing about which courses
  * count, how HAC and Canvas are reconciled, or how the transcript anchors the
- * GPA is decided here — those live in `gradebook.ts`, `gpa.ts` and
+ * GPA is decided here, those live in `gradebook.ts`, `gpa.ts` and
  * `transcript.ts`, and this file only hands their answers to React.
  */
 
@@ -53,7 +53,7 @@ export type GradebookState =
   | { status: "locked" }
   /// Unlocked, decrypt in flight.
   | { status: "loading" }
-  /// A row would not decrypt — almost always a changed password.
+  /// A row would not decrypt, almost always a changed password.
   | { status: "failed" }
   | {
       status: "ready";
@@ -130,7 +130,7 @@ export function GradebookProvider({ children }: { children: React.ReactNode }) {
           if (p.reportedGrade != null) reported.set(label, p.reportedGrade);
           // Two ways a class is on HAC's roll: HAC created the row, or HAC
           // matched an existing Canvas row and wrote its grade there. Reading
-          // only the first made PLTW disappear — its HAC grade landed on the
+          // only the first made PLTW disappear, its HAC grade landed on the
           // Canvas row, which then looked like a duplicate and was dropped.
           if (c.canvasId === null || p.hacNamed) fromHac.add(label);
 
@@ -217,8 +217,8 @@ export function GradebookProvider({ children }: { children: React.ReactNode }) {
     // two states that are a function of `status` are worked out below.
     if (status !== "unlocked") return;
 
-    // Guarded because the read is slow — every row is decrypted one at a time
-    // — and a student can unlock, look, and navigate away well before it
+    // Guarded because the read is slow, every row is decrypted one at a time
+    //, and a student can unlock, look, and navigate away well before it
     // finishes. Without this, the result lands on an unmounted component.
     let live = true;
     void gather().then((result) => {
@@ -236,7 +236,7 @@ export function GradebookProvider({ children }: { children: React.ReactNode }) {
   }, [status, gather]);
 
   // The key is not in memory, so nothing can be read and nothing should
-  // render — whatever a previous unlock left in `state` is stale the moment
+  // render, whatever a previous unlock left in `state` is stale the moment
   // the key goes, so it is ignored rather than cleared.
   const value: GradebookState =
     status !== "unlocked"

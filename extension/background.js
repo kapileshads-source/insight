@@ -1,5 +1,5 @@
 /**
- * Insight extension — service worker.
+ * Insight extension, service worker.
  *
  * Two jobs, both of which only happen while a study session is running:
  * count seconds per site, and redirect blocked ones while Focus Mode is on.
@@ -8,7 +8,7 @@
  * and must be trustworthy while doing so. So:
  *
  *   - Nothing is recorded when no session is running. Not "recorded and
- *     discarded" — the timer simply doesn't accumulate.
+ *     discarded", the timer simply doesn't accumulate.
  *   - Only hostnames are kept, never full URLs. Which page they read is not
  *     ours, and truncating at the host makes that true by construction
  *     rather than by promise.
@@ -90,7 +90,7 @@ function isBlocked(host, blocklist) {
 ///
 /// Closing a tab loses whatever was in it and feels punitive. A page that
 /// explains itself and offers a way back is the difference between a tool and
-/// a nuisance — and a nuisance gets uninstalled.
+/// a nuisance, and a nuisance gets uninstalled.
 async function enforceFocusMode(tabId, host) {
   const target = chrome.runtime.getURL(
     `blocked.html?site=${encodeURIComponent(host)}`,
@@ -140,7 +140,7 @@ chrome.tabs.onUpdated.addListener(async (_tabId, changeInfo, tab) => {
 });
 
 chrome.windows.onFocusChanged.addListener(async (windowId) => {
-  // Chrome lost focus entirely — they've switched to another app, so stop
+  // Chrome lost focus entirely, they've switched to another app, so stop
   // counting rather than crediting the last site with the whole lunch break.
   if (windowId === chrome.windows.WINDOW_ID_NONE) {
     await closeCurrentSlice();
@@ -166,8 +166,8 @@ async function poll() {
       // failing silently and looking like the extension simply stopped.
       //
       // The token is also dropped, which it was not before. A 401 here is
-      // definitive — it means the stored token hashes to nothing on the
-      // server — so retrying it cannot ever succeed, and this polls every
+      // definitive, it means the stored token hashes to nothing on the
+      // server, so retrying it cannot ever succeed, and this polls every
       // fifteen seconds. An unpaired browser left open was filling the
       // production logs with a rejected request four times a minute,
       // indefinitely, drowning everything worth reading.
@@ -192,7 +192,7 @@ async function poll() {
       lastError: null,
     });
 
-    // Session just ended — flush whatever is left before the id stops being
+    // Session just ended, flush whatever is left before the id stops being
     // valid, otherwise the last minute of every session is lost.
     if (previous && !data.session) {
       await closeCurrentSlice();

@@ -6,8 +6,8 @@ import ServiceManagement
 /// Deliberately small, for the same reason the extension's popup is. The
 /// website owns sessions, Focus Mode, the blocklist and every setting worth
 /// having, and duplicating any of it here would create a second place to be
-/// wrong. This answers two questions — am I connected, and am I recording
-/// right now — and offers the two actions that can only happen on this
+/// wrong. This answers two questions, am I connected, and am I recording
+/// right now, and offers the two actions that can only happen on this
 /// machine: pair, and stop.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
@@ -50,7 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// The menu bar icon, drawn rather than shipped.
     ///
-    /// It has one job — say at a glance whether this is recording — which is
+    /// It has one job, say at a glance whether this is recording, which is
     /// the same job the extension popup's dot does. Drawing it means the state
     /// *is* the icon, and there's no image file to keep in step.
     ///
@@ -75,7 +75,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func refresh() {
         statusItem.button?.image = icon(recording: tracker.session != nil)
-        statusItem.button?.toolTip = "Insight — " + statusLine()
+        statusItem.button?.toolTip = "Insight, " + statusLine()
     }
 
     private func statusLine() -> String {
@@ -178,7 +178,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// useless if it isn't running itself, and a student who forgets to launch
     /// it gets a silent gap that reads as focused time.
     ///
-    /// Only works from inside a .app bundle — `swift run` has nothing for the
+    /// Only works from inside a .app bundle, `swift run` has nothing for the
     /// system to register, so the item is simply off in that case.
     private func opensAtLogin() -> Bool {
         guard Bundle.main.bundleIdentifier != nil else { return false }

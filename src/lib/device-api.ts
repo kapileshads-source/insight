@@ -4,7 +4,7 @@ import { z } from "zod";
 /**
  * Shared plumbing for the endpoints a paired device talks to.
  *
- * Extensions and native apps call from an origin that can't be allowlisted —
+ * Extensions and native apps call from an origin that can't be allowlisted,
  * `chrome-extension://` ids are unpredictable, and a phone has no origin at
  * all. That's acceptable here because every one of these authenticates a
  * bearer token rather than a cookie: there is no ambient authority for a

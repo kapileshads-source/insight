@@ -4,7 +4,7 @@ package app.insight.android
  * What gets reported for an app in the foreground, and what gets thrown away.
  *
  * The Windows and Mac twins are `windows/Apps.cs` and `mac/Sources/Insight/
- * Apps.swift`, and all three must agree — a student with a laptop and a phone
+ * Apps.swift`, and all three must agree, a student with a laptop and a phone
  * should see one set of figures rather than three dialects of the same day.
  *
  * Pure, and covered by `AppsTest`.
@@ -16,14 +16,14 @@ object Apps {
      *
      * There, the extension counts them and this app skipping them is what
      * stops every web minute being counted twice. **Chrome for Android can't
-     * run extensions**, so on a phone there is nothing to double up with — and
+     * run extensions**, so on a phone there is nothing to double up with, and
      * excluding them made a student's entire phone browsing invisible to
      * Insight and impossible to block. That was an inherited rule rather than
      * a decision.
      *
      * What this app still can't do is tell YouTube from Wikipedia inside a
      * browser. Reading a URL out of another app means an accessibility
-     * service, which reads the contents of the screen — the one thing every
+     * service, which reads the contents of the screen, the one thing every
      * client here has promised never to do. So a browser is blocked whole or
      * not at all, and only if the student names it themselves.
      */
@@ -43,7 +43,7 @@ object Apps {
         "com.android.browser",
     )
 
-    /** Whether a package is a browser — used only to explain itself in the UI. */
+    /** Whether a package is a browser, used only to explain itself in the UI. */
     fun isBrowser(packageName: String?): Boolean = packageName in browserPackages
 
     /**
@@ -53,7 +53,7 @@ object Apps {
      * blocklist, which is hostnames plus the app names the settings page now
      * accepts. Reporting Spotify as `spotify.com` puts phone and laptop and
      * web time for one service in the same bucket, which is what a student
-     * would expect — and matches what the desktop apps already do.
+     * would expect, and matches what the desktop apps already do.
      */
     private val aliases = mapOf(
         "com.spotify.music" to "spotify.com",
@@ -85,7 +85,7 @@ object Apps {
      * What to report, or null to record nothing.
      *
      * @param packageName e.g. `com.spotify.music`. Exact, unlike a Windows
-     *   executable name, and free — reading it needs no permission beyond the
+     *   executable name, and free, reading it needs no permission beyond the
      *   usage access the student granted in Settings.
      * @param label the app's own display name, e.g. "Spotify".
      */
@@ -107,7 +107,7 @@ object Apps {
      * Strip anything that would leak a path or break the display.
      *
      * A label comes from whoever built the app, so it is treated as untrusted.
-     * Whitespace is handled before control characters — a tab is a control
+     * Whitespace is handled before control characters, a tab is a control
      * character too, and dropping it outright welds two words into one, which
      * the Windows app shipped for an hour before a test caught it.
      */

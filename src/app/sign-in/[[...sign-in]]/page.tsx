@@ -1,7 +1,7 @@
 import { SignIn } from "@clerk/nextjs";
 import { SiteNav } from "@/components/chrome";
 
-export const metadata = { title: "Sign in — Insight" };
+export const metadata = { title: "Sign in, Insight" };
 
 export default function SignInPage() {
   return (

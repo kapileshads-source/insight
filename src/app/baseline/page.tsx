@@ -4,7 +4,7 @@ import { getOrCreateUser } from "@/lib/user";
 import { getProfile } from "@/app/actions/profile";
 import { BaselineForm } from "@/components/baseline-form";
 
-export const metadata = { title: "Your usual week — Insight" };
+export const metadata = { title: "Your usual week, Insight" };
 
 export default async function BaselinePage() {
   const user = await getOrCreateUser();
@@ -20,7 +20,7 @@ export default async function BaselinePage() {
         <PageTitle
           eyebrow="Your normal"
           title="Your usual week"
-          lede="Insight never compares you against a general target — there is no &quot;eight hours&quot; anywhere in it. Everything is measured against your own normal, and this is where you say what that is."
+          lede="Insight never compares you against a general target, there is no &quot;eight hours&quot; anywhere in it. Everything is measured against your own normal, and this is where you say what that is."
         />
 
         <div className="mt-10">

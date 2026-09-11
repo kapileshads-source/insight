@@ -10,7 +10,7 @@ import {
   TooYoungStep,
 } from "@/components/onboarding/steps";
 
-export const metadata = { title: "Set up — Insight" };
+export const metadata = { title: "Set up, Insight" };
 
 export default async function OnboardingPage() {
   const user = await getOrCreateUser();

@@ -44,7 +44,7 @@ Reference this skill when:
 ## Using MongoDB? This guide does not apply
 
 Prisma 7 has no MongoDB connector. Do not apply any step in this guide to a project with
-`provider = "mongodb"` — see the `prisma-mongodb-upgrade` skill for the actual decision
+`provider = "mongodb"`, see the `prisma-mongodb-upgrade` skill for the actual decision
 (stay on v6 deliberately vs migrate to Prisma Next).
 
 ## Important Notes

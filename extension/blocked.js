@@ -3,7 +3,7 @@
  *
  * The override is deliberately available, and deliberately slightly slow.
  * Your plan calls for a soft commitment rather than a hard lock, because a
- * hard lock just gets the extension uninstalled — and an uninstalled extension
+ * hard lock just gets the extension uninstalled, and an uninstalled extension
  * records nothing at all. Three seconds is enough to interrupt the reflex
  * without becoming a punishment.
  */

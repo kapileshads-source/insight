@@ -214,7 +214,7 @@ console.log("\na week that mixes late and early sessions");
   // The bug this guards: the timing factor used the *latest* session in the
   // seven-day window, so one 11 PM session marked the whole week late. Every
   // outcome then landed in the same group, the control group was empty, and
-  // compare() returned null — the factor silently never fired for anybody who
+  // compare() returned null, the factor silently never fired for anybody who
   // studied late even once. The older test above missed it because its student
   // is all-or-nothing: every session for a test is late, or none is. Real
   // weeks mix, and mixing is what emptied the other side.
@@ -285,7 +285,7 @@ console.log("\nhow often chance alone does this");
 
   // A group of one is one number. Its gap from the rest is whatever that
   // number happens to be, and a ten-point gap turns up here one time in eight
-  // — which is exactly the kind of thing the old gates called a finding.
+  //, which is exactly the kind of thing the old gates called a finding.
   ok("a group of one proves nothing", chanceOf([70, 72, 74, 76, 78, 80, 82, 95], 1, 10) > 0.05);
 
   ok("a degenerate split is never a finding", chanceOf([1, 2, 3], 0, 10) === 1);
@@ -352,7 +352,7 @@ console.log("\nthe sentence agrees with its own sign");
         location: atHome ? "HOME" : "LIBRARY",
       });
     }
-    // Home is the *better* place for this student — the opposite of the
+    // Home is the *better* place for this student, the opposite of the
     // sentence the code used to produce unconditionally.
     outcomes.push({
       id: `ho${i}`,
@@ -375,7 +375,7 @@ console.log("\nthe sentence agrees with its own sign");
 // --- multiple comparisons ---------------------------------------------------
 //
 // The engine asks seven questions of the same set of scores. At maxChance 0.05
-// each, the odds that at least one clears by luck are about 30% — so roughly
+// each, the odds that at least one clears by luck are about 30%, so roughly
 // one student in three would be shown a confident invented finding. These
 // check the Holm correction that fixes it.
 {
@@ -427,8 +427,8 @@ console.log("\nthe sentence agrees with its own sign");
   }
 
   // With no correction this sat well above a tenth of the runs. The bar is
-  // deliberately loose — this is a stochastic test and a flaky one helps
-  // nobody — but it is far below where the uncorrected engine landed.
+  // deliberately loose, this is a stochastic test and a flaky one helps
+  // nobody, but it is far below where the uncorrected engine landed.
   ok(
     `pure noise surfaces a finding in under a fifth of runs (${anySurfaced}/${TRIALS})`,
     anySurfaced <= TRIALS / 5,

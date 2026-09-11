@@ -6,7 +6,7 @@ import { z } from "zod";
 /**
  * End a session from a paired device.
  *
- * The payload arrives already encrypted — how long it ran, the subject, how it
+ * The payload arrives already encrypted, how long it ran, the subject, how it
  * felt. The phone holds the key because a student unlocked it with their own
  * password; this endpoint holds none of that and stores what it's given.
  */

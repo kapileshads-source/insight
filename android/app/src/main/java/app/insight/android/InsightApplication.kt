@@ -9,7 +9,7 @@ import java.io.StringWriter
  * Keeps the last crash where a person can read it.
  *
  * "Insight keeps stopping" is all Android tells a student, and all they can
- * tell us. A stack trace lives in logcat, which needs a cable and a laptop —
+ * tell us. A stack trace lives in logcat, which needs a cable and a laptop,
  * so the app writes its own down and the status screen shows it.
  *
  * This is the same principle as everything else here: when something is

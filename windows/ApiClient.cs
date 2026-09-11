@@ -51,7 +51,7 @@ internal sealed class ApiClient
     /// Ask whether a session is running, and get the current blocklist.
     ///
     /// The website owns session state and this app only follows, exactly as
-    /// the extension does — so starting a session on a phone starts recording
+    /// the extension does, so starting a session on a phone starts recording
     /// on the laptop, and a student is never told two different things about
     /// whether they are studying.
     ///
@@ -125,7 +125,7 @@ internal sealed class ApiClient
     /// what the endpoint's author intended for the native apps.
     ///
     /// Returns false on anything other than a clean success, and the caller
-    /// keeps its tally — a dropped connection should delay the data rather
+    /// keeps its tally, a dropped connection should delay the data rather
     /// than destroy it.
     /// </summary>
     internal async Task<bool> PostActivityAsync(

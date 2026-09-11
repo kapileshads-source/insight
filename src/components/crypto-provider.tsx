@@ -31,7 +31,7 @@ export type CryptoStatus =
 type CryptoContextValue = {
   status: CryptoStatus;
   /// Decrypt a stored payload. Throws if called while locked, which is a bug
-  /// rather than a user-facing state — every caller sits behind UnlockGate.
+  /// rather than a user-facing state, every caller sits behind UnlockGate.
   reveal: <T>(sealed: Sealed) => Promise<T>;
   /// Encrypt a value for storage.
   conceal: (value: unknown) => Promise<Sealed>;
@@ -57,7 +57,7 @@ export function CryptoProvider({ children }: { children: React.ReactNode }) {
       // Everything below is wrapped, because the only state worse than an
       // error is no state at all. This function reaches the network, and
       // without a catch a rejected promise leaves `status` on "checking"
-      // forever — which the gate renders as an entirely blank page, with no
+      // forever, which the gate renders as an entirely blank page, with no
       // message and no way out.
       try {
         if (!cryptoAvailable()) {

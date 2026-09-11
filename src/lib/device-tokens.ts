@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
  * Same pattern as the parent consent link: the plaintext is shown once and
  * only its SHA-256 is stored, so a database leak hands out no working tokens.
  *
- * Unlike the Canvas token this one is ours, so it never expires on a schedule —
+ * Unlike the Canvas token this one is ours, so it never expires on a schedule,
  * a student revokes it when they uninstall, and that is the only way it dies.
  * Chasing a laptop extension for re-pairing every 90 days would be friction
  * for no security gain, since it grants far less than a Canvas token does.
@@ -24,7 +24,7 @@ export function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
-/// Mint a token. Returns the plaintext exactly once — it is never recoverable
+/// Mint a token. Returns the plaintext exactly once, it is never recoverable
 /// afterwards, so the UI has to show it immediately or lose it.
 export async function createDeviceToken(
   userId: string,

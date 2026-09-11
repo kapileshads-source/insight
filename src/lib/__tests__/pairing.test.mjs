@@ -1,7 +1,7 @@
 import { encodePhonePairing, decodePhonePairing } from "../pairing.ts";
 
 /// The phone's pairing code is the one input that arrives by being typed or
-/// pasted, so half of one is the likely failure — and a half-read code that
+/// pasted, so half of one is the likely failure, and a half-read code that
 /// decoded to something plausible would be much worse than one that's refused.
 
 let pass = 0;

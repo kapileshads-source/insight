@@ -17,7 +17,7 @@ import {
  *
  * Server-only, and deliberately incapable of saying anything interesting: the
  * payload is a fixed question with no numbers in it, because the server has no
- * numbers. That is not a limitation to apologise for — it means a notification
+ * numbers. That is not a limitation to apologise for, it means a notification
  * on a lock screen can't show a grade or a sleep total to whoever picks the
  * phone up.
  *
@@ -58,7 +58,7 @@ function dateKey(at: Date, timezone: string): string {
  * Ask everyone who hasn't logged today.
  *
  * The only thing read is whether a row exists. Nothing is decrypted, and
- * nothing could be — the server has no key.
+ * nothing could be, the server has no key.
  */
 /**
  * The evening "what's due tomorrow" reminder.
@@ -68,7 +68,7 @@ function dateKey(at: Date, timezone: string): string {
  * tells them something and skips anyone with nothing to be told.
  *
  * **What the server can and cannot see here matters.** A due date is plaintext
- * — the dashboard has to order by it without decrypting every row — so counting
+ *, the dashboard has to order by it without decrypting every row, so counting
  * what falls tomorrow is free. Whether a thing has been *handed in* is not: it
  * lives in the encrypted payload. The one proxy available is a graded outcome,
  * whose `assignmentId` is a plain foreign key, so work that has come back
@@ -76,7 +76,7 @@ function dateKey(at: Date, timezone: string): string {
  *
  * That leaves "submitted but not yet marked" counted as still due. For work due
  * tomorrow that is usually right, and where it is wrong it errs toward
- * reminding — which is the safe direction for a reminder and the reason the
+ * reminding, which is the safe direction for a reminder and the reason the
  * wording says "3 due tomorrow" rather than "3 you still need to do".
  */
 export async function sendDueWorkNudges(): Promise<number> {

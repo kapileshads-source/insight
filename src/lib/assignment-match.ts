@@ -3,7 +3,7 @@
  *
  * They rarely say so. A teacher types "Ch 5 Quiz" into one gradebook and
  * "Chapter 5 Quiz" into the other, or posts a Canvas page called "Unit 2 Test"
- * against a HAC row called "Unit 2 Test Retake" — which is a *different*
+ * against a HAC row called "Unit 2 Test Retake", which is a *different*
  * assignment that looks almost identical. HAC has no stable assignment id
  * (two independent parsers of it capture none), so there is nothing to join
  * on but the words, the dates and the numbers.
@@ -19,7 +19,7 @@
  * similar the titles look.
  *
  * Everything here is pure. It runs in the browser, because the server cannot
- * read assignment names — same reason the insight engine does.
+ * read assignment names, same reason the insight engine does.
  */
 
 export type MatchCandidate = {
@@ -28,7 +28,7 @@ export type MatchCandidate = {
   course: string;
   title: string;
   dueAt?: Date | null;
-  /// Points possible. Null when unknown — never a guessed default, because a
+  /// Points possible. Null when unknown, never a guessed default, because a
   /// 5-point warm-up silently becoming a 100-point assignment poisons every
   /// percentage built on it.
   points?: number | null;
@@ -88,7 +88,7 @@ const ABBREVIATIONS: Record<string, string> = {
 
   // Course names, which is where this was failing hardest. A whole semester
   // of "World History" against "World Hist" scored 0.33 on tokens and fell
-  // under the floor, so four of nine real assignments never matched — while
+  // under the floor, so four of nine real assignments never matched, while
   // the traps this file exists to catch were all caught. Precision was fine;
   // recall was the problem, and it was the course line every time.
   hist: "history",
@@ -113,7 +113,7 @@ const ABBREVIATIONS: Record<string, string> = {
   span: "spanish",
   comp: "composition",
   // The level words, which have to reduce to one spelling before the check
-  // below compares them — see coursesMatch.
+  // below compares them, see coursesMatch.
   h: "honors",
   honours: "honors",
   hon: "honors",
@@ -182,7 +182,7 @@ function daysApart(a?: Date | null, b?: Date | null): number | null {
   return Math.abs(a.getTime() - b.getTime()) / 86_400_000;
 }
 
-/// Course names differ between systems more than assignment names do —
+/// Course names differ between systems more than assignment names do,
 /// "AP Biology" against "Biology AP 1-2", "Alg II H" against "Algebra 2
 /// Honors". Matched on tokens, with the level words that distinguish two real
 /// courses treated as significant.
@@ -195,7 +195,7 @@ export function coursesMatch(a: string, b: string): boolean {
   //
   // These are compared *after* expansion, which is the whole point: "Alg II H"
   // and "Algebra II Honors" are the same class, and treating "h" and "honors"
-  // as different levels vetoed every pairing between them — the exact case
+  // as different levels vetoed every pairing between them, the exact case
   // this function's own comment claims to handle.
   for (const level of ["ap", "honors", "gt", "ib", "dc"]) {
     if (left.has(level) !== right.has(level)) return false;
@@ -226,7 +226,7 @@ export function scorePair(
   // One is a retake and the other isn't.
   if (hasAttemptMarker(canvas.title) !== hasAttemptMarker(hac.title)) return null;
 
-  // Both name a number and the numbers disagree — Unit 2 is not Unit 3.
+  // Both name a number and the numbers disagree, Unit 2 is not Unit 3.
   const canvasNumbers = numbersIn(canvas.title);
   const hacNumbers = numbersIn(hac.title);
   if (
@@ -295,7 +295,7 @@ export function scorePair(
 /**
  * Pair up two lists of assignments.
  *
- * Greedy on the strongest pairings first, and each assignment is used once —
+ * Greedy on the strongest pairings first, and each assignment is used once,
  * so a title that resembles three others is spent on the best of them rather
  * than claiming all three.
  */

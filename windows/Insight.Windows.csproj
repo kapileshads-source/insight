@@ -2,7 +2,7 @@
 
   <!--
     Windows tray app. Publishes as one self-contained .exe so a student
-    downloads a single file and runs it — no .NET install, no installer, no
+    downloads a single file and runs it, no .NET install, no installer, no
     admin rights. SmartScreen shows an "unrecognised app" warning on first run;
     code signing would remove it and is not planned.
   -->

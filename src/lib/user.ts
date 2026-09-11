@@ -25,7 +25,7 @@ export const MINIMUM_AGE = 13;
 /// The consent flow below still exists and still works. It is unreachable on
 /// purpose: verified parental consent under COPPA means real parent emails
 /// landing reliably in real inboxes, and a consent request that quietly goes
-/// to spam fails in the worst available way — the student is stuck, the parent
+/// to spam fails in the worst available way, the student is stuck, the parent
 /// never knew, and nothing anywhere says so. Turning under-13s away is honest
 /// about what a free pilot can actually guarantee. Flip this back the day the
 /// email path is proven and the flow has had a legal read.
@@ -70,7 +70,7 @@ export async function getOrCreateUser() {
   // against their old id.
   //
   // Re-pointing on a verified email address is safe, because proving control
-  // of the address is exactly what Clerk's magic link establishes — the same
+  // of the address is exactly what Clerk's magic link establishes, the same
   // guarantee any email-based account recovery rests on. Their data key is
   // untouched, so their existing password still opens everything.
   const byEmail = await traced("user.findByEmail", () =>
@@ -87,7 +87,7 @@ export async function getOrCreateUser() {
   }
 
   // A student's very first request fans out into several server calls at once
-  // — the page render, the encryption-key lookup, the period prompt — and each
+  //, the page render, the encryption-key lookup, the period prompt, and each
   // one lands here. They all find no row, and they all try to create one. The
   // first wins; the rest violate a unique constraint and 500.
   //
@@ -145,7 +145,7 @@ export function nextOnboardingStep(user: UserWithRelations): OnboardingStep {
   // Everything above this line is required: the age gate is a legal
   // obligation, and without a key there is nowhere to put anything.
   //
-  // Everything below it is not, and used to behave as though it were — five
+  // Everything below it is not, and used to behave as though it were, five
   // compulsory steps before a student saw a single screen of the app, ending
   // on an empty dashboard. Both remaining answers are editable later and
   // neither blocks any feature outright, so both can be deferred.

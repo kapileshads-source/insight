@@ -67,7 +67,7 @@ type Slot = {
 //
 // **The numbering is interleaved, and this is the part worth reading twice.**
 // The school calls the blocks 1A 2A 3A 4A on an A day and 1B 2B 3B 4B on a B
-// day — but HAC lists them 1A 1B 2A 2B 3A 3B 4A 4B and shows the student a
+// day, but HAC lists them 1A 1B 2A 2B 3A 3B 4A 4B and shows the student a
 // plain number 1-8 in that order. So an odd number is an A day and an even one
 // is a B day, and the block is the number rounded up over two.
 //
@@ -75,13 +75,13 @@ type Slot = {
 // and is wrong in the worst way: "5" meant B-day first block at 9:00 here and
 // A-day third block at 12:50 to the student. Nearly every course would have
 // been filed against a time it never met at, and nothing would have looked
-// broken — the periods all exist, they're just the wrong ones.
+// broken, the periods all exist, they're just the wrong ones.
 const HS_A: Slot[] = [
   { sequence: 1, number: 1, label: null, start: hm(9, 0), end: hm(10, 30), instructional: true },
   { sequence: 2, number: 3, label: null, start: hm(10, 35), end: hm(12, 10), instructional: true },
   { sequence: 3, number: null, label: "Advisory", start: hm(12, 15), end: hm(12, 45), instructional: false },
   // Lunch waves A-C happen inside this block rather than beside it, and which
-  // wave a student gets differs per campus and per course — so the whole span
+  // wave a student gets differs per campus and per course, so the whole span
   // is one period as far as period lookup is concerned.
   { sequence: 4, number: 5, label: null, start: hm(12, 50), end: hm(14, 52), instructional: true },
   { sequence: 5, number: 7, label: null, start: hm(14, 57), end: hm(16, 30), instructional: true },
@@ -128,7 +128,7 @@ async function seedPeriods(schoolId: string, dayType: DayType, slots: Slot[]) {
       },
       // Bell times are corrected here rather than only created. `update: {}`
       // meant a fixed schedule stayed wrong forever in any database that had
-      // already been seeded — which is every deployed one, so the correction
+      // already been seeded, which is every deployed one, so the correction
       // that matters most was the one that could never land.
       //
       // Safe to re-run: a period is identified by campus, day type and

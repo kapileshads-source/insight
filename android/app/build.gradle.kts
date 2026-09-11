@@ -46,7 +46,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     // For LifecycleResumeEffect: usage access is granted in Settings and the
-    // student walks back in, with no callback to tell us — so the screen has
+    // student walks back in, with no callback to tell us, so the screen has
     // to re-check on every resume.
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.activity:activity-compose:1.9.3")
@@ -61,6 +61,6 @@ dependencies {
     testImplementation("org.json:json:20240303")
 
     // No HTTP library. The whole client is two calls, and HttpURLConnection is
-    // in the platform — one fewer dependency to keep current on a phone that
+    // in the platform, one fewer dependency to keep current on a phone that
     // holds a student's pairing token.
 }

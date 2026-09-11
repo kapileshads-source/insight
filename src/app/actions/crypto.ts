@@ -8,7 +8,7 @@ import type { EncryptionSetup, RecoverySetup } from "@/lib/crypto";
 /// Hand the browser the material it needs to derive the key.
 ///
 /// None of this is secret. The salt is public by design, and the wrapped key
-/// is inert without the password — which this server has never seen and has no
+/// is inert without the password, which this server has never seen and has no
 /// code path to obtain. Returning it is what lets a student unlock on a device
 /// they've never used before.
 export async function fetchEncryptionSetup(): Promise<EncryptionSetup | null> {
@@ -43,7 +43,7 @@ export async function fetchEncryptionSetup(): Promise<EncryptionSetup | null> {
  * on. Returning it to a signed-in session is what lets someone who is logged
  * in but locked out get back to their data.
  *
- * Null means this account has no recovery key — either it predates the
+ * Null means this account has no recovery key, either it predates the
  * feature, or the student declined one. There is nothing to be done for them
  * here, and `/recover` says so rather than pretending.
  */
@@ -64,7 +64,7 @@ export async function fetchRecoverySetup(): Promise<RecoverySetup | null> {
     }),
   );
 
-  // Every column moves together — they are written in one update — so one
+  // Every column moves together, they are written in one update, so one
   // being null means none of them are set.
   if (
     !key?.recoverySalt ||
@@ -85,7 +85,7 @@ export async function fetchRecoverySetup(): Promise<RecoverySetup | null> {
   };
 }
 
-/// Whether a recovery key exists and when it was issued — enough for settings
+/// Whether a recovery key exists and when it was issued, enough for settings
 /// to say "you have one, from March" without handing over the material.
 export async function recoveryKeyStatus(): Promise<{
   exists: boolean;

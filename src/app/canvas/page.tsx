@@ -5,7 +5,7 @@ import { getOrCreateUser } from "@/lib/user";
 import { getCanvasStatus } from "@/app/actions/canvas";
 import { CanvasConnect } from "@/components/canvas-connect";
 
-export const metadata = { title: "Canvas — Insight" };
+export const metadata = { title: "Canvas, Insight" };
 
 export default async function CanvasPage() {
   const user = await getOrCreateUser();

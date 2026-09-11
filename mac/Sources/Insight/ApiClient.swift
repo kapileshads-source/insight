@@ -52,7 +52,7 @@ struct ApiClient {
     /// Ask whether a session is running, and get the current blocklist.
     ///
     /// The website owns session state and this app only follows, exactly as
-    /// the extension does — so starting a session on a phone starts recording
+    /// the extension does, so starting a session on a phone starts recording
     /// on the laptop, and a student is never told two different things about
     /// whether they are studying.
     func poll(base: String, token: String) async -> PollResult {
@@ -111,7 +111,7 @@ struct ApiClient {
     }()
 
     /// `toISOString()` always includes milliseconds, but a parser that only
-    /// accepts them would fail silently — and a failed start time reads as a
+    /// accepts them would fail silently, and a failed start time reads as a
     /// session that began just now, which quietly makes every "started N
     /// minutes ago" wrong.
     private static let isoPlain = ISO8601DateFormatter()
@@ -120,7 +120,7 @@ struct ApiClient {
     /// the endpoint's author intended for the native apps.
     ///
     /// Returns false on anything other than a clean success, and the caller
-    /// keeps its tally — a dropped connection should delay the data rather
+    /// keeps its tally, a dropped connection should delay the data rather
     /// than destroy it.
     func postActivity(
         base: String,

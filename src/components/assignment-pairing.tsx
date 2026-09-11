@@ -18,8 +18,8 @@ import { planPairings } from "@/lib/pairing-plan";
  * server stores the answer and enforces the one thing a browser can't: that an
  * assignment is never in two pairings at once.
  *
- * Confident pairings are made silently. The middle band — where the titles
- * look alike but something doesn't line up — is the only part worth a
+ * Confident pairings are made silently. The middle band, where the titles
+ * look alike but something doesn't line up, is the only part worth a
  * student's attention, and it is shown one question at a time rather than as a
  * queue, because a queue of yes/no questions is a queue nobody finishes.
  */
@@ -34,7 +34,7 @@ type Payload = {
 export type PairingChoice = Pairing & { canvasTitle: string; hacTitle: string };
 
 /// A pairing already made, with a way back out. The undo is the whole reason
-/// this is a link and not a merge — without it the schema's justification is
+/// this is a link and not a merge, without it the schema's justification is
 /// a comment rather than a feature.
 export type LinkedPair = {
   id: string;
@@ -135,7 +135,7 @@ export function AssignmentPairing() {
 
   useEffect(() => {
     // `run` awaits a round trip before it touches state, so there is no
-    // cascading render for the rule to see — and the data arrives as
+    // cascading render for the rule to see, and the data arrives as
     // ciphertext, so this cannot happen anywhere but the client.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (status === "unlocked") void run();
@@ -193,7 +193,7 @@ export function AssignmentPairing() {
 /**
  * The card, with no crypto and no fetching.
  *
- * Split out so it can be rendered against made-up pairings and read — whether
+ * Split out so it can be rendered against made-up pairings and read, whether
  * a student can actually tell these two apart from what's on screen is the
  * whole question, and it isn't one a test can answer.
  */
@@ -228,7 +228,7 @@ export function PairingCard({
           const id = `${c.canvasId}|${c.hacId}`;
           return (
             <li key={id} className="border-t border-line py-4 first:border-t-0">
-              {/* Which gradebook each came from is half the question — without
+              {/* Which gradebook each came from is half the question, without
                   it a student is comparing two bare titles and guessing. */}
               <p className="flex flex-wrap items-baseline gap-2 text-[15px] text-text">
                 <span className="label shrink-0 text-text-faint">Canvas</span>
@@ -298,7 +298,7 @@ export function PairingCard({
       )}
 
       <p className="mt-6 border-t border-line pt-4 text-[13px] leading-relaxed text-text-faint">
-        Nothing is merged or deleted either way — both rows stay, and a link can
+        Nothing is merged or deleted either way, both rows stay, and a link can
         be undone.
       </p>
     </section>

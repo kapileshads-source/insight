@@ -31,7 +31,7 @@ const setupSchema = z.object({
 });
 
 /// The second wrapping, under the recovery code. Same shape as the password
-/// wrapping and equally inert on its own — the code that opens it was made in
+/// wrapping and equally inert on its own, the code that opens it was made in
 /// the browser and never sent here.
 const recoverySchema = z.object({
   recoverySalt: z.string().max(256),
@@ -45,7 +45,7 @@ const recoverySchema = z.object({
 ///
 /// Distinct from the create-once action used at signup. What arrives here is
 /// the *same* data key re-wrapped under a new password, which is why not one
-/// encrypted row has to be rewritten — and why this is safe to repeat.
+/// encrypted row has to be rewritten, and why this is safe to repeat.
 export async function updateEncryptionSetup(
   setup: unknown,
 ): Promise<SettingsResult> {
@@ -109,7 +109,7 @@ const categorySchema = z.enum([
 
 /// Turn a whole category of insight off.
 ///
-/// In the plan because some of these land badly — a student already anxious
+/// In the plan because some of these land badly, a student already anxious
 /// about sleep does not need a weekly reminder that theirs correlates with
 /// their grades. Muting is a first-class feature, not a hidden preference.
 export async function setCategoryMuted(
@@ -155,7 +155,7 @@ export async function getMutedCategories(): Promise<string[]> {
 /// Hand back everything we hold, ciphertext included.
 ///
 /// The browser decrypts it and writes the file, which is the only way an
-/// export can work here — we couldn't produce a readable one if we tried.
+/// export can work here, we couldn't produce a readable one if we tried.
 /// Promised on the privacy page, so it is not optional.
 export async function exportEverything() {
   const user = await getOrCreateUser();
@@ -194,7 +194,7 @@ export async function exportEverything() {
 /// Delete the account and everything hanging off it.
 ///
 /// Every relation cascades from User, so this one delete is genuinely
-/// complete rather than leaving orphaned rows behind — which is what the
+/// complete rather than leaving orphaned rows behind, which is what the
 /// retention promise on the privacy page actually requires.
 ///
 /// The Clerk identity is left alone deliberately: signing out and removing
@@ -219,14 +219,14 @@ export async function deleteAccount(
  *
  * This is the honest floor under "I forgot my password and I have no recovery
  * key". There is no third option. The server cannot read these rows, so it
- * cannot re-encrypt them under a new password — it can only delete them, and
+ * cannot re-encrypt them under a new password, it can only delete them, and
  * leaving them in place would mean an account permanently carrying data
  * nobody can open.
  *
  * What actually survives matters, and it is more than it sounds: courses,
  * assignments, marks and the transcript all come back on the next sync,
  * because Canvas and HAC still have them. What is gone for good is the part
- * only Insight held — the study log, the sleep entries, the outcomes typed in
+ * only Insight held, the study log, the sleep entries, the outcomes typed in
  * by hand, and every insight computed from them. So the wording in the UI is
  * "your study history", not "your data": telling a student they will lose
  * their grades when they will not is its own kind of lie.

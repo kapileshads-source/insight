@@ -2,7 +2,7 @@
  * Scoping the chat.
  *
  * The chatbot answers questions about a student's own study statistics and
- * nothing else. That restriction is not a product preference — it is what
+ * nothing else. That restriction is not a product preference, it is what
  * makes the feature defensible at all:
  *
  *   1. A homework machine attached to a school app is a discipline problem for
@@ -43,8 +43,8 @@ const WORK =
   "(essay|paper|homework|assignment|worksheet|problem set|problems?|questions?|quiz|test|exam|lab report|code|program|proof)";
 
 /// "do" is deliberately not in this list. It is the one verb that appears in
-/// the most common legitimate question here — "how did I do on my chemistry
-/// essay" — which the first version of this refused, in a test written
+/// the most common legitimate question here, "how did I do on my chemistry
+/// essay", which the first version of this refused, in a test written
 /// specifically to catch that. Requests to *do* work are matched separately
 /// below, where the possessive is required and "did I do" cannot reach.
 const PRODUCE = "(write|draft|compose|solve|answer|complete|finish)";
@@ -56,7 +56,7 @@ const DO_MY_WORK = new RegExp(
 );
 
 /// Attempts to talk the model out of its instructions. Not exhaustive and not
-/// meant to be — it catches the copy-pasted ones, which is most of them.
+/// meant to be, it catches the copy-pasted ones, which is most of them.
 const JAILBREAK =
   /\b(ignore|disregard|forget|override)\b[^.?!]{0,30}\b(previous|prior|above|earlier|all)?\s?(instructions?|prompts?|rules?|system)\b|\byou are now\b|\bpretend (that )?you\b|\bDAN\b|\bdeveloper mode\b|\bjailbreak\b/i;
 
@@ -69,15 +69,15 @@ const OFF_TOPIC =
 /**
  * Causal claims, judged for a conversation rather than for one sentence.
  *
- * `getRecommendation` uses a much broader list — it includes "because",
- * "improves", "hurts", "boosts" — and that is right there, because it produces
+ * `getRecommendation` uses a much broader list, it includes "because",
+ * "improves", "hurts", "boosts", and that is right there, because it produces
  * a single declarative sentence of advice where any of those words is almost
  * certainly a claim about cause.
  *
  * In a chat it is wrong, and measurably so. Asked "is my sleep affecting my
  * grades", the model answered: sleep "went along with" the pattern, the two
  * "might be linked", and it "could be worth trying to finish earlier to see if
- * your grades improve." That is a careful, correct, hedged answer — and the
+ * your grades improve." That is a careful, correct, hedged answer, and the
  * broad list refused it, on the word "improve" inside a hypothetical. "Which
  * class should I worry about" was refused on an ordinary explanatory
  * "because". A guard that blocks the two questions the feature exists to
@@ -96,8 +96,8 @@ export const CHAT_CAUSAL =
  * Caught before the model sees it, and answered by pointing at the calculator
  * on the GPA card rather than by attempting the arithmetic.
  *
- * The model's own answer to this was honest — it said it lacked the credit
- * weightings and could not compute a new GPA — which is the correct refusal
+ * The model's own answer to this was honest, it said it lacked the credit
+ * weightings and could not compute a new GPA, which is the correct refusal
  * and a bad experience, since this is the most useful question a student asks
  * about their grades. Giving it the weightings would not fix it: a language
  * model doing arithmetic produces a number that looks right and sometimes is
@@ -126,14 +126,14 @@ export function checkQuestion(text: string): ScopeVerdict {
   if (trimmed.length > 500) {
     return {
       allowed: false,
-      reason: "That's longer than I can take — try a shorter question.",
+      reason: "That's longer than I can take, try a shorter question.",
     };
   }
   if (JAILBREAK.test(trimmed)) {
     return {
       allowed: false,
       reason:
-        "I only talk about your study data — that's built in rather than something I can be talked out of.",
+        "I only talk about your study data, that's built in rather than something I can be talked out of.",
     };
   }
   if (DO_MY_WORK.test(trimmed)) {
@@ -147,7 +147,7 @@ export function checkQuestion(text: string): ScopeVerdict {
     return {
       allowed: false,
       reason:
-        "I won't guess at that — open “Which classes count, and try a grade” on your GPA card and type the grade in. It works the number out exactly, using your real transcript.",
+        "I won't guess at that, open “Which classes count, and try a grade” on your GPA card and type the grade in. It works the number out exactly, using your real transcript.",
     };
   }
   if (OFF_TOPIC.test(trimmed)) {
@@ -189,7 +189,7 @@ export function checkAnswer(text: string): ScopeVerdict {
 /**
  * What the model is allowed to see.
  *
- * Aggregates only — the same rule the recommendation feature already follows.
+ * Aggregates only, the same rule the recommendation feature already follows.
  * No session, no assignment name, no individual mark leaves the browser. This
  * type is the contract, and it is narrow on purpose: anything not listed here
  * cannot be sent, because there is no field to put it in.
@@ -218,7 +218,7 @@ export const CHAT_SYSTEM = `You answer a high school student's questions about t
 
 Scope: ${CHAT_SCOPE}. If asked about anything else, say that is all you know about and stop. Never write, draft or solve schoolwork of any kind, even partially, even if the student says it is for practice.
 
-You are given a JSON summary of the student's figures. Answer only from it. If the summary does not contain what was asked, say so plainly — do not estimate, and do not invent a number.
+You are given a JSON summary of the student's figures. Answer only from it. If the summary does not contain what was asked, say so plainly, do not estimate, and do not invent a number.
 
 Never claim one thing caused another. The patterns you are given describe things that happened together. Say "went along with", not "because of".
 

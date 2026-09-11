@@ -20,7 +20,7 @@ import {
  * The GPA estimate.
  *
  * Pure: it is handed courses and grades and renders. No crypto and no fetching,
- * so it can be rendered against fixtures and looked at — which is how the rest
+ * so it can be rendered against fixtures and looked at, which is how the rest
  * of this app's display bugs were found.
  *
  * **Everything here is written to keep one promise: this is an estimate.** The
@@ -29,7 +29,7 @@ import {
  * the moment a student believes it is their real GPA the app has lied to them
  * about the number they care about most.
  *
- * So the word "estimate" is in the heading, not in a footnote — a caveat below
+ * So the word "estimate" is in the heading, not in a footnote, a caveat below
  * a large confident number is a caveat nobody reads.
  */
 
@@ -62,7 +62,7 @@ export function GpaCard({
   priorCount?: number;
 }) {
   // HAC is the roll. A Canvas course with no counterpart there is a district
-  // shell rather than a class — "Frisco ISD 1forAll Student Course 26-27" was
+  // shell rather than a class, "Frisco ISD 1forAll Student Course 26-27" was
   // sitting at 100% and lifting a real GPA. When HAC has said nothing yet,
   // everything is kept rather than the estimate silently blanking.
   const courses = onlyEnrolled(all);
@@ -77,13 +77,13 @@ export function GpaCard({
     courses.filter((c) => looksNonAcademic(c.title)).map((c) => c.id),
   );
 
-  // A course reading 0.00 has not been graded — it has not failed.
+  // A course reading 0.00 has not been graded, it has not failed.
   //
   // Progress checks count for nothing and assessments are the whole grade, so
   // a class whose assessment category is still empty prints 0.00% in HAC while
   // holding a page of marked work. Kapilesh's own English class did exactly
   // that. Feeding it into a GPA turns "the term has not really started" into a
-  // 3.000, which is both false and alarming — and it is the first number a
+  // 3.000, which is both false and alarming, and it is the first number a
   // student would see.
   //
   // A genuine zero for a whole course is not a thing that happens to someone
@@ -106,7 +106,7 @@ export function GpaCard({
 
   // Says it is waiting rather than rendering nothing.
   //
-  // Returning null was defensible — an empty GPA is not a GPA — but in
+  // Returning null was defensible, an empty GPA is not a GPA, but in
   // practice it made the feature look absent rather than pending, and it was
   // asked about three times. One line costs nothing and answers the question
   // before it is asked.
@@ -117,14 +117,14 @@ export function GpaCard({
         <h2 className="h3 text-[17px]">GPA estimate</h2>
         <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-text-muted">
           Waiting on a posted grade. As soon as one of your classes has a
-          percentage, this works out both GPAs from it — weighted on the 6.0
+          percentage, this works out both GPAs from it, weighted on the 6.0
           scale and unweighted on the 4.0 one.
         </p>
         {ungraded.length > 0 && (
           <p className="mt-3 max-w-lg text-[14px] leading-relaxed text-text-faint">
             {ungraded.length === 1
-              ? `${ungraded[0].title} reads 0%, which means no assessments have been marked in it yet — so it isn't counted.`
-              : `${ungraded.length} classes read 0%, which means no assessments have been marked in them yet — so they aren't counted.`}
+              ? `${ungraded[0].title} reads 0%, which means no assessments have been marked in it yet, so it isn't counted.`
+              : `${ungraded.length} classes read 0%, which means no assessments have been marked in them yet, so they aren't counted.`}
           </p>
         )}
       </section>
@@ -133,7 +133,7 @@ export function GpaCard({
 
   // The number a student is actually asking for: where they stand today, with
   // this term counted as it currently stands. Anchored to the school's own
-  // cumulative figure rather than recomputed from the transcript — see
+  // cumulative figure rather than recomputed from the transcript, see
   // `presentGpa` for why re-adding it lands a quarter of a point out.
   const today = presentGpa(
     past ?? { weighted: null, unweighted: null },
@@ -146,7 +146,7 @@ export function GpaCard({
 
   /* Starlight, not another Midnight panel.
    *
-   * The dashboard's problem was never that any one card was ugly — it was that
+   * The dashboard's problem was never that any one card was ugly, it was that
    * ten cards cut from the same dark cloth, at the same width, gave the eye
    * nothing to land on, so the screen read as one grey wall. The palette has
    * carried `--paper` and `--on-light` since the beginning for "the
@@ -327,14 +327,14 @@ export function GpaDetail({
             key={String(trying ? withTryout.weighted : today.weighted)}
             className="figure figure-live mt-2 text-[2.6rem] text-text"
           >
-            {(trying ? withTryout.weighted : today.weighted)?.toFixed(3) ?? "—"}
+            {(trying ? withTryout.weighted : today.weighted)?.toFixed(3) ?? ", "}
           </p>
           <p className="mt-1 text-[13px] text-text-faint">Weighted</p>
         </div>
         <div>
           <p className="figure text-[1.6rem] text-text">
             {(trying ? withTryout.unweighted : today.unweighted)?.toFixed(3) ??
-              "—"}
+              ", "}
           </p>
           <p className="mt-1 text-[13px] text-text-faint">Unweighted</p>
         </div>
@@ -417,27 +417,27 @@ export function GpaDetail({
         <h2 className="h3 text-[17px] text-text">How this is worked out</h2>
         <p>
           {anchored
-            ? "Your finished semesters are exactly what the school calculated — that part isn't guesswork. This term is added at whatever your gradebook shows today, so the number moves every time a mark is posted, and it isn't official until the semester closes."
+            ? "Your finished semesters are exactly what the school calculated, that part isn't guesswork. This term is added at whatever your gradebook shows today, so the number moves every time a mark is posted, and it isn't official until the semester closes."
             : "Worked out from the grades your gradebook is showing right now. Your school calculates the real one when the semester ends, and the two will not match exactly."}
         </p>
         {!anchored && (
           <p>
             Read your transcript on the HAC page and this becomes your real
-            cumulative GPA, brought up to today — not just this term.
+            cumulative GPA, brought up to today, not just this term.
           </p>
         )}
         <p className="text-text-faint">
           Frisco weights per percentage point: an on-level class tops out at
           5.0, Advanced at 5.5 and AP at 6.0, losing 0.1 for every point below
           100. The unweighted figure uses letter grades on the 4.0 scale, which
-          is a different calculation entirely — that is why the two move at
+          is a different calculation entirely, that is why the two move at
           different speeds.
         </p>
         {ungraded.length > 0 && (
           <p className="text-text-faint">
             {ungraded.length === 1
-              ? `${ungraded[0].title} isn't counted yet — it still reads 0%, which means no assessments have been marked in it.`
-              : `${ungraded.length} classes aren't counted yet — they still read 0%, which means no assessments have been marked in them.`}
+              ? `${ungraded[0].title} isn't counted yet, it still reads 0%, which means no assessments have been marked in it.`
+              : `${ungraded.length} classes aren't counted yet, they still read 0%, which means no assessments have been marked in them.`}
           </p>
         )}
       </section>
@@ -465,7 +465,7 @@ function Figure({
   return (
     <div>
       <div className={`figure text-on-light ${size}`}>
-        {value === null ? "—" : value.toFixed(3)}
+        {value === null ? ", " : value.toFixed(3)}
       </div>
       <p className="mt-1.5 text-[13px] text-on-light-muted">{label}</p>
     </div>

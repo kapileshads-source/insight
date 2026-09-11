@@ -39,7 +39,7 @@ console.log("\nwhen it refuses, and says why");
 {
   // Each of these is a call that would have gone out for nobody's benefit.
   ok("not connected", shouldSync(base({ connected: false })).because.includes("connected"));
-  ok("locked — no key, nothing to encrypt with",
+  ok("locked, no key, nothing to encrypt with",
      shouldSync(base({ unlocked: false })).sync === false);
   // A dashboard left open in a background tab for a week would otherwise call
   // Canvas a thousand times for nobody to read.

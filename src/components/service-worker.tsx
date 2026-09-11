@@ -6,7 +6,7 @@ import { useEffect } from "react";
  * Registers the service worker, which is what makes Insight installable.
  *
  * Only in production. In development a worker sits between the browser and
- * the dev server, and the failure mode is edits that appear not to apply —
+ * the dev server, and the failure mode is edits that appear not to apply,
  * an afternoon lost to a cached page that looks like a bug in your code.
  */
 export function ServiceWorker() {

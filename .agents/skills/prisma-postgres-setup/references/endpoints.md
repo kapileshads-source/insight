@@ -110,7 +110,7 @@ Key field to extract:
 
 - `data.database.connections[0].endpoints.direct.connectionString` → use as `DATABASE_URL`
 
-The response also includes `pooled` and `accelerate` endpoints — ignore these for new projects. The direct connection string is all you need.
+The response also includes `pooled` and `accelerate` endpoints, ignore these for new projects. The direct connection string is all you need.
 
 If `data.database.status` is `provisioning`, poll `GET /v1/databases/{id}` until `status` is `ready`.
 

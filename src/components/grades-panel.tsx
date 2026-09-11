@@ -16,7 +16,7 @@ import {
 /**
  * Your grades, which the app collected for a year and never showed anyone.
  *
- * Everything here is decrypted in the browser, like every other record — see
+ * Everything here is decrypted in the browser, like every other record, see
  * `gradebook-data.tsx`, which owns the one decrypt this and the GPA headline
  * both read from. The server hands over ciphertext and an `updatedAt` column
  * it keeps for its own bookkeeping; the marks themselves are unreadable to it.
@@ -41,7 +41,7 @@ export function GradesPanel() {
  *
  * Not gated on the grades list having anything in it. Early in a term a course
  * can carry a percentage while none of its assignments fall in the window the
- * list reads, and the two were once gated together — which is exactly how the
+ * list reads, and the two were once gated together, which is exactly how the
  * estimate looked missing rather than pending.
  */
 export function GpaPanel() {
@@ -104,7 +104,7 @@ export function GradesList({
           Both extremes were wrong on a real account. Drawing every class gave
           six identical "Nothing marked yet" cards that buried the marks under
           them. Dropping the empty ones made the whole section disappear in
-          September, when every class can be empty — which looked like the
+          September, when every class can be empty, which looked like the
           feature had been deleted. Saying how many are waiting is the honest
           middle: nothing is hidden, and nothing is buried. */}
       <div className="mt-4 space-y-3">
@@ -117,7 +117,7 @@ export function GradesList({
         <p className="mt-4 text-[14px] leading-relaxed text-text-faint">
           {shown.length === 0
             ? `None of your ${waiting.length} classes has posted a grade yet. They'll appear here as soon as one does.`
-            : `${waiting.length} other ${waiting.length === 1 ? "class has" : "classes have"} nothing marked yet — ${waiting
+            : `${waiting.length} other ${waiting.length === 1 ? "class has" : "classes have"} nothing marked yet, ${waiting
                 .map((c) => c.course)
                 .join(", ")}.`}
         </p>
@@ -125,7 +125,7 @@ export function GradesList({
 
       <p className="mt-4 text-[13px] leading-relaxed text-text-faint">
         Percentages are your gradebook&rsquo;s own. Insight never works one out
-        itself — your classes weight their categories, so anything it calculated
+        itself, your classes weight their categories, so anything it calculated
         would disagree with what your school shows.
       </p>
     </section>

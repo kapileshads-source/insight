@@ -12,8 +12,8 @@ metadata:
 MongoDB projects are the one Prisma cohort with no road into Prisma 7: **v6 is the terminal
 classic-ORM major for MongoDB, and v7 never ships a MongoDB connector**. The successor path
 is [Prisma Next](https://github.com/prisma/prisma-next), where MongoDB support is in Early
-Access with GA planned after Postgres. This skill frames the real decision — migrate to
-Prisma Next (the encouraged path), or stay on v6 where a hard blocker applies — and carries
+Access with GA planned after Postgres. This skill frames the real decision, migrate to
+Prisma Next (the encouraged path), or stay on v6 where a hard blocker applies, and carries
 the migration mechanics.
 
 **Never do either of these:**
@@ -28,17 +28,17 @@ the migration mechanics.
 | Version | MongoDB status |
 |---------|----------------|
 | Prisma ORM v6 | Fully supported (`mongodb` provider); latest 6.x is the current stable path; maintenance line |
-| Prisma ORM v7 | **No MongoDB connector — not an option, ever** |
-| Prisma Next | MongoDB support in **Early Access**, actively developed, GA planned after Postgres — the successor path for MongoDB projects |
+| Prisma ORM v7 | **No MongoDB connector, not an option, ever** |
+| Prisma Next | MongoDB support in **Early Access**, actively developed, GA planned after Postgres, the successor path for MongoDB projects |
 
 ## The decision, up front
 
 **Migrating to Prisma Next is the encouraged path.** MongoDB support in Prisma Next is Early
-Access: functional and moving quickly, with GA planned after Postgres — and the Prisma team
+Access: functional and moving quickly, with GA planned after Postgres, and the Prisma team
 wants MongoDB users to migrate early and share feedback. The migration mechanics are
 detailed in the references.
 
-**Staying on the latest v6 remains a legitimate choice where a hard blocker applies** —
+**Staying on the latest v6 remains a legitimate choice where a hard blocker applies**,
 stated plainly: the Next Mongo façade does not wrap transactions yet (the underlying driver
 is available directly; this is expected to change soon), and pre-1.0 minors can carry
 breaking changes with published upgrade recipes.
@@ -49,11 +49,11 @@ breaking changes with published upgrade recipes.
 |--------|-----------|
 | No blockers below apply | Migrate to Next; run the `verify-cutover-checklist` and share feedback with the Prisma team |
 | Greenfield / prototype / internal tool | Migrate to Next |
-| Codebase uses multi-document transactions (`$transaction`) — check with grep, do not ask | Plan raw-driver session equivalents first (see `client-api-mapping`), or stay on v6 until the façade wrapper lands |
+| Codebase uses multi-document transactions (`$transaction`), check with grep, do not ask | Plan raw-driver session equivalents first (see `client-api-mapping`), or stay on v6 until the façade wrapper lands |
 | Team cannot absorb pre-1.0 breaking upgrades between minors | Stay on v6 until GA |
 | Risk-averse but interested | Run a staged Next round-trip on a copy (see `verify-cutover-checklist`), then migrate |
 
-Note: the transactions gap is expected to close soon — this section will be updated when
+Note: the transactions gap is expected to close soon, this section will be updated when
 façade transactions merge in Prisma Next.
 
 ### If staying on v6: hygiene (a deliberate stay, not neglect)
@@ -70,7 +70,7 @@ façade transactions merge in Prisma Next.
 |-----------|----------------|
 | `references/decision-stay-or-migrate.md` | The full decision framing, blocker checks, and stay-hygiene detail |
 | `references/schema-contract-mapping.md` | v6 schema (`mongodb` provider, `@db.ObjectId`, composite types) → Next contract concepts |
-| `references/client-api-mapping.md` | v6 client calls → Next equivalents, incl. raw escape hatches and transactions — names map, parity does not |
+| `references/client-api-mapping.md` | v6 client calls → Next equivalents, incl. raw escape hatches and transactions, names map, parity does not |
 | `references/migrations-mapping.md` | v6 `db push`-only story → Next's plan/migrate/verify/sign flow |
 | `references/verify-cutover-checklist.md` | No-data-moves verification: same DB, index parity, staged round-trip before cutover |
 
@@ -89,4 +89,4 @@ prisma-next skills installed with it). Next's Mongo target requires MongoDB 8.0+
 This skill is the **discovery bridge**, not a replacement for Prisma Next's own
 documentation. After a project switches to Prisma Next, run Prisma Next's `init`/skill
 installation and follow its own skills (quickstart, contract, queries, migrations, runtime)
-for day-to-day work — do not keep working from this skill's summaries.
+for day-to-day work, do not keep working from this skill's summaries.

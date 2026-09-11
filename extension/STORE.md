@@ -9,7 +9,7 @@ updates itself, and makes Chrome nag on every launch. For a pilot that's a
 support burden you answer messages about weekly.
 
 **Cost and time:** $5 once, to register as a developer. Review is usually a few
-days. Choose **Unlisted** visibility — installable by anyone with the link, not
+days. Choose **Unlisted** visibility, installable by anyone with the link, not
 findable by searching, no need to be public.
 
 ---
@@ -31,7 +31,7 @@ Counts the sites you use during a study session, and blocks distracting ones whi
 **Description**
 
 ```
-Insight is a study tracker for students. This extension is the part that watches your browser — and only while you're actually studying.
+Insight is a study tracker for students. This extension is the part that watches your browser, and only while you're actually studying.
 
 WHAT IT DOES
 
@@ -39,7 +39,7 @@ When you start a study session on Insight, this counts how long you spend on eac
 
 WHAT IT DOESN'T DO
 
-Nothing is recorded when no session is running. Not recorded and discarded — the timer doesn't accumulate at all.
+Nothing is recorded when no session is running. Not recorded and discarded, the timer doesn't accumulate at all.
 
 It keeps hostnames, never full addresses. "wikipedia.org", not which article. That's enforced in the code rather than promised in a policy.
 
@@ -49,7 +49,7 @@ You start and stop sessions on the Insight website. This extension has no settin
 
 REQUIRES AN INSIGHT ACCOUNT
 
-Free, at https://insight-study-sleep.vercel.app — you'll paste a pairing code from your Devices page.
+Free, at https://insight-study-sleep.vercel.app, you'll paste a pairing code from your Devices page.
 
 Insight is built by two students in Frisco ISD. It is not run by, endorsed by, or affiliated with the district.
 ```
@@ -78,7 +78,7 @@ Stores the pairing code for the user's Insight account and the current session's
 `tabs`
 
 ```
-Reads the hostname of the active tab to count how long each site is used during a study session. Only the hostname is kept — never the full URL, the page title, or the contents. Nothing is read while no session is running.
+Reads the hostname of the active tab to count how long each site is used during a study session. Only the hostname is kept, never the full URL, the page title, or the contents. Nothing is read while no session is running.
 ```
 
 `alarms`
@@ -87,23 +87,23 @@ Reads the hostname of the active tab to count how long each site is used during 
 Manifest V3 service workers are stopped when idle. A one-minute alarm wakes the extension to send the tally to the user's account and to ask whether a study session is still running.
 ```
 
-Host permission — `https://insight-study-sleep.vercel.app/*`
+Host permission, `https://insight-study-sleep.vercel.app/*`
 
 ```
 The extension talks to exactly one server: the user's own Insight account. It asks whether a session is running and sends the session's site tally. No other host is contacted.
 ```
 
-Optional host permissions — `https://*/*`, `http://*/*`
+Optional host permissions, `https://*/*`, `http://*/*`
 
 ```
 Not requested at install. Some users run their own copy of Insight at a different address; when they enter one while pairing, permission for that single address is requested at that moment. Users of the hosted version are never asked.
 ```
 
-**Data usage — disclose these, they are true**
+**Data usage, disclose these, they are true**
 
-- **Authentication information** — the pairing code, stored locally, which grants
+- **Authentication information**, the pairing code, stored locally, which grants
   the ability to add activity to one account and nothing else.
-- **Web history** — hostnames of sites used while a study session is running.
+- **Web history**, hostnames of sites used while a study session is running.
 
 **Certifications, all of which hold**
 
@@ -123,7 +123,7 @@ https://insight-study-sleep.vercel.app/privacy
 
 One to five, at 1280×800 or 640×400. Three that tell the story:
 
-1. The popup while a session runs — green dot, "Studying, Focus Mode on".
+1. The popup while a session runs, green dot, "Studying, Focus Mode on".
 2. The blocked page, with the site named and the override button visible.
 3. The Devices page on the website, showing where the pairing code comes from.
 
@@ -134,7 +134,7 @@ rather than your own data.
 
 ## Before you upload
 
-Zip the **contents** of `extension/`, not the folder itself — `manifest.json`
+Zip the **contents** of `extension/`, not the folder itself, `manifest.json`
 has to sit at the root of the zip.
 
 ```bash
@@ -144,5 +144,5 @@ cd extension && zip -r ../insight-extension.zip . -x '*.DS_Store' 'STORE.md' 'lo
 Bump `version` in `manifest.json` for every upload; the store refuses a version
 it has seen before.
 
-After it's published, update the install steps on `/devices` — they currently
+After it's published, update the install steps on `/devices`, they currently
 describe Load unpacked, which stops being the route students take.

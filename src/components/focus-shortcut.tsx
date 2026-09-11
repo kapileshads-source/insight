@@ -11,7 +11,7 @@ import {
  * Two buttons that run the student's own Focus shortcuts.
  *
  * This is the whole of what an iPhone allows. No app can set a Focus, and no
- * web page can do anything unprompted — so a session started on a laptop can
+ * web page can do anything unprompted, so a session started on a laptop can
  * never reach into a phone and quiet it. A tap is the mechanism, and pretending
  * otherwise would just mean a feature that silently doesn't work.
  *
@@ -57,7 +57,7 @@ export function FocusShortcut() {
         <div className="mt-4 space-y-3 border-t border-line pt-4 text-[14px] leading-relaxed text-text-muted">
           <p>
             <span className="text-text">1.</span> In Settings → Focus, make one
-            called anything you like — pick the apps you want hidden.
+            called anything you like, pick the apps you want hidden.
           </p>
           <p>
             <span className="text-text">2.</span> In the Shortcuts app, create a

@@ -77,7 +77,7 @@ for (const q of [
 console.log("\nthe causation guard, chat flavour");
 // Real answers the model produced against real-shaped data. The broad guard
 // used for one-line recommendations refused both of these, on "because" and
-// on "improve" inside a hypothetical — which meant the two questions this
+// on "improve" inside a hypothetical, which meant the two questions this
 // feature exists to answer were the two it could not answer.
 for (const good of [
   "Your lowest grade is in Advanced Chemistry, at 78%, so that's the class you might want to focus on.",

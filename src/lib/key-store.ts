@@ -3,7 +3,7 @@
  *
  * A CryptoKey is structured-cloneable, so IndexedDB can hold one directly and
  * a non-extractable key stays non-extractable across the round trip. No script
- * can read the raw bytes back out — it can only be used to encrypt and decrypt.
+ * can read the raw bytes back out, it can only be used to encrypt and decrypt.
  *
  * This is off by default and always will be. Half of these students are on a
  * shared family laptop or a school Chromebook, and "stay unlocked" on a shared
@@ -44,7 +44,7 @@ export async function rememberKey(key: CryptoKey): Promise<void> {
     db.close();
   } catch {
     // Private browsing and some locked-down profiles reject IndexedDB writes.
-    // Failing to remember is not worth interrupting the student over — they
+    // Failing to remember is not worth interrupting the student over, they
     // are already unlocked for this session.
   }
 }
@@ -78,6 +78,6 @@ export async function forgetKey(): Promise<void> {
     });
     db.close();
   } catch {
-    // Nothing to do — the key either wasn't there or can't be reached.
+    // Nothing to do, the key either wasn't there or can't be reached.
   }
 }

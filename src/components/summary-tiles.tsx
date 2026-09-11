@@ -13,7 +13,7 @@ import { formatDuration } from "@/lib/records";
  * The dashboard as a hub.
  *
  * Every tile is the headline of a page and a link to it. Nothing here is a
- * control, nothing here is a list, and nothing here needs scrolling — the
+ * control, nothing here is a list, and nothing here needs scrolling, the
  * point is that opening Insight answers "where am I" in one glance, and every
  * follow-up question has one obvious place to go.
  *
@@ -50,7 +50,7 @@ function Tile({
   );
 }
 
-/// A figure and its unit. Null renders as a dash, never as zero — no data is
+/// A figure and its unit. Null renders as a dash, never as zero, no data is
 /// not the same fact as none.
 ///
 /// The unit is two short words at most. "since you last looked" was tried
@@ -59,7 +59,7 @@ function Tile({
 function Big({ value, unit }: { value: string | null; unit?: string }) {
   return (
     <span className="figure text-[2rem] text-text">
-      {value ?? "—"}
+      {value ?? ", "}
       {unit && (
         <span className="ml-1.5 font-sans text-[13px] text-text-muted">
           {unit}
@@ -74,7 +74,7 @@ export function SummaryTiles() {
   const study = useStudyData();
   const assignments = useAssignments();
 
-  // GPA, worked out exactly as /gpa does it — the same `presentGpa`, so the
+  // GPA, worked out exactly as /gpa does it, the same `presentGpa`, so the
   // tile and the page can never disagree.
   let gpa: string | null = null;
   let gpaFoot: string | null = null;

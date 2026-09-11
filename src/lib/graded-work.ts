@@ -5,7 +5,7 @@ import type { OutcomeRecord } from "@/lib/insights";
  *
  * This closes the gap the whole app was built around and never crossed. The
  * engine compares study habits against *scores*, and the only scores it ever
- * had were the ones a student typed in by hand — which, in practice, nobody
+ * had were the ones a student typed in by hand, which, in practice, nobody
  * does. So every insight sat in "still gathering" indefinitely, and the one
  * thing making Insight more than a gradebook had never run on anything real.
  *
@@ -26,7 +26,7 @@ export type MarkedWork = {
   category?: string | null;
   score: number | null;
   pointsPossible: number | null;
-  /// When the work was due — *not* when the mark was seen. See below.
+  /// When the work was due, *not* when the mark was seen. See below.
   dueAt: Date | null;
   /// When Insight first stored the row. The fallback, and only that.
   updatedAt: Date;
@@ -52,7 +52,7 @@ export const MIN_POINTS = 20;
 /// because the district's own spelling varies by campus.
 const MINOR_CATEGORIES = /progress|practice|homework|classwork|daily|warm|participation/i;
 
-/// Categories that are assessments regardless of how few points they carry —
+/// Categories that are assessments regardless of how few points they carry,
 /// a 10-point quiz is still a quiz.
 const MAJOR_CATEGORIES = /assess|test|exam|quiz|project|essay|lab|summative/i;
 
@@ -70,7 +70,7 @@ function isMajor(work: MarkedWork): boolean {
  * This one would have silently ruined the whole feature. The engine looks at
  * the seven days *before* an outcome to find the sessions that prepared for
  * it. On a first sync every row arrives at once, so `updatedAt` is the same
- * timestamp for a whole term of work — which would place every test on the
+ * timestamp for a whole term of work, which would place every test on the
  * same afternoon and compare all of them against the same handful of recent
  * sessions.
  *
@@ -158,7 +158,7 @@ export function outcomesFromMarkedWork(
  * Merge hand-entered outcomes with ones derived from the gradebook.
  *
  * Hand-entered wins on a collision. A student who typed a score in did so for
- * a reason — usually because it was not in Canvas — and if it later shows up
+ * a reason, usually because it was not in Canvas, and if it later shows up
  * in the gradebook too, counting it twice would weight that one test double.
  * Matching is by subject and day, which is as precise as it can be: the two
  * sources do not share an identifier.

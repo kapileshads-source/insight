@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
  * keeps to them:
  *
  *  - Nothing is recorded when no session is running. Not recorded and then
- *    discarded — the timer does not accumulate.
+ *    discarded, the timer does not accumulate.
  *  - App names only. Android gives us a package name and a label, and neither
  *    says what was on screen.
  *  - No encryption key here, ever. What this posts lands in a staging table
@@ -67,7 +67,7 @@ class TrackerService : android.app.Service() {
     /// Whether we've asked for the DNS tunnel.
     ///
     /// This was the crash. `stop()` reaches the VPN service by *starting* it,
-    /// and every poll without a focused session called it — so once the app
+    /// and every poll without a focused session called it, so once the app
     /// was in the background, Android refused to start a background service
     /// and threw out of the polling coroutine, killing the process.
     /// START_STICKY brought it back, fifteen seconds later it happened again,
@@ -89,7 +89,7 @@ class TrackerService : android.app.Service() {
             while (isActive) {
                 // Nothing in here is worth dying for. An exception thrown in a
                 // coroutine kills the process, START_STICKY restarts it, and
-                // the phone ends up saying "Insight keeps stopping" — which
+                // the phone ends up saying "Insight keeps stopping", which
                 // tells a student nothing and costs them every session in
                 // between.
                 try {
@@ -187,12 +187,12 @@ class TrackerService : android.app.Service() {
      *
      * No entitlement and nobody's approval, which is the whole difference
      * between Android and iPhone here. It needs the overlay permission, which
-     * the student granted in Settings and can take back there — and which is
+     * the student granted in Settings and can take back there, and which is
      * also what lets a background service start an activity at all since
      * Android 10.
      *
      * The app is left running. Killing it would lose whatever was in it and
-     * feels punitive, and a punitive tool gets uninstalled — at which point it
+     * feels punitive, and a punitive tool gets uninstalled, at which point it
      * blocks nothing. Same reasoning as the extension redirecting a tab.
      */
     private fun enforce(app: String, packageName: String) {
@@ -216,7 +216,7 @@ class TrackerService : android.app.Service() {
         )
 
         // Then close it. Covering an app leaves it running behind the screen,
-        // holding its place — so going back to it resumed exactly where it
+        // holding its place, so going back to it resumed exactly where it
         // was, and the block read as a curtain rather than a door.
         //
         // Done after our screen is in front, because this only reaches
@@ -228,7 +228,7 @@ class TrackerService : android.app.Service() {
         try {
             activityManager.killBackgroundProcesses(packageName)
         } catch (_: Exception) {
-            // Some apps can't be closed this way — a foreground service of
+            // Some apps can't be closed this way, a foreground service of
             // their own, say. The screen is still in front of it, which is the
             // behaviour we had before and is better than nothing.
         }
@@ -253,7 +253,7 @@ class TrackerService : android.app.Service() {
      *
      * `queryEvents` over the last few seconds rather than `queryUsageStats`,
      * because the aggregated stats round to the nearest interval and lag by
-     * minutes — long enough that a student switching apps would see the
+     * minutes, long enough that a student switching apps would see the
      * previous one credited with the next one's time.
      */
     private fun foregroundApp(): Pair<String, String>? {
@@ -301,7 +301,7 @@ class TrackerService : android.app.Service() {
             PollStatus.UNAUTHORISED -> {
                 session = null
                 currentApp = null
-                update("Unpaired — pair again from Insight")
+                update("Unpaired, pair again from Insight")
             }
             PollStatus.UNREACHABLE -> Unit
             PollStatus.OK -> {
@@ -311,7 +311,7 @@ class TrackerService : android.app.Service() {
                 // Close the open slice *before* `session` is reassigned.
                 // closeSlice() returns early when session is null, so doing it
                 // afterwards threw away everything counted since the last
-                // flush every time a session ended — which is every session.
+                // flush every time a session ended, which is every session.
                 if (changed) closeSlice()
 
                 session = result.session
@@ -446,7 +446,7 @@ class TrackerService : android.app.Service() {
         /// site is recorded exactly like a blocked app.
         fun reportBlockedSite(context: Context, host: String) {
             // Called from the VPN's own thread, where a throw takes the
-            // process with it — and starting a service is refused outright
+            // process with it, and starting a service is refused outright
             // when the app is in the background.
             try {
             context.startService(

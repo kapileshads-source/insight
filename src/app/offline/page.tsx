@@ -1,4 +1,4 @@
-export const metadata = { title: "Offline — Insight" };
+export const metadata = { title: "Offline, Insight" };
 
 /// Shown when a page load fails and there's no network.
 ///
@@ -14,7 +14,7 @@ export default function OfflinePage() {
 
       <p className="mt-5 text-[19px] leading-relaxed text-text-muted">
         Insight needs the network to read your data, because none of it is kept
-        on this device — that&rsquo;s the same reason a lost phone doesn&rsquo;t
+        on this device, that&rsquo;s the same reason a lost phone doesn&rsquo;t
         lose anything.
       </p>
 

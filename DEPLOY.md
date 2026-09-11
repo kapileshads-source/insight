@@ -27,20 +27,20 @@ and tries the pooled string anyway, which may fail.
 | **Clerk** (login) | 10,000 monthly active users | Includes production instances. Far past a district pilot. |
 | **Google OAuth** | Free | Unverified apps using only email/profile scopes are fine. Verification is only needed for sensitive scopes, which we don't request. |
 | **Groq** (recommendations) | Free, no card | Rate-limited per minute. We call it at most once per dashboard load, per student. |
-| **Resend** (email) | 3,000/month, 100/day | Plenty. **But needs a domain to send to anyone but yourself** — see step 5. |
+| **Resend** (email) | 3,000/month, 100/day | Plenty. **But needs a domain to send to anyone but yourself**, see step 5. |
 | **Domain** | Free via GitHub Student Pack | The only item that would otherwise cost money. |
 
 ---
 
-## 1. Database — Neon
+## 1. Database, Neon
 
 1. **neon.tech** → sign up with GitHub. No card.
-2. Create a project named `insight`, region **AWS us-east-2 (Ohio)** — closest
+2. Create a project named `insight`, region **AWS us-east-2 (Ohio)**, closest
    to Vercel's default region and to Frisco.
 3. Copy the **pooled** connection string (the one containing `-pooler`).
    Serverless functions open many short-lived connections and the direct
    string runs out of slots; the pooler shares a few real ones between them.
-4. Keep the direct (non-pooler) string too — migrations want it.
+4. Keep the direct (non-pooler) string too, migrations want it.
 
 ## 2. Vercel
 
@@ -53,9 +53,9 @@ and tries the pooled string anyway, which may fail.
    | Name | Value |
    |---|---|
    | `DATABASE_URL` | the pooled Neon string |
-   | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | `pk_live_…` — from step 3, come back for it |
-   | `CLERK_SECRET_KEY` | `sk_live_…` — same |
-   | `TOKEN_ENCRYPTION_KEY` | `openssl rand -base64 32` — a **fresh** one, not the dev key |
+   | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | `pk_live_…`, from step 3, come back for it |
+   | `CLERK_SECRET_KEY` | `sk_live_…`, same |
+   | `TOKEN_ENCRYPTION_KEY` | `openssl rand -base64 32`, a **fresh** one, not the dev key |
    | `CRON_SECRET` | `openssl rand -base64 32` again |
    | `CANVAS_BASE_URL` | `https://fisd.instructure.com` |
    | `LLM_PROVIDER` | `groq` |
@@ -85,7 +85,7 @@ and tries the pooled string anyway, which may fail.
 
 ## 3. Clerk production instance
 
-**Blocked until you have a domain — do step 5 first.**
+**Blocked until you have a domain, do step 5 first.**
 
 Clerk production instances need DNS records on a domain you own, for session
 management and email. A `*.vercel.app` subdomain cannot work, because you
@@ -112,14 +112,14 @@ Free, but it changes two things that were quietly handled for you in dev.
    - On the OAuth consent screen, **publish** the app. Only `email`, `profile`
      and `openid` are requested, which are non-sensitive, so no paid or manual
      verification is needed. Leaving it in Testing caps you at 100 users.
-4. While you're here: **Configure → Email, phone, username** — confirm
+4. While you're here: **Configure → Email, phone, username**, confirm
    **Password is OFF** and verification is **Email verification link**. This
    matters more in production than anywhere else, because a login password
    students reuse as their encryption password undoes the encryption.
 
 ## 4. Cron
 
-Nothing to configure — `vercel.json` registers both jobs on deploy.
+Nothing to configure, `vercel.json` registers both jobs on deploy.
 
 Both run **daily**, which is the Hobby ceiling. The recap job checks whether
 it's Sunday in Frisco and returns immediately if not, so it behaves weekly
@@ -127,14 +127,14 @@ without needing a weekly cron expression that Hobby might reject.
 
 Verify under **Project → Settings → Cron Jobs** after the first deploy.
 
-## 5. Domain and email — free via GitHub Student Pack
+## 5. Domain and email, free via GitHub Student Pack
 
 **Start this first. Two other steps depend on it.**
 
 A domain is needed for:
 
-- **Clerk production** (step 3) — DNS records for session management
-- **Resend** — DNS records proving you may send as that address
+- **Clerk production** (step 3), DNS records for session management
+- **Resend**, DNS records proving you may send as that address
 
 Without one, Resend delivers **only to your own signup address**, so parent
 consent emails reach nobody and an under-13 student waits forever. And Clerk
@@ -144,12 +144,12 @@ Approval takes a few days, which is why it goes first even though it's
 numbered fifth.
 
 1. **education.github.com/pack** → **Get student benefits**.
-   - High school students qualify. You need to be 13+ and prove enrollment —
+   - High school students qualify. You need to be 13+ and prove enrollment,
      your FISD school email, or a photo of your student ID.
    - Approval usually takes a few days. Start this early.
 2. Once approved, claim a domain from the pack:
-   - **Namecheap** — one free `.me` for a year.
-   - **Name.com** — one free `.dev`, `.app`, `.live` or similar for a year.
+   - **Namecheap**, one free `.me` for a year.
+   - **Name.com**, one free `.dev`, `.app`, `.live` or similar for a year.
    - Either works. `.app` and `.dev` force HTTPS, which suits us.
 3. **Resend → Domains → Add Domain** → add the DNS records it lists at your
    registrar → wait for verification (minutes to an hour).
@@ -157,7 +157,7 @@ numbered fifth.
 5. Optionally point the domain at Vercel too, under **Project → Settings →
    Domains**, so the app lives somewhere nicer than `*.vercel.app`.
 
-**If the student pack is slow or gets rejected**, the pilot still works — just
+**If the student pack is slow or gets rejected**, the pilot still works, just
 test consent with your own email as the "parent" address until a domain lands.
 Everything else functions. Only real parents are blocked.
 
@@ -188,11 +188,11 @@ Each of these catches a failure that is invisible when you test as yourself.
 
 ---
 
-## Gotcha: "Deployment Blocked — commit author did not have contributing access"
+## Gotcha: "Deployment Blocked, commit author did not have contributing access"
 
 Vercel resolves the **email on the git commit** to a GitHub account, then checks
 whether that account can deploy the project. On the Hobby plan only the owner
-can, so a commit authored with a different address is refused — even though it
+can, so a commit authored with a different address is refused, even though it
 was pushed to the right repo by the right person.
 
 This happens when the email in `git config` isn't the one attached to the

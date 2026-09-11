@@ -4,7 +4,7 @@ import SwiftUI
 
 /// What the phone knows, and what it can do about it.
 ///
-/// The website still owns most of this — the blocklist, the settings, the
+/// The website still owns most of this, the blocklist, the settings, the
 /// insights engine. The phone follows, and adds the two things it is genuinely
 /// better at: starting a session from the thing already in your hand, and
 /// logging a night's sleep before you've got out of bed.
@@ -25,7 +25,7 @@ final class Store: ObservableObject {
     /// Set when a Shortcuts automation opened us with `insight://bounce`.
     ///
     /// Carries a timestamp so a second bounce off the same app re-triggers the
-    /// screen rather than looking like nothing happened — the interruption is
+    /// screen rather than looking like nothing happened, the interruption is
     /// the entire feature.
     @Published private(set) var bouncedFrom: Bounce?
 
@@ -129,11 +129,11 @@ final class Store: ObservableObject {
 
     // --- pairing and unlocking ----------------------------------------------
 
-    /// The code carries the address, the token and the encryption setup —
+    /// The code carries the address, the token and the encryption setup,
     /// see `src/lib/pairing.ts` for why it isn't an endpoint.
     func pair(code: String) async -> String? {
         guard let pairing = Pairing.decode(code) else {
-            return "That code didn't scan right. Copy the whole thing — it's long."
+            return "That code didn't scan right. Copy the whole thing, it's long."
         }
         if let problem = Address.problem(with: pairing.base) { return problem }
 
@@ -143,7 +143,7 @@ final class Store: ObservableObject {
         // surfaces as "couldn't reach", sending someone to check their wifi
         // over a problem no amount of wifi will fix.
         guard pairing.base.lowercased().hasPrefix("https://") else {
-            return "A phone needs an https address — iOS refuses plain http."
+            return "A phone needs an https address, iOS refuses plain http."
         }
 
         // Checked against the server before it's kept, so a stale code fails

@@ -10,7 +10,7 @@
       Settings, that they can take back at any time.
 
       PACKAGE_USAGE_STATS is that permission. It is not granted by tapping
-      Allow — the student has to go to Settings and turn it on for this app
+      Allow, the student has to go to Settings and turn it on for this app
       specifically, which is friction we keep rather than route around,
       because it is also what makes the promise legible.
     -->
@@ -22,7 +22,7 @@
       its first instruction, and site blocking never worked once.
 
       Sending everything to a public resolver instead would need no permission
-      at all — and would quietly move a student's browsing history to a company
+      at all, and would quietly move a student's browsing history to a company
       they didn't choose. This permission is what lets us not do that.
     -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -34,7 +34,7 @@
       Close a blocked app rather than merely covering it.
 
       Showing a screen on top leaves the app running behind it, holding its
-      state and waiting — so blocking felt like a curtain rather than a door.
+      state and waiting, so blocking felt like a curtain rather than a door.
       This is granted at install and only reaches apps in the background,
       which by then is exactly what a blocked app is.
     -->

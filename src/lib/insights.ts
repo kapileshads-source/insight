@@ -2,12 +2,12 @@
  * The insight engine.
  *
  * Runs in the browser, over decrypted records, because the server can no
- * longer read the inputs. No model is involved in finding a pattern — this is
+ * longer read the inputs. No model is involved in finding a pattern, this is
  * arithmetic. A model only ever phrases one that has already passed the gates
  * below, and it never sees a raw session.
  *
  * The method: an outcome (a test score) is explained by the sessions in the
- * days before it. Each outcome gets a context — how late they studied, how
+ * days before it. Each outcome gets a context, how late they studied, how
  * long, where, how loud, how much they slept. Outcomes are then split into two
  * groups by one factor at a time, and the group means are compared.
  *
@@ -30,7 +30,7 @@ export type SessionRecord = {
   stress?: number;
   wasCram?: boolean;
   /// Minutes on sites the student blocks, measured by the extension rather
-  /// than reported. Undefined when no extension was running — which is not
+  /// than reported. Undefined when no extension was running, which is not
   /// the same as zero, and must never be treated as it.
   distractedMinutes?: number;
 };
@@ -195,7 +195,7 @@ export function buildContexts(inputs: InsightInputs): Context[] {
         : undefined,
       // How much of the week's preparation was late, not whether any of it
       // was. The comparison used to run on the latest session in the window,
-      // so one 11 PM session marked the whole week late — and since most
+      // so one 11 PM session marked the whole week late, and since most
       // students have one of those, every outcome landed in the same group,
       // the control group was empty, and the factor silently never fired.
       lateShare: startHours.length
@@ -235,7 +235,7 @@ export function buildContexts(inputs: InsightInputs): Context[] {
  *
  * The gates above control sample size, not luck. Driving the engine with
  * generated students showed the cost: with seven factors compared against
- * twenty-odd scores, about half of what surfaced was noise — factors with no
+ * twenty-odd scores, about half of what surfaced was noise, factors with no
  * effect built into the data at all, and on one run a finding with the wrong
  * sign entirely. All of it passed every gate, and all of it would have been
  * shown to a student in the same confident sentence as a real pattern.
@@ -245,7 +245,7 @@ export function buildContexts(inputs: InsightInputs): Context[] {
  * random shuffles produce this gap, it is not a finding.
  *
  * The shuffle is seeded deliberately. An insight that appears on one page load
- * and vanishes on the next is worse than one that never appears — a student
+ * and vanishes on the next is worse than one that never appears, a student
  * has no way to tell that apart from their own data changing.
  */
 export function chanceOf(
@@ -260,7 +260,7 @@ export function chanceOf(
   const target = Math.abs(observed);
   let seed = 0x5eed;
   const next = () => {
-    // Mulberry32: small, fast, and stable across engines — which matters more
+    // Mulberry32: small, fast, and stable across engines, which matters more
     // here than the quality of the randomness.
     seed = (seed + 0x6d2b79f5) | 0;
     let x = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -302,7 +302,7 @@ type Split = {
   /// Takes the magnitude because the sentence has to agree with its own sign.
   /// Every implementation ignored it and described the negative case
   /// unconditionally, so a factor that came before *higher* scores was shown
-  /// as "+8%" beside the words "came before lower scores" — visible on the
+  /// as "+8%" beside the words "came before lower scores", visible on the
   /// dashboard in the "still gathering" list, and it would have stated the
   /// opposite of the truth the moment one of them surfaced.
   phrase: (magnitude: number) => { statement: string; suggestion?: string };
@@ -464,7 +464,7 @@ function splits(contexts: Context[]): Split[] {
             ? "Weeks where you slept less than your own average came before lower scores."
             : "Weeks where you slept less than your own average came before higher scores.",
         suggestion:
-          "Your better results followed weeks nearer your usual amount of sleep. Nothing dramatic — just closer to your own normal.",
+          "Your better results followed weeks nearer your usual amount of sleep. Nothing dramatic, just closer to your own normal.",
       }),
     },
     {
@@ -480,7 +480,7 @@ function splits(contexts: Context[]): Split[] {
             ? "Sessions where more than a fifth of your time went to blocked sites came before lower scores than your focused ones."
             : "Sessions where more than a fifth of your time went to blocked sites came before higher scores than your focused ones.",
         suggestion:
-          "This one is measured rather than typed in, so it's the most reliable number here. Focus Mode already blocks these — leaving it on is the whole fix.",
+          "This one is measured rather than typed in, so it's the most reliable number here. Focus Mode already blocks these, leaving it on is the whole fix.",
       }),
     },
     {
@@ -531,15 +531,15 @@ export function computeInsights(inputs: InsightInputs): ComputedInsight[] {
  * The multiple-comparisons correction the engine has been missing.
  *
  * `maxChance: 0.05` means "this gap appears by chance less than one time in
- * twenty" — which is the right bar for *one* question. Seven factors are
+ * twenty", which is the right bar for *one* question. Seven factors are
  * tested against the same set of scores, so the chance that at least one of
  * them clears 0.05 by luck alone is not 5% but about 30%. Roughly one student
  * in three would be shown a confident, well-worded, entirely invented finding
  * about their sleep or their study location.
  *
  * That is the "too many variables" criticism, and it was correct. The comment
- * on `maxChance` even names the problem — "seven factors tested against
- * twenty-odd scores will throw up a big-looking difference regularly" — and
+ * on `maxChance` even names the problem, "seven factors tested against
+ * twenty-odd scores will throw up a big-looking difference regularly", and
  * then nothing was done about it.
  *
  * Holm–Bonferroni rather than plain Bonferroni: it is uniformly stricter than
@@ -549,7 +549,7 @@ export function computeInsights(inputs: InsightInputs): ComputedInsight[] {
  * p-value, the k-th of m tests must clear `maxChance / (m - k)`, and once one
  * fails every weaker one fails with it.
  *
- * `m` is every factor that produced a comparison — not every factor that
+ * `m` is every factor that produced a comparison, not every factor that
  * passed. The first version of this counted only the survivors, which meant
  * that in the common case where exactly one factor cleared the other gates,
  * m was 1 and the correction did nothing at all. It measured identically to
@@ -557,8 +557,8 @@ export function computeInsights(inputs: InsightInputs): ComputedInsight[] {
  * the number of questions asked of the data, and asking a question you did
  * not like the answer to still counts.
  *
- * Factors that never produced a comparison — one side of the split empty,
- * because the student never studied at home, say — are genuinely not tests
+ * Factors that never produced a comparison, one side of the split empty,
+ * because the student never studied at home, say, are genuinely not tests
  * and stay out of m.
  */
 function holmCorrect(results: ComputedInsight[]): ComputedInsight[] {
@@ -571,7 +571,7 @@ function holmCorrect(results: ComputedInsight[]): ComputedInsight[] {
   const rejected = new Set<string>();
   let failed = false;
   ranked.forEach((r, k) => {
-    // Once one test fails, every larger p-value fails too — that is the step
+    // Once one test fails, every larger p-value fails too, that is the step
     // in step-down, and skipping it would let a weak result through behind a
     // strong one.
     if (failed || r.chance > GATES.maxChance / (m - k)) {
@@ -597,7 +597,7 @@ export function basicStats(inputs: InsightInputs, now: Date = new Date()) {
 
   // Only measured sessions contribute. Shown as null rather than zero when
   // nothing was measured, so "no extension" reads differently from "no
-  // distractions" — they are very different facts.
+  // distractions", they are very different facts.
   const measured = thisWeek.filter((s) => s.distractedMinutes !== undefined);
   const measuredMinutes = measured.reduce((n, s) => n + s.durationMinutes, 0);
   const distractedMinutes = measured.reduce(
@@ -645,7 +645,7 @@ export type DayBar = {
  * Study minutes per day, for the chart.
  *
  * Fourteen days rather than seven: one week alone has no shape to it, and the
- * comparison a student actually makes — "am I doing more than I was?" — needs
+ * comparison a student actually makes, "am I doing more than I was?", needs
  * the week before to sit next to.
  *
  * Days with nothing are returned as zeroes rather than omitted. A gap in a bar
@@ -759,7 +759,7 @@ export type WellbeingAlert = {
 
 /// Patterns that suggest a student is running down rather than studying well.
 ///
-/// Free to include — every input is already collected for other reasons. The
+/// Free to include, every input is already collected for other reasons. The
 /// wording is the hard part: these are noticed, not diagnosed, and none of
 /// them mention grades. Telling a tired fifteen-year-old that their exhaustion
 /// is also costing them marks is the opposite of help.
@@ -793,7 +793,7 @@ export function wellbeingAlerts(
   }
 
   // Three or more consecutive nights under five hours. An absolute floor is
-  // justified here in a way it isn't for grades — this is about a person, not
+  // justified here in a way it isn't for grades, this is about a person, not
   // a comparison.
   const shortRun = recentSleep.slice(0, 3);
   if (shortRun.length === 3 && shortRun.every((s) => s.hours < 5)) {

@@ -2,7 +2,7 @@
  * When to pull Canvas again, without being asked.
  *
  * Syncing has to happen in a browser tab, and that is not a limitation to work
- * around — it is the encryption model. The server can call Canvas, but it has
+ * around, it is the encryption model. The server can call Canvas, but it has
  * no key, so assignment names make a round trip through the student's own
  * browser to be encrypted before they are stored. A server cron could fetch
  * and would have nowhere to put the result.
@@ -86,7 +86,7 @@ export function shouldSync(c: SyncConditions): SyncDecision {
   return { sync: false, because: "the data is fresh" };
 }
 
-/// How long until it would be worth asking again — for a timer that shouldn't
+/// How long until it would be worth asking again, for a timer that shouldn't
 /// fire more often than it needs to.
 export function msUntilNextSync(c: SyncConditions): number {
   const newest = Math.max(c.lastSyncedAt ?? 0, c.lastAttemptAt ?? 0);
@@ -97,7 +97,7 @@ export function msUntilNextSync(c: SyncConditions): number {
 /**
  * The student's own current score in a course, as Canvas computes it.
  *
- * Quoted, never derived — the same rule the HAC gradebook follows. Canvas
+ * Quoted, never derived, the same rule the HAC gradebook follows. Canvas
  * applies the teacher's group weights, and any average worked out here would
  * disagree with what the student sees in Canvas itself.
  *

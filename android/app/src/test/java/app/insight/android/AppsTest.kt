@@ -8,7 +8,7 @@ import org.junit.Test
 
 /**
  * The decisions that must not be wrong, tested the way the other four clients
- * test them — deliberately case for case, so that where the apps are supposed
+ * test them, deliberately case for case, so that where the apps are supposed
  * to agree, the tests visibly agree too.
  */
 class AppsTest {
@@ -17,7 +17,7 @@ class AppsTest {
     fun `browsers are counted here, unlike on the desktops`() {
         // The desktop apps skip browsers because the extension counts them.
         // Chrome for Android can't run extensions, so skipping them made phone
-        // browsing invisible and unblockable — an inherited rule rather than a
+        // browsing invisible and unblockable, an inherited rule rather than a
         // decision.
         assertEquals("Chrome", Apps.report("com.android.chrome", "Chrome"))
         assertEquals("Firefox", Apps.report("org.mozilla.firefox", "Firefox"))
@@ -26,7 +26,7 @@ class AppsTest {
     @Test
     fun `a browser is blocked only when the student names it`() {
         // Whole or not at all: reading a URL out of another app needs an
-        // accessibility service, which reads the screen — the one thing every
+        // accessibility service, which reads the screen, the one thing every
         // client here has promised never to do.
         assertTrue(Apps.isBlocked("Chrome", listOf("chrome")))
         assertFalse(Apps.isBlocked("Chrome", listOf("youtube.com", "instagram.com")))

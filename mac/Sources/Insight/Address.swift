@@ -3,8 +3,8 @@ import Foundation
 /// Whether an Insight address is safe to send a pairing code to.
 ///
 /// The pairing screen used to accept any `http://` address. Everything this
-/// app sends — the pairing code itself, then every app name during every
-/// session — would then cross the network in clear text, readable by anyone
+/// app sends, the pairing code itself, then every app name during every
+/// session, would then cross the network in clear text, readable by anyone
 /// else on the school's wifi. A student typing "http" out of habit is not
 /// making an informed choice about that.
 ///
@@ -31,7 +31,7 @@ enum Address {
 
         if isLocal(host) { return nil }
 
-        return "That address isn't secure. Use https:// — over plain http your "
+        return "That address isn't secure. Use https://, over plain http your "
             + "pairing code and everything this app records could be read by "
             + "anyone else on the network."
     }

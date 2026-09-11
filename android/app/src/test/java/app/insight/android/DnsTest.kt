@@ -8,7 +8,7 @@ import org.junit.Test
 
 /**
  * Packet parsing that is nearly right fails like flaky wifi, which is the
- * hardest kind of bug to attribute — a student would blame the school's
+ * hardest kind of bug to attribute, a student would blame the school's
  * network, or Insight, and never the byte offsets.
  */
 class DnsTest {

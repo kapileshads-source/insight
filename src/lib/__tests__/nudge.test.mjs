@@ -53,7 +53,7 @@ console.log("\nwhat it says");
   }
 
   // A lock-screen notification must never show a number to whoever picks the
-  // phone up — the server has none to put in it anyway.
+  // phone up, the server has none to put in it anyway.
   for (const kind of ["SLEEP", "SCREEN_TIME"]) {
     const { body } = nudgeMessage(kind, 0);
     ok(`${kind} carries no personal number`, !/\d+(\.\d+)?\s*(hours|hrs|minutes|mins|%)/.test(body));
@@ -82,7 +82,7 @@ console.log("\nand counts what is due, never what is undone");
   ok("one is grammatical", dueWorkMessage(1, 0).body.includes("One thing"));
   ok("overdue alone reads as overdue", dueWorkMessage(0, 2).title.includes("2 past"));
   ok("both are mentioned together", dueWorkMessage(2, 1).body.includes("1 past its date"));
-  // Never tells anyone off — the same rule the other two nudges follow.
+  // Never tells anyone off, the same rule the other two nudges follow.
   ok("late work is not scolded", dueWorkMessage(0, 4).body.includes("Still worth handing in"));
 }
 

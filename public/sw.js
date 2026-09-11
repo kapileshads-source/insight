@@ -2,8 +2,8 @@
  * Insight's service worker, which caches almost nothing on purpose.
  *
  * A service worker exists here for one reason: without a fetch handler,
- * Chrome won't offer to install the app. The obvious next step — caching pages
- * so it works offline — is one this app should not take. Every page worth
+ * Chrome won't offer to install the app. The obvious next step, caching pages
+ * so it works offline, is one this app should not take. Every page worth
  * caching is a page showing a student's decrypted study data, and a cache is a
  * copy on disk that outlives the tab, survives a lock, and isn't covered by
  * anything the privacy page promises.
@@ -40,8 +40,8 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
-  // Only page loads. Anything else — API calls, server actions, encrypted
-  // records — goes straight to the network without this worker touching it.
+  // Only page loads. Anything else, API calls, server actions, encrypted
+  // records, goes straight to the network without this worker touching it.
   if (request.method !== "GET" || request.mode !== "navigate") return;
 
   event.respondWith(
@@ -55,8 +55,8 @@ self.addEventListener("fetch", (event) => {
 
 // --- nudges ----------------------------------------------------------------
 //
-// The two numbers Insight can't measure — last night's sleep, today's phone
-// time — have to be typed in, and a student who forgets for a week leaves a
+// The two numbers Insight can't measure, last night's sleep, today's phone
+// time, have to be typed in, and a student who forgets for a week leaves a
 // biased dataset rather than a smaller one. This is the only thing that
 // reaches a phone nobody is looking at.
 //

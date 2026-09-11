@@ -21,14 +21,14 @@ import { spawnSync } from "node:child_process";
 const url = process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
 
 if (!url) {
-  console.log("[migrate] No DATABASE_URL set — skipping.");
+  console.log("[migrate] No DATABASE_URL set, skipping.");
   process.exit(0);
 }
 
 if (!process.env.DIRECT_DATABASE_URL && /-pooler\./.test(url)) {
   console.warn(
     "[migrate] Using a pooled connection. If this fails, set DIRECT_DATABASE_URL " +
-      "to Neon's direct (non-pooler) string — migrations need session mode.",
+      "to Neon's direct (non-pooler) string, migrations need session mode.",
   );
 }
 
@@ -36,7 +36,7 @@ if (!process.env.DIRECT_DATABASE_URL && /-pooler\./.test(url)) {
  * Retry on an unreachable database.
  *
  * Neon's free tier suspends a compute after a few minutes idle, and the first
- * connection to a sleeping one is refused rather than queued while it wakes —
+ * connection to a sleeping one is refused rather than queued while it wakes,
  * Prisma reports that as P1001 and the build dies. A deploy that happens to be
  * the first traffic in an hour, which describes most of ours, hits it.
  *
@@ -69,7 +69,7 @@ for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
 
   const wait = BACKOFF_MS[attempt - 1] ?? 15000;
   console.log(
-    `[migrate] Database unreachable (P1001) — likely a suspended Neon compute ` +
+    `[migrate] Database unreachable (P1001), likely a suspended Neon compute ` +
       `waking up. Attempt ${attempt} of ${ATTEMPTS}; retrying in ${wait / 1000}s.`,
   );
   // Synchronous on purpose: this runs as a build step, not in a server.

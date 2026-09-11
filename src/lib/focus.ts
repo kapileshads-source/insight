@@ -1,13 +1,13 @@
 /**
  * The Focus shortcut handshake.
  *
- * iOS won't let any app — native or web — turn on a Focus. Only Shortcuts can,
+ * iOS won't let any app, native or web, turn on a Focus. Only Shortcuts can,
  * and only when the student runs one. What we get is a URL: tapping it opens
  * Shortcuts, asks once, and runs the shortcut they made.
  *
  * So the deal is that the student creates two shortcuts with these exact
  * names, and Insight offers a button that runs them. It's a tap rather than
- * automatic — nothing we control runs on the phone at the moment a session
+ * automatic, nothing we control runs on the phone at the moment a session
  * starts, so nothing else is possible from a web page.
  *
  * **These names must match `ios/Sources/Focus.swift`.** A student who sets up

@@ -59,7 +59,7 @@ export type ScreenTimePayload = {
 };
 
 export type OutcomePayload = {
-  /// Free text — "Unit 6 test" — since a Canvas assignment may not exist.
+  /// Free text, "Unit 6 test", since a Canvas assignment may not exist.
   label?: string;
   subject?: string;
   pointsEarned: number;
@@ -71,7 +71,7 @@ export type OutcomePayload = {
 
 export type ProfilePayload = {
   /// Minutes from midnight, so "11:20 PM" is 1400 and comparisons are integer
-  /// arithmetic — the same reason bell schedules are stored this way.
+  /// arithmetic, the same reason bell schedules are stored this way.
   usualSleepMinutes?: number;
   usualWakeMinutes?: number;
   usualNoise?: NoiseLevel;
@@ -101,7 +101,7 @@ export function minutesToTimeValue(minutes: number): string {
 /// How long a night is, in minutes, given a bedtime and a wake time.
 ///
 /// Bedtimes cross midnight and wake times don't, so plain subtraction gives a
-/// negative night — which would have shown a student sleeping minus four
+/// negative night, which would have shown a student sleeping minus four
 /// hours. Wrapping is the normal case here, not the edge case.
 export function nightLength(sleepMinutes: number, wakeMinutes: number): number {
   const raw = wakeMinutes - sleepMinutes;

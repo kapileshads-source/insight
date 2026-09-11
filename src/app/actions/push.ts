@@ -10,7 +10,7 @@ import { getOrCreateUser } from "@/lib/user";
  *
  * A subscription is a URL at Apple's or Google's push service plus the keys
  * that encrypt the message on the way. None of it is student content, and the
- * messages carry none either — the server has nothing to put in them.
+ * messages carry none either, the server has nothing to put in them.
  */
 
 const subscriptionSchema = z.object({
@@ -76,8 +76,8 @@ export async function pushSubscribed(endpoint: string): Promise<boolean> {
  * Which of the two reminders this device wants.
  *
  * Separate from unsubscribing, because "stop asking about my phone but keep
- * asking about sleep" is a reasonable thing to want, and the alternative —
- * all or nothing — is how someone ends up turning off the one they'd have
+ * asking about sleep" is a reasonable thing to want, and the alternative,
+ * all or nothing, is how someone ends up turning off the one they'd have
  * answered.
  */
 export async function setNudgePreferences(input: unknown): Promise<PushResult> {

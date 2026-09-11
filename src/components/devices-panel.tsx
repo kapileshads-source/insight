@@ -16,7 +16,7 @@ const KIND_LABELS: Record<string, string> = {
 /// A pairing code, and which section asked for it.
 ///
 /// Tracked together because two sections can both mint one, and a code that
-/// appears under the wrong heading is a code pasted into the wrong app — which
+/// appears under the wrong heading is a code pasted into the wrong app, which
 /// fails in the most confusing way available: it works.
 type Minted = { kind: string; token: string };
 
@@ -28,7 +28,7 @@ export function DevicesPanel({
   devices: DeviceRow[];
   appUrl: string;
   /// The Chrome Web Store listing, once it exists. Undefined until then, and
-  /// the manual route is shown instead — see below.
+  /// the manual route is shown instead, see below.
   extensionUrl?: string;
 }) {
   const router = useRouter();
@@ -154,7 +154,7 @@ export function DevicesPanel({
         {/* Two routes, and which one a student gets depends on whether the
             store listing is live yet.
 
-            Load unpacked is not a lesser version of the same thing — it needs
+            Load unpacked is not a lesser version of the same thing, it needs
             developer mode on, it silently stops working if the folder moves,
             it never updates itself, and Chrome nags about it on every launch.
             It was the only route available, and the moment it is not, showing
@@ -231,7 +231,7 @@ export function DevicesPanel({
           </li>
           <li>
             <span className="text-text">2.</span> Run it. Windows will say
-            it&rsquo;s an unrecognised app — click <strong>More info</strong>,
+            it&rsquo;s an unrecognised app, click <strong>More info</strong>,
             then <strong>Run anyway</strong>. That warning is what any app
             without a paid signing certificate looks like.
           </li>
@@ -247,7 +247,7 @@ export function DevicesPanel({
         </ol>
 
         <p className="mt-5 text-[14px] leading-relaxed text-text-faint">
-          It records app names — Word, Spotify, Steam — and never window titles,
+          It records app names, Word, Spotify, Steam, and never window titles,
           so which document or which video stays yours. Browsers are left to the
           extension, so nothing is counted twice.
         </p>
@@ -290,7 +290,7 @@ export function DevicesPanel({
 
         <p className="mt-5 text-[14px] leading-relaxed text-text-faint">
           It never asks for Accessibility permission, and that&rsquo;s the point
-          — reading window titles would require it, so macOS itself is what
+         , reading window titles would require it, so macOS itself is what
           stops this app seeing which document you have open.
         </p>
 
@@ -306,7 +306,7 @@ export function DevicesPanel({
         </p>
         <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
           What it can do is quiet itself while you work and bounce you out of
-          the apps you were avoiding — about ten minutes of setup, done once.
+          the apps you were avoiding, about ten minutes of setup, done once.
         </p>
         <a
           href="/iphone"
@@ -331,7 +331,7 @@ export function DevicesPanel({
               Download Insight.apk
             </a>{" "}
             and tap it. Android blocks installing from unknown sources until you
-            allow it in the prompt — once only.
+            allow it in the prompt, once only.
           </li>
           <li>
             <span className="text-text">2.</span> Open Insight and paste the
@@ -340,7 +340,7 @@ export function DevicesPanel({
           <li>
             <span className="text-text">3.</span> Turn on{" "}
             <strong>usage access</strong> when it asks. That&rsquo;s the
-            permission that lets it see which app is in front — app names only,
+            permission that lets it see which app is in front, app names only,
             never what&rsquo;s on screen.
           </li>
           <li>
@@ -362,8 +362,8 @@ export function DevicesPanel({
         <h2 className="h3 text-[17px]">Install the iPhone app</h2>
         <p className="mt-2 text-[15px] leading-relaxed text-text-muted">
           Start and stop sessions, and log last night&rsquo;s sleep before
-          you&rsquo;re out of bed. It can&rsquo;t see which apps you use —
-          iOS doesn&rsquo;t allow that — so your phone time still comes from the
+          you&rsquo;re out of bed. It can&rsquo;t see which apps you use,
+          iOS doesn&rsquo;t allow that, so your phone time still comes from the
           Screen Time screenshot.
         </p>
 
@@ -402,7 +402,7 @@ export function DevicesPanel({
               <p className="mt-3 text-[13px] leading-relaxed text-text-faint">
                 This one carries your encryption setup as well as the pairing
                 code, so the app can show your own data back to you. It is
-                useless without your password, which isn&rsquo;t in it — but
+                useless without your password, which isn&rsquo;t in it, but
                 don&rsquo;t share it.
               </p>
             </div>

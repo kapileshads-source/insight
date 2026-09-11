@@ -2,7 +2,7 @@
  * Popup: pair the browser, then show whether a session is running.
  *
  * Deliberately small. The extension has no dashboard and no settings of its
- * own — the website owns all of that. This exists to answer two questions:
+ * own, the website owns all of that. This exists to answer two questions:
  * am I connected, and am I recording right now.
  */
 
@@ -88,7 +88,7 @@ $("pair").addEventListener("click", async () => {
       return;
     }
   } catch (e) {
-    fail(`Couldn't ask for permission — ${e?.message ?? "unknown error"}`);
+    fail(`Couldn't ask for permission, ${e?.message ?? "unknown error"}`);
     return;
   }
 
@@ -97,14 +97,14 @@ $("pair").addEventListener("click", async () => {
   //
   // The three stages below are caught separately. Wrapping them together
   // blamed a failed storage write on the network, which sent you looking at
-  // the wrong thing — the same mistake as any error message that guesses.
+  // the wrong thing, the same mistake as any error message that guesses.
   let res;
   try {
     res = await fetch(`${apiBase}/api/devices/session`, {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch (e) {
-    fail(`Couldn't reach ${apiBase} — ${e?.message ?? "network error"}`);
+    fail(`Couldn't reach ${apiBase}, ${e?.message ?? "network error"}`);
     return;
   }
 
@@ -129,7 +129,7 @@ $("pair").addEventListener("click", async () => {
       lastError: null,
     });
   } catch (e) {
-    fail(`Connected, but couldn't save it — ${e?.message ?? "storage error"}`);
+    fail(`Connected, but couldn't save it, ${e?.message ?? "storage error"}`);
     return;
   }
 

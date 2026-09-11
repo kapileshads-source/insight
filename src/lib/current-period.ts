@@ -64,7 +64,7 @@ export async function getSchoolDayState(
 
   // The district calendar's A/B marking only means something at block
   // campuses. Middle schools meet every class daily, so their periods are
-  // seeded as ALL — querying them for an "A day" finds nothing and the student
+  // seeded as ALL, querying them for an "A day" finds nothing and the student
   // is told there is no class running, on a normal Wednesday morning.
   const dayTypeForSchool = school.type === "MIDDLE" ? "ALL" : resolved.dayType;
 
@@ -87,7 +87,7 @@ export async function getSchoolDayState(
   }));
 
   // Middle schools meet everything daily, so an "A day" label would be
-  // meaningless there — only block campuses get one.
+  // meaningless there, only block campuses get one.
   const dayLabel =
     dayTypeForSchool === "ALL" ? "" : `${dayTypeForSchool} day`;
 

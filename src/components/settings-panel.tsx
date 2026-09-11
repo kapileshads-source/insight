@@ -265,7 +265,7 @@ export function SettingsPanel({
           <div className="space-y-3">
             {canvas.disconnected && (
               <p className="text-[15px] text-down">
-                Your token stopped working. Reconnect to resume — nothing is
+                Your token stopped working. Reconnect to resume, nothing is
                 lost, but the time since then is marked as missing rather than
                 counted as a quiet week.
               </p>

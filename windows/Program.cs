@@ -4,7 +4,7 @@ namespace Insight;
 /// Insight for Windows.
 ///
 /// Counts time per app while a study session is running, and gets blocked apps
-/// out of the way while Focus Mode is on — the desktop half of what the
+/// out of the way while Focus Mode is on, the desktop half of what the
 /// browser extension does for websites. It talks to the same two endpoints the
 /// extension does and adds nothing to the server.
 ///
@@ -29,8 +29,8 @@ internal static class Program
         Application.SetHighDpiMode(HighDpiMode.SystemAware);
 
         // Installed explicitly rather than waiting for the first control, so
-        // the tracker can rely on posting machine-state events — sleep, screen
-        // lock — to the thread that owns the tally.
+        // the tracker can rely on posting machine-state events, sleep, screen
+        // lock, to the thread that owns the tally.
         if (SynchronizationContext.Current is not WindowsFormsSynchronizationContext)
         {
             SynchronizationContext.SetSynchronizationContext(

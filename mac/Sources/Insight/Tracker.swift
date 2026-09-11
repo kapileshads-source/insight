@@ -9,7 +9,7 @@ import Foundation
 /// Windows app:
 ///
 ///   - Nothing is recorded when no session is running. Not recorded and then
-///     discarded — the timer simply does not accumulate.
+///     discarded, the timer simply does not accumulate.
 ///   - App names only, never window titles. On a Mac that is enforced by the
 ///     system rather than by restraint: reading another app's window titles
 ///     needs Accessibility permission, and this app never asks for it. If it
@@ -36,7 +36,7 @@ final class Tracker {
     ///
     /// **Keyboard idle alone is not enough, and this was measured rather than
     /// guessed.** On a real MacBook the trackpad emits digitizer events on its
-    /// own roughly every six minutes — `AppleMultitouchDevice` tickling the
+    /// own roughly every six minutes, `AppleMultitouchDevice` tickling the
     /// HID event system with nobody near it. Six is less than ten, so the
     /// threshold below was never once reached and an evening with the lid open
     /// counted, in full, as studying. The idle rule existed and did nothing.
@@ -56,8 +56,8 @@ final class Tracker {
     /// How far back the slice should be closed to.
     ///
     /// Time spent away ended the slice at the last keypress, not at the moment
-    /// we noticed. With a sleeping screen the keypress may be recent — the
-    /// trackpad may have tickled it a minute ago — so the display going dark
+    /// we noticed. With a sleeping screen the keypress may be recent, the
+    /// trackpad may have tickled it a minute ago, so the display going dark
     /// is the better marker, and `idleSeconds` is used only when it is larger.
     nonisolated static func awaySince(
         idleSeconds: TimeInterval,
@@ -78,14 +78,14 @@ final class Tracker {
     private static let maxSlice: TimeInterval = 6 * 60 * 60
 
     /// Re-focusing a blocked app shouldn't file a fresh block event every
-    /// second — that would fill the batch with identical rows and push out the
+    /// second, that would fill the batch with identical rows and push out the
     /// real ones.
     private static let blockCooldown: TimeInterval = 30
 
     /// Activity is batched every minute, but session state is asked for four
     /// times as often. Focus Mode is switched on at the website, and a student
     /// who flips it and then watches nothing happen for a minute concludes the
-    /// app is broken — which, from where they're standing, it is.
+    /// app is broken, which, from where they're standing, it is.
     private static let flushEverySeconds = 60
     private static let pollEverySeconds = 15
 
@@ -165,7 +165,7 @@ final class Tracker {
         onChange?()
     }
 
-    /// Unpairing leaves nothing behind — including whatever was counted and
+    /// Unpairing leaves nothing behind, including whatever was counted and
     /// not yet sent.
     func unpair() {
         config.clear()
@@ -201,7 +201,7 @@ final class Tracker {
 
     /// Seconds since the keyboard or mouse was last touched.
     ///
-    /// Not trustworthy on its own — see `isAway`. A trackpad that tickles the
+    /// Not trustworthy on its own, see `isAway`. A trackpad that tickles the
     /// event system every few minutes holds this permanently below any
     /// threshold worth setting.
     private func idleSeconds() -> TimeInterval {
@@ -287,13 +287,13 @@ final class Tracker {
 
     /// Get a blocked app out of the way, and say why.
     ///
-    /// Quit, not hidden. Hiding was the first attempt and it is toothless —
+    /// Quit, not hidden. Hiding was the first attempt and it is toothless,
     /// one Cmd-Tab and you're back where you were, which makes Focus Mode a
     /// suggestion rather than a decision.
     ///
     /// `terminate()` is the polite quit, the same one Cmd-Q sends: an app with
     /// unsaved work still puts up its save dialog and still wins the argument.
-    /// Nothing is destroyed silently, which is the line worth holding — the
+    /// Nothing is destroyed silently, which is the line worth holding, the
     /// point is to make going back deliberate, not to punish. Where the app
     /// refuses outright, hiding is the fallback so something still happens.
     private func enforce(_ app: String, running: NSRunningApplication) {
@@ -394,7 +394,7 @@ final class Tracker {
 
         // Close the open slice *before* `session` is reassigned. `closeSlice`
         // guards on a session existing, so doing this afterwards threw away
-        // everything since the last flush every time a session ended — which
+        // everything since the last flush every time a session ended, which
         // is every session. The comment below has always described the intent;
         // the ordering defeated it, on all three trackers, for months.
         if changed { closeSlice() }
@@ -470,7 +470,7 @@ final class Tracker {
 
         // React the moment they switch apps rather than up to a second later
         // on the next tick. The timer stays as the backstop for everything
-        // this notification doesn't cover — idleness, and an app that was
+        // this notification doesn't cover, idleness, and an app that was
         // already in front when a session started.
         center.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,

@@ -16,7 +16,7 @@ internal static class Apps
     /// Counting both would double every minute a student spends on the web,
     /// and worse than double it: the extension would file that minute as
     /// distracted while this app filed the same minute as focused, so the
-    /// distraction ratio — the number the whole insight engine turns on —
+    /// distraction ratio, the number the whole insight engine turns on,
     /// would drift towards nonsense. A student with no extension loses their
     /// browser time here instead, which is a gap rather than a wrong answer.
     /// </summary>
@@ -31,15 +31,15 @@ internal static class Apps
     /// Desktop apps reported under their website's name instead of their own.
     ///
     /// Focus Mode and the distraction figures are both defined by the
-    /// student's blocklist, which is a list of hostnames — and a hostname is
+    /// student's blocklist, which is a list of hostnames, and a hostname is
     /// all the settings page can accept, because <c>normalizeSite</c> rejects
     /// anything that isn't domain-shaped. So the Spotify desktop app reported
     /// as "Spotify" would be untouchable: unblockable, and counted as focused
     /// time no matter what the student chose.
     ///
     /// Reporting it as <c>spotify.com</c> keeps one promise the rest of the
-    /// app makes — that everything is measured against the student's own
-    /// choices — and has the side effect of merging desktop and web time for
+    /// app makes, that everything is measured against the student's own
+    /// choices, and has the side effect of merging desktop and web time for
     /// the same service, which is what a student would expect anyway.
     ///
     /// Only apps whose hostname already appears in a block category are here.
@@ -72,7 +72,7 @@ internal static class Apps
         ["pinterest"] = "pinterest.com",
     };
 
-    /// The longest a reported name may be — the server's own limit for the
+    /// The longest a reported name may be, the server's own limit for the
     /// field. Truncating here means a strange binary produces a short label
     /// rather than a rejected batch that takes the whole minute down with it.
     private const int MaxNameLength = 253;
@@ -82,7 +82,7 @@ internal static class Apps
     /// </summary>
     /// <param name="processName">Executable name, without the .exe.</param>
     /// <param name="fileDescription">
-    /// The binary's <c>FileDescription</c> resource — "Discord", "Notepad".
+    /// The binary's <c>FileDescription</c> resource, "Discord", "Notepad".
     /// Static metadata compiled into the executable, so unlike a window title
     /// it says what the app is and never what is open in it.
     /// </param>
@@ -105,7 +105,7 @@ internal static class Apps
         if (name.Length == 0) name = Clean(process);
         if (name.Length == 0) return null;
 
-        // A description can be an alias too — the Spotify Store build's
+        // A description can be an alias too, the Spotify Store build's
         // executable is not called "spotify".
         if (Aliases.TryGetValue(name, out string? byDescription)) return byDescription;
 
@@ -153,7 +153,7 @@ internal static class Apps
     /// The same rule as <c>matchesBlocklist</c> in <c>src/lib/blocklist.ts</c>
     /// and <c>isBlocked</c> in the extension. All three have to agree, because
     /// "blocked" and "counted as a distraction" are meant to be the same
-    /// sentence — a student blocked from something that never appears in their
+    /// sentence, a student blocked from something that never appears in their
     /// distraction figures would have no idea what happened.
     /// </summary>
     internal static bool IsBlocked(string? name, IReadOnlyList<string> blocklist)

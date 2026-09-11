@@ -3,7 +3,7 @@ import { getRunningSession } from "@/app/actions/sessions";
 import { cleanAppName } from "@/lib/bounce";
 import { formatDuration } from "@/lib/records";
 
-export const metadata = { title: "Back to it — Insight" };
+export const metadata = { title: "Back to it, Insight" };
 export const dynamic = "force-dynamic";
 
 /**
@@ -12,13 +12,13 @@ export const dynamic = "force-dynamic";
  *
  * iOS won't let any app block another one without an entitlement Apple grants
  * to parental-control companies. What it does allow is an automation that fires
- * when a chosen app opens — so the phone bounces straight back out, and lands
+ * when a chosen app opens, so the phone bounces straight back out, and lands
  * here.
  *
  * The tone matters more than usual. This appears at the exact moment someone
  * feels caught, and a page that tells them off is one they'll delete the
  * automation to avoid. It states what happened, how far into the session they
- * are, and gets out of the way — the same reasoning as the three-second
+ * are, and gets out of the way, the same reasoning as the three-second
  * countdown on the desktop apps.
  *
  * Public, because it has to work in whatever browser the automation opens and
@@ -52,7 +52,7 @@ export default async function BouncePage({
       {app ? (
         <p className="mt-5 text-[19px] leading-relaxed text-text-muted">
           You just opened <span className="text-text">{app}</span>, and your
-          phone brought you here instead. That was your own doing — you set it
+          phone brought you here instead. That was your own doing, you set it
           up.
         </p>
       ) : (
@@ -73,7 +73,7 @@ export default async function BouncePage({
 
       {!running && (
         <p className="mt-5 text-[15px] leading-relaxed text-text-faint">
-          No session is running right now — either you finished, or this fired
+          No session is running right now, either you finished, or this fired
           on its own. Either way, nothing is being recorded.
         </p>
       )}
@@ -109,7 +109,7 @@ export default async function BouncePage({
             so it knows what to say.
           </p>
           <p>
-            To stop it, delete that automation — same screen, swipe left. No
+            To stop it, delete that automation, same screen, swipe left. No
             password, no waiting.{" "}
             <span className="text-text-faint">
               That&rsquo;s deliberate. A blocker that hides its own off-switch is

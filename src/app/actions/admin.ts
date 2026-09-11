@@ -73,7 +73,7 @@ const calendarSchema = z.object({
 /// Set what kind of day a date is, district-wide.
 ///
 /// This is the fix path for the five dates the calendar extractor couldn't
-/// resolve, and for anything FISD changes mid-year — a bad weather make-up day
+/// resolve, and for anything FISD changes mid-year, a bad weather make-up day
 /// being invoked, an exam schedule, a late start added in November.
 export async function upsertCalendarDay(input: unknown): Promise<AdminResult> {
   await requireAdmin();

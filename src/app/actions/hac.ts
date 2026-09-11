@@ -14,7 +14,7 @@ import { fetchClasswork, fetchTranscript } from "@/lib/hac-login";
  * The server never sees the gradebook. The extension fetches the page with the
  * session the student already has, the browser parses and encrypts it, and
  * what arrives here is ciphertext plus the few structural fields the schema
- * keeps in the clear — which course, which due date, whether it has a score.
+ * keeps in the clear, which course, which due date, whether it has a score.
  *
  * There is no id to upsert on. HAC assignments have none, so the browser works
  * out what is new by decrypting what is already stored and diffing on
@@ -54,7 +54,7 @@ const storeSchema = z.object({
       }),
     )
     .max(500),
-  /// Existing course rows whose payload the browser has rewritten — in
+  /// Existing course rows whose payload the browser has rewritten, in
   /// practice, to carry the overall grade the gradebook printed beside the
   /// class. The parser has always read it and storage used to drop it, so the
   /// app knew every student's course grade and had nowhere to put it.
@@ -220,7 +220,7 @@ export async function connectHac(input: unknown): Promise<HacConnectResult> {
 
   const attempt = await fetchClasswork(username, password);
   if (!attempt.ok) {
-    // HAC's own wording when it offered any — it names the person to ask, and
+    // HAC's own wording when it offered any, it names the person to ask, and
     // we do not know the district's procedures well enough to invent that.
     const base = FAILURE_TEXT[attempt.reason] ?? "Couldn't sign in to HAC.";
     return {
@@ -288,7 +288,7 @@ export async function hacConnectionStatus(): Promise<{
 /**
  * Fetch the gradebook page using the stored credentials.
  *
- * Returns the HTML to the caller's own browser, which parses and encrypts it —
+ * Returns the HTML to the caller's own browser, which parses and encrypts it,
  * the same round trip Canvas takes, and for the same reason: the server has no
  * key, so it cannot store what it just fetched.
  *
@@ -317,8 +317,8 @@ export async function pullHac(): Promise<
         data: { disconnectedAt: new Date() },
       });
     }
-    // Append what each address returned. Statuses and sizes only — no student
-    // data — because three rounds of guessing which page we got have each cost
+    // Append what each address returned. Statuses and sizes only, no student
+    // data, because three rounds of guessing which page we got have each cost
     // a day, and one line of fact ends it.
     const base = FAILURE_TEXT[result.reason] ?? "Couldn't read HAC.";
     const trace = result.tried?.length

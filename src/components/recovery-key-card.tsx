@@ -11,7 +11,7 @@ import { createRecoveryKey, WrongPasswordError } from "@/lib/crypto";
  * Issuing a recovery key from settings.
  *
  * Two audiences, one card. Accounts made before recovery existed have no key
- * at all and are one forgotten password away from losing their study log —
+ * at all and are one forgotten password away from losing their study log,
  * they get a prompt that says so. Accounts that have one get a quieter offer
  * to replace it, which is what a student wants after losing the paper or
  * sharing the code by accident.
@@ -72,7 +72,7 @@ export function RecoveryKeyCard({
         intro={
           exists
             ? "This replaces your old key, which no longer works. Save it and throw the old one away."
-            : "This is the only way back into your data if you forget your password. Save it now — we cannot show it again, and we do not have a copy."
+            : "This is the only way back into your data if you forget your password. Save it now, we cannot show it again, and we do not have a copy."
         }
         onDone={() => setCode(null)}
       />
@@ -97,13 +97,13 @@ export function RecoveryKeyCard({
       {exists ? (
         <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-text-muted">
           You have one. If you have lost it, or it ended up somewhere you
-          didn&rsquo;t mean it to, make a new one — the old key stops working
+          didn&rsquo;t mean it to, make a new one, the old key stops working
           the moment you do.
         </p>
       ) : (
         <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-text-muted">
           This account doesn&rsquo;t have one. Your password is currently the
-          only thing that opens your data, and we have no copy of it — so if you
+          only thing that opens your data, and we have no copy of it, so if you
           forget it, your study log is gone. A recovery key fixes that, and
           takes a minute.
         </p>

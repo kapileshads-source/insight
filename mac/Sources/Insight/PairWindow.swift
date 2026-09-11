@@ -5,7 +5,7 @@ import AppKit
 /// The same two fields as the extension's popup, and the same rule: the code
 /// is verified against the server before it is saved. A code that is saved
 /// without being checked produces an app that looks connected, records
-/// nothing, and gives a student no way to tell — which is worse than a window
+/// nothing, and gives a student no way to tell, which is worse than a window
 /// that says no.
 @MainActor
 final class PairWindow: NSWindowController {
@@ -58,7 +58,7 @@ final class PairWindow: NSWindowController {
             errorLabel,
             Views.footnote(
                 "This Mac never receives your encryption password, and never reads "
-                + "window titles — only which apps were in front."),
+                + "window titles, only which apps were in front."),
         ], in: .leading)
 
         // A little more air around the field groups than the default spacing,
@@ -130,7 +130,7 @@ final class PairWindow: NSWindowController {
             pairButton.title = "Pair"
 
             // Each failure is named separately. Grouping them blames a bad
-            // code on the network and sends you looking at the wrong thing —
+            // code on the network and sends you looking at the wrong thing,
             // the same mistake as any error message that guesses.
             switch result.status {
             case .unauthorised:

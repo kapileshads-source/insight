@@ -9,7 +9,7 @@ import { sendDueWorkNudges, sendNudges } from "@/lib/push";
  * Two jobs, both of which have to work without reading any student data:
  *
  * Canvas expiry warnings. FISD caps tokens at 90 days, so one made on the
- * first day of school dies around mid-November — roughly five weeks before
+ * first day of school dies around mid-November, roughly five weeks before
  * December finals. Warning at 14, 3 and 0 days is the difference between a
  * one-minute reconnect and a silent gap across the term's biggest grades.
  *
@@ -17,7 +17,7 @@ import { sendDueWorkNudges, sendNudges } from "@/lib/push";
  * we can't read them.
  *
  * Both schedules also carry a push notification, because Vercel's Hobby plan
- * allows two cron entries and both were already spoken for — and because the
+ * allows two cron entries and both were already spoken for, and because the
  * two times happen to be exactly right. 13:00 UTC is 8am in Frisco, when a
  * student can answer "how did you sleep?"; 23:00 UTC is 6pm, when the day is
  * over enough to answer "how much phone time?" without guessing.
@@ -35,7 +35,7 @@ function authorised(request: Request): boolean {
 /// Delete staged device data nobody collected.
 ///
 /// `PendingDeviceData` is the one table holding plaintext a student would
-/// consider private — the sites and apps they used during a session — and it
+/// consider private, the sites and apps they used during a session, and it
 /// carries an `expiresAt` six hours out. Reads have always filtered on it, and
 /// rows are deleted the moment a browser collects them.
 ///
@@ -132,7 +132,7 @@ async function handle(request: Request) {
       // one of them fails.
       const purged = await runStagingCleanup();
       // 13:00 UTC is 8am in Frisco, which is when a student can actually
-      // answer "how did you sleep?" — so the morning nudge rides this
+      // answer "how did you sleep?", so the morning nudge rides this
       // schedule rather than needing a cron slot there isn't one of.
       const nudged = await sendNudges("SLEEP");
       return NextResponse.json({
@@ -156,7 +156,7 @@ async function handle(request: Request) {
     if (job === "due-work") {
       // Driven by GitHub Actions rather than Vercel. The Hobby plan allows two
       // cron entries and both are spoken for, and it refuses any schedule
-      // firing more than once a day — while this wants an evening slot that is
+      // firing more than once a day, while this wants an evening slot that is
       // neither of the other two. A scheduled workflow calling this endpoint
       // with the same bearer token costs nothing and removes the limit, and
       // this route already authenticates by secret rather than by Vercel's

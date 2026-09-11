@@ -72,7 +72,7 @@ export function SessionTimer({
   // Ticks off wall-clock time rather than counting intervals, so a backgrounded
   // tab or a sleeping laptop doesn't quietly lose minutes from the total.
   //
-  // The first value is set when the timer starts rather than here — writing
+  // The first value is set when the timer starts rather than here, writing
   // state synchronously inside an effect causes a second render before paint
   // for no benefit, since the interval corrects it a tick later anyway.
   useEffect(() => {
@@ -310,7 +310,7 @@ export function SessionTimer({
 
       <p className="mt-4 text-[14px] leading-relaxed text-text-faint">
         Everything above is encrypted on this device before it&rsquo;s saved.
-        Leave anything blank you&rsquo;d rather not answer — a session with
+        Leave anything blank you&rsquo;d rather not answer, a session with
         fewer details still counts.
       </p>
     </div>

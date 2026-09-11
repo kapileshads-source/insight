@@ -3,8 +3,8 @@ import Link from "next/link";
 /**
  * The shared frame every page is built in.
  *
- * Until now each page drew its own header — usually the word "Insight" linking
- * to the dashboard — and its own title block, with the spacing retyped each
+ * Until now each page drew its own header, usually the word "Insight" linking
+ * to the dashboard, and its own title block, with the spacing retyped each
  * time. That is why the app looked like twenty pages rather than one product,
  * and why the landing page redesign didn't reach any of them.
  *
@@ -15,7 +15,7 @@ import Link from "next/link";
  *   sample data, and a way in.
  * - `AppNav` is for pages you have to be signed in to see. It points inward,
  *   between the parts of the app, and it carries the signed-in email so it is
- *   always obvious which account is being looked at — which matters more here
+ *   always obvious which account is being looked at, which matters more here
  *   than in most apps, because the demo account and a real one are otherwise
  *   indistinguishable once both are full of data.
  *
@@ -23,7 +23,7 @@ import Link from "next/link";
  * time, and the two audiences want opposite things from it.
  *
  * **The one rule about atmosphere.** `PageHero` is paper, lit, with a ruled
- * grid — the landing page's treatment, and it belongs on pages that are read
+ * grid, the landing page's treatment, and it belongs on pages that are read
  * once. Pages you open every day get `PageTitle` on flat midnight instead. A
  * gradient behind a table of grades is harder to read and gets no less tiring
  * the fiftieth time you see it. This is the same split the `mk-` prefix
@@ -31,7 +31,7 @@ import Link from "next/link";
  */
 
 /// Two plotted points and the line through them. A logo that is a tiny chart,
-/// for the same reason the landing page's hero is a chart — and it stays
+/// for the same reason the landing page's hero is a chart, and it stays
 /// legible at 20px, which a glyph or a gradient blob does not.
 export function Mark({ size = 22 }: { size?: number }) {
   return (
@@ -105,7 +105,7 @@ export function SiteNav() {
   );
 }
 
-/// The nav, in the order a student uses them. Settings is not in this list —
+/// The nav, in the order a student uses them. Settings is not in this list,
 /// it is the gear at the end, because it is the one destination nobody needs
 /// a word for and it was taking the same width as the pages that carry work.
 const APP_LINKS = [

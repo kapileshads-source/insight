@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 /// Extensions fetch cross-origin from an unpredictable `chrome-extension://`
 /// origin, so an allowlist isn't possible. That's acceptable here because
-/// every route below authenticates a bearer token rather than a cookie —
+/// every route below authenticates a bearer token rather than a cookie,
 /// there is no ambient authority for a hostile page to borrow.
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
     }),
   ]);
 
-  // An empty array means "never chosen", not "block nothing" — the default is
+  // An empty array means "never chosen", not "block nothing", the default is
   // applied here so it can change later without backfilling every row.
   const categories =
     prefs && prefs.blockCategories.length > 0

@@ -13,7 +13,7 @@ import {
   WhatWeAreSeeing,
 } from "@/components/study-panel";
 
-export const metadata = { title: "Insights — Insight" };
+export const metadata = { title: "Insights, Insight" };
 
 /**
  * Everything analytical, in one place.
@@ -26,7 +26,7 @@ export const metadata = { title: "Insights — Insight" };
  * gathering" list is a row per untested factor, the chat is a panel with a
  * transcript in it, and the device readout runs to twelve rows. A screen a
  * student opens twenty times a day cannot also be the place the analysis
- * lives — it becomes a feed to scroll past, which is exactly what happened.
+ * lives, it becomes a feed to scroll past, which is exactly what happened.
  *
  * The dashboard keeps one line: the phrased suggestion, when there is a
  * validated pattern to phrase. Everything behind that sentence is here.
@@ -37,7 +37,7 @@ export default async function LogsPage() {
 
   // Counts, not contents. Row existence is plaintext by the schema rule, so
   // the server can say how many sessions there are without being able to read
-  // one — which is what lets the wait be shown before the student unlocks.
+  // one, which is what lets the wait be shown before the student unlocks.
   const [sessionCount, outcomeCount] = await Promise.all([
     db.studySession.count({ where: { userId: user.id, endedAt: { not: null } } }),
     db.outcome.count({ where: { userId: user.id } }),
@@ -51,7 +51,7 @@ export default async function LogsPage() {
           <PageTitle
             eyebrow="Your data"
             title="What we're seeing"
-            lede="Patterns in your own logs, compared against your own averages — and how much more is needed before they mean anything."
+            lede="Patterns in your own logs, compared against your own averages, and how much more is needed before they mean anything."
           />
           <div className="mt-10 space-y-6">
             <InsightProgress sessions={sessionCount} outcomes={outcomeCount} />

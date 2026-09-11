@@ -12,7 +12,7 @@ import { formatDuration } from "@/lib/records";
  *
  * These were one component. It rendered the timer, the quick-log form, a
  * four-up stat row, the weekly recap and chart, what the devices saw, the
- * wellbeing alerts, the phrased advice and the insight list — in that order,
+ * wellbeing alerts, the phrased advice and the insight list, in that order,
  * in one column, on the dashboard. Which is how a dashboard becomes a page
  * you scroll past.
  *
@@ -60,7 +60,7 @@ export function StudyStats() {
           <Stat value={String(stats.sessionsThisWeek)} label="Sessions this week" />
           <Stat value={formatDuration(stats.minutesThisWeek)} label="Time logged" />
           <Stat
-            value={stats.meanSleep ? `${stats.meanSleep.toFixed(1)} hrs` : "—"}
+            value={stats.meanSleep ? `${stats.meanSleep.toFixed(1)} hrs` : ", "}
             label="Sleep, 7-day"
           />
           {stats.focusShareThisWeek !== null ? (
@@ -186,7 +186,7 @@ export function DeviceReadout() {
 
           <p className="mt-4 border-t border-line pt-4 text-[13px] leading-relaxed text-text-faint">
             Only what was in front while a session was running, and only the
-            name — never a page title or a document name. Encrypted here in your
+            name, never a page title or a document name. Encrypted here in your
             browser, the same as everything else.
           </p>
         </section>
@@ -244,7 +244,7 @@ export function SuggestedThisWeek() {
   );
 }
 
-/// The findings themselves — the reason the app exists.
+/// The findings themselves, the reason the app exists.
 export function WhatWeAreSeeing() {
   const { insights, failed, derivedCount, minorExcluded } = useStudyData();
   const surfaced = insights?.filter((i) => i.isSurfaced) ?? [];
@@ -257,7 +257,7 @@ export function WhatWeAreSeeing() {
 
         {failed && (
           <p role="alert" className="mt-4 text-[17px] text-down">
-            Couldn&rsquo;t read your data just now. Nothing is lost — reload and
+            Couldn&rsquo;t read your data just now. Nothing is lost, reload and
             it should come back.
           </p>
         )}
@@ -269,7 +269,7 @@ export function WhatWeAreSeeing() {
         {!failed && insights !== null && insights.length === 0 && (
           <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-text-muted">
             {derivedCount > 0
-              ? `Your gradebook has given us ${derivedCount} score${derivedCount === 1 ? "" : "s"} to work with. What's missing is study sessions — patterns come from comparing the two, so log a few and this fills in.`
+              ? `Your gradebook has given us ${derivedCount} score${derivedCount === 1 ? "" : "s"} to work with. What's missing is study sessions, patterns come from comparing the two, so log a few and this fills in.`
               : "Nothing yet. Log a few sessions and a test score, and patterns start appearing once there's enough of them to mean something."}
           </p>
         )}
@@ -281,7 +281,7 @@ export function WhatWeAreSeeing() {
             {derivedCount} score{derivedCount === 1 ? "" : "s"} read straight
             from your gradebook.
             {minorExcluded > 0 &&
-              ` ${minorExcluded} smaller ${minorExcluded === 1 ? "grade was" : "grades were"} left out — a 2/2 warm-up counts as a 100% and would drown out your real assessments.`}
+              ` ${minorExcluded} smaller ${minorExcluded === 1 ? "grade was" : "grades were"} left out, a 2/2 warm-up counts as a 100% and would drown out your real assessments.`}
           </p>
         )}
 

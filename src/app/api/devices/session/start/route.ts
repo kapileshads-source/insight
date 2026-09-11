@@ -3,7 +3,7 @@ import { authenticateDevice } from "@/lib/device-tokens";
 import { fail, ok, preflight } from "@/lib/device-api";
 
 /**
- * Start a session from a paired device — in practice, the phone.
+ * Start a session from a paired device, in practice, the phone.
  *
  * The website has always owned session state and every other client follows.
  * This is the one exception, and it's the whole reason the phone app exists:

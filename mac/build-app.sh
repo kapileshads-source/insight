@@ -6,7 +6,7 @@
 # can't be a menu-bar-only app, can't register as a login item, and can't be
 # double-clicked. This wraps it in the bundle macOS expects.
 #
-# Needs only the Command Line Tools — no Xcode, no project file.
+# Needs only the Command Line Tools, no Xcode, no project file.
 
 set -euo pipefail
 
@@ -59,8 +59,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
-# Ad-hoc signature. It buys no trust from Gatekeeper — that needs a paid
-# Developer ID and notarisation — but an unsigned binary on Apple silicon
+# Ad-hoc signature. It buys no trust from Gatekeeper, that needs a paid
+# Developer ID and notarisation, but an unsigned binary on Apple silicon
 # won't launch at all, and a stable signature stops the keychain treating
 # every rebuild as a different app asking for the token.
 echo "Signing (ad-hoc)…"

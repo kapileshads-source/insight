@@ -3,7 +3,7 @@ import type { DesktopOs } from "@/lib/user-agent";
 /**
  * The two desktop apps, and how to get past the warning each OS shows.
  *
- * Neither app is signed — signing costs $100–300 a year on Windows and $99 on
+ * Neither app is signed, signing costs $100–300 a year on Windows and $99 on
  * a Mac, and this project is free by design. So both operating systems will
  * accuse them of being suspicious, and the single most useful thing this page
  * does is say so first. A student who hits an unexplained "Windows protected
@@ -31,7 +31,7 @@ export function DownloadPanel({
       url: windowsUrl,
       file: "Insight.exe",
       steps: [
-        "Put it somewhere you won't delete by accident — not Downloads.",
+        "Put it somewhere you won't delete by accident, not Downloads.",
         "Windows will say it's an unrecognised app. Click More info, then Run anyway. That happens once.",
         "The pairing window opens by itself. Paste the code from your Devices page.",
         "Right-click the Insight circle near the clock and turn on Start with Windows.",
@@ -45,7 +45,7 @@ export function DownloadPanel({
       file: "Insight.app",
       steps: [
         "Drag it to your Applications folder.",
-        "Right-click it and choose Open, then Open again. Double-clicking gets refused — that's what an unsigned app looks like, and you only do this once.",
+        "Right-click it and choose Open, then Open again. Double-clicking gets refused, that's what an unsigned app looks like, and you only do this once.",
         "The pairing window opens by itself. Paste the code from your Devices page.",
         "Click the Insight circle in the menu bar and turn on Open at Login.",
       ],
@@ -57,9 +57,9 @@ export function DownloadPanel({
       url: androidUrl,
       file: "Insight.apk",
       steps: [
-        "Tap the file. Android will say installing from unknown sources is blocked — tap Settings in that prompt and allow it. Once only.",
+        "Tap the file. Android will say installing from unknown sources is blocked, tap Settings in that prompt and allow it. Once only.",
         "Open Insight and paste the code from your Devices page.",
-        "It asks for usage access, in Settings. That's the permission that lets it see which app is in front — app names only, and only while a session runs.",
+        "It asks for usage access, in Settings. That's the permission that lets it see which app is in front, app names only, and only while a session runs.",
         "Then it asks to draw over other apps. That one is what lets Focus Mode actually block something, and you can skip it if you only want the counting.",
       ],
     },
@@ -155,7 +155,7 @@ export function DownloadPanel({
             doesn&rsquo;t accumulate at all.
           </li>
           <li>
-            App names — Word, Spotify, Steam. Never window titles, so never
+            App names, Word, Spotify, Steam. Never window titles, so never
             which document or which video.
           </li>
           <li>
@@ -165,13 +165,13 @@ export function DownloadPanel({
           <li>
             On Windows and Mac, browsers are left to the extension so nothing
             is counted twice. On Android they&rsquo;re counted here, because
-            Chrome for Android can&rsquo;t run the extension — and you can
+            Chrome for Android can&rsquo;t run the extension, and you can
             block a browser by name, though only the whole thing. Telling
             YouTube from Wikipedia inside it would mean reading your screen,
             which nothing here does.
           </li>
           <li>
-            On Android, nothing counts while the screen is off — a phone in a
+            On Android, nothing counts while the screen is off, a phone in a
             pocket names a foreground app, and that isn&rsquo;t studying.
           </li>
         </ul>

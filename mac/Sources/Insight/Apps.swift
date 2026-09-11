@@ -11,7 +11,7 @@ enum Apps {
     /// Browsers are skipped entirely, because the extension already counts
     /// them.
     ///
-    /// Counting both would double every minute on the web — and worse, the
+    /// Counting both would double every minute on the web, and worse, the
     /// extension would file that minute as distracted while this filed it as
     /// focused, so the distraction ratio the insight engine turns on would
     /// drift towards nonsense. A student with no extension loses their browser
@@ -40,7 +40,7 @@ enum Apps {
     /// Apps reported under their website's name instead of their own.
     ///
     /// Focus Mode and the distraction split are both defined by the student's
-    /// blocklist, which is a list of hostnames — `normalizeSite` won't accept
+    /// blocklist, which is a list of hostnames, `normalizeSite` won't accept
     /// anything else. So the Spotify app reported as "Spotify" would be
     /// untouchable: unblockable, and counted as focused time whatever the
     /// student chose. Reporting it as `spotify.com` keeps the whole app on one
@@ -67,7 +67,7 @@ enum Apps {
         "com.pinterest.mac": "pinterest.com",
     ]
 
-    /// Names that map even when the bundle identifier is unfamiliar — a
+    /// Names that map even when the bundle identifier is unfamiliar, a
     /// sideloaded or re-signed build of the same app.
     static let aliasesByName: [String: String] = [
         "spotify": "spotify.com",
@@ -89,7 +89,7 @@ enum Apps {
     /// What to report for the app in front, or nil to record nothing.
     ///
     /// - Parameters:
-    ///   - bundleId: e.g. `com.apple.TextEdit`. Exact, and free — unlike a
+    ///   - bundleId: e.g. `com.apple.TextEdit`. Exact, and free, unlike a
     ///     window title, reading it needs no Accessibility permission, which
     ///     is the permission this app deliberately never asks for.
     ///   - name: the app's localised name, e.g. "TextEdit".
@@ -98,7 +98,7 @@ enum Apps {
 
         // Our own windows must not be counted as an app they chose to use.
         // Both sides have to exist for this to mean anything: run outside a
-        // bundle — `swift run`, or the self-test — our own identifier is nil,
+        // bundle, `swift run`, or the self-test, our own identifier is nil,
         // and a bare `==` would then swallow every app that hasn't got one.
         if let bundleId, let own = Bundle.main.bundleIdentifier, bundleId == own {
             return nil
@@ -118,7 +118,7 @@ enum Apps {
     ///
     /// An app's name comes from its bundle and is set by whoever built it, so
     /// it is treated as untrusted: control characters out, path separators
-    /// out, whitespace collapsed. Note that whitespace is checked first — a
+    /// out, whitespace collapsed. Note that whitespace is checked first, a
     /// tab is a control character too, and dropping it outright welds two
     /// words into one. The Windows version shipped that bug for an hour.
     static func clean(_ value: String?) -> String {

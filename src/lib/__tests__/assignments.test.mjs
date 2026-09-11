@@ -169,7 +169,7 @@ console.log("\nundated work that was handed out recently");
   };
 
   // "No due date" is a pile with no order to it. When it was handed out is the
-  // only signal either gradebook gives, so recent work is guessed as current —
+  // only signal either gradebook gives, so recent work is guessed as current,
   // as a guess, in its own group.
   ok("assigned this week is probably this week",
      bucketFor(row({ dueAt: null, assignedOn: key(-2) }), NOW) === "RECENT");

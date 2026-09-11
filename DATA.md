@@ -1,7 +1,7 @@
 # What Insight collects, and what happens to it
 
 Written for a legal review. Every row below is drawn from `prisma/schema.prisma`
-and the code that writes it, not from what the privacy pages say — where the two
+and the code that writes it, not from what the privacy pages say, where the two
 disagree, that's noted, because those disagreements are the point of the
 exercise.
 
@@ -20,8 +20,8 @@ codebase but is unreachable.
 
 Study data is encrypted **in the student's browser** with a key derived from a
 password that never reaches the server. The server stores ciphertext it cannot
-read. There is no password reset in the ordinary sense — nothing on the server
-can decrypt anything — but a **recovery key** issued at signup wraps a second
+read. There is no password reset in the ordinary sense, nothing on the server
+can decrypt anything, but a **recovery key** issued at signup wraps a second
 copy of the data key under a 25-character code held only by the student. Losing
 both the password and the code destroys the data permanently, including for us.
 An account with neither can be reset: the key and everything it encrypted are
@@ -50,9 +50,9 @@ the four places where readable data exists, all listed below.
 | Focus Mode blocklist | `User.blockCategories`, `blockExtra`, `blockAllowed` | The extension has no key, so the server must build the list it enforces | Life of account |
 | Session start and end times | `StudySession.startedAt`, `endedAt` | Ordering and de-duplication without decrypting | Life of account |
 | Focus Mode on/off, override used | `StudySession.focusModeActive`, `focusModeOverride` | The extension must be told whether to block, and it cannot decrypt | Life of account |
-| Dates on every record | `forDate`, `occurredOn` | De-duplication — a second entry for one night must be catchable | Life of account |
+| Dates on every record | `forDate`, `occurredOn` | De-duplication, a second entry for one night must be catchable | Life of account |
 | Canvas access token | `CanvasConnection.accessToken` | **Encrypted with a server key**, because the server calls Canvas on the student's behalf | Deleted on disconnect; Canvas expires it at 90 days |
-| **HAC password** | `HacConnection.password` | **Encrypted with a server key.** The heaviest item in this table — see below | Row deleted on disconnect |
+| **HAC password** | `HacConnection.password` | **Encrypted with a server key.** The heaviest item in this table, see below | Row deleted on disconnect |
 | Assignment ticked off | `Assignment.completedAt` | Plaintext timestamp, so the evening reminder can stop counting finished work | Deleted with the assignment |
 | Device site and app names | `PendingDeviceData.payload` | **Plaintext.** See below | Six hours, then deleted |
 | Parent email | `ParentConsent.parentEmail` | Dormant flow, no longer reachable | Life of account |
@@ -75,7 +75,7 @@ Added 2026-09-06. **Optional**, and the alternative needs no password at all.
 
 There are two ways to read a student's Home Access Center gradebook. The browser
 extension uses the session already in their browser and never sees a
-credential — strictly better, and desktop Chrome only. The second is to store
+credential, strictly better, and desktop Chrome only. The second is to store
 their HAC username and password so the server can sign in for them, which is
 the only thing that works on a phone.
 
@@ -83,7 +83,7 @@ the only thing that works on a phone.
 is the single largest carve-out in this document and it should be treated as
 such in any review. A Canvas token is scoped, revocable, and expires in 90 days.
 A HAC password is the student's school identity, and at many districts it is the
-same credential as their school Google account — so the blast radius of a
+same credential as their school Google account, so the blast radius of a
 database breach is materially larger for this one field than for anything else
 listed here.
 
@@ -103,7 +103,7 @@ Mitigations, all enforced in code rather than by policy:
   is handed to the student's browser to parse and encrypt. The server cannot
   store what it just read.
 
-**Both privacy pages describe this** — the student page under "What we can see"
+**Both privacy pages describe this**, the student page under "What we can see"
 and the parent page as its own two questions. They say plainly that Insight can
 open the gradebook if this option is used, and both advise changing one password
 if the HAC and school-email passwords match.
@@ -118,7 +118,7 @@ been asked.
 
 `PendingDeviceData` holds **plaintext** site hostnames and application names,
 because the browser extension and the desktop apps have no encryption key and
-must never have one — a program running on a student's laptop all day is the
+must never have one, a program running on a student's laptop all day is the
 last place that key should live.
 
 - Written only while a study session is running.
@@ -128,7 +128,7 @@ last place that key should live.
   daily.
 
 So for a few hours the server can see that a session included twenty minutes of
-`youtube.com` — not what was watched, and nothing from outside a session. Both
+`youtube.com`, not what was watched, and nothing from outside a session. Both
 privacy pages say this in as many words.
 
 ---
@@ -151,9 +151,9 @@ architecture makes most of that impossible rather than merely prohibited.
 
 ## Deletion and export
 
-- **Export everything** as a file, decrypted in the browser — `exportEverything`.
+- **Export everything** as a file, decrypted in the browser, `exportEverything`.
 - **Delete single entries**, or **delete the account**, which cascades to every
-  table via `onDelete: Cascade` — `deleteAccount`.
+  table via `onDelete: Cascade`, `deleteAccount`.
 - **Disconnect Canvas**, which deletes the stored token.
 - **Revoke a device**, which stops it recording immediately.
 - **Forget the password**, which makes the data permanently unreadable by
@@ -172,7 +172,7 @@ which leaves a real question for review: **is indefinite retention of a dormant
 minor's account acceptable, or is a sweep something we should be obliged to
 build?** Deletion by the student works and always has.
 
-**2. Backup retention — unverified.** `/privacy` says deleted data is gone from
+**2. Backup retention, unverified.** `/privacy` says deleted data is gone from
 backups within 90 days. Nobody has checked what Neon's free tier actually
 retains or for how long. Confirm before anyone relies on it.
 
@@ -194,5 +194,5 @@ claimed six hours. It now sweeps on every device report and again daily.)*
    the student's own initiative and the district isn't involved? Does that change
    if the pilot is ever school-sanctioned?
 4. What are the notification obligations if `PendingDeviceData` were exposed?
-5. Are terms of service needed at all, and does the encryption model — no reset,
-   no recovery — need to be disclosed as a term rather than an explanation?
+5. Are terms of service needed at all, and does the encryption model, no reset,
+   no recovery, need to be disclosed as a term rather than an explanation?

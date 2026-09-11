@@ -24,13 +24,13 @@
  *     span id ~ lblGPACum\d+     the value
  *     span id ~ lblGPARank\d+    class rank
  *
- * The index has no count anywhere — loop until the element is missing.
+ * The index has no count anywhere, loop until the element is missing.
  *
  * **On the cell indices.** They are positional, which is the failure mode this
  * codebase works hardest to avoid: an inserted column shifts every field with
  * no error and serves wrong data confidently. There is no header row here to
- * bind to, so instead every row is validated — a course code that looks like a
- * course code, grades that look like grades — and anything that doesn't fit is
+ * bind to, so instead every row is validated, a course code that looks like a
+ * course code, grades that look like grades, and anything that doesn't fit is
  * dropped rather than guessed at. A missing course is visible; a wrong grade is
  * not.
  */
@@ -39,7 +39,7 @@ export type TranscriptCourse = {
   code: string;
   description: string;
   /// Semester finals. Null where the semester has not happened or the row
-  /// carries a letter — `P`, `W` — which is a real outcome and not a number.
+  /// carries a letter, `P`, `W`, which is a real outcome and not a number.
   sem1: number | null;
   sem2: number | null;
   credit: number | null;
@@ -68,7 +68,7 @@ export type Transcript = {
  * A semester grade, or null.
  *
  * `P`, `W`, `CNS` and a blank are all real states and none of them is a
- * number. Turning any of them into a zero would invent a failure — the same
+ * number. Turning any of them into a zero would invent a failure, the same
  * mistake `parseScore` exists to prevent on the assignments page.
  */
 export function semesterGrade(cell: string | undefined): number | null {
@@ -104,7 +104,7 @@ export function creditOf(cell: string | undefined): number | null {
  * Whether a transcript course should count toward a GPA.
  *
  * Zero credit is the district's own answer to "is this a real course", printed
- * on the page — better than any inference from a title. It is what marks the
+ * on the page, better than any inference from a title. It is what marks the
  * tech waivers that would otherwise be averaged in.
  */
 export function countsTowardGpa(course: TranscriptCourse): boolean {
@@ -134,7 +134,7 @@ export function semesterGrades(
  * Turn the raw page structures into a transcript.
  *
  * Every row is validated rather than trusted. The course table has no header
- * row to bind to, so the cell indices are positional — the failure mode this
+ * row to bind to, so the cell indices are positional, the failure mode this
  * codebase works hardest to avoid, because an inserted column shifts every
  * field with no error. A row that does not look like a course row is dropped
  * instead of being read at the wrong offsets: a missing course is visible on

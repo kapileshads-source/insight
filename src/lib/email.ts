@@ -6,7 +6,7 @@ import { Resend } from "resend";
  *
  * A hard constraint shapes every template here: the server cannot read a
  * student's data. So no email can contain a grade, a session, or a number of
- * hours slept — those live encrypted and only their browser can open them.
+ * hours slept, those live encrypted and only their browser can open them.
  *
  * That rules out the "here's your week in numbers" email most study apps send.
  * What's left is honest: tell them something is ready, and link to it.
@@ -95,7 +95,7 @@ kapilesh.rajaravi@gmail.com`,
 }
 
 /// Canvas tokens expire every 90 days at FISD. A token made on the first day
-/// of school dies in mid-November — about five weeks before December finals.
+/// of school dies in mid-November, about five weeks before December finals.
 /// Warning early is the difference between a reconnect and a silent data gap
 /// across the highest-stakes grades of the term.
 export async function sendCanvasExpiryWarning(
@@ -118,7 +118,7 @@ Making a new one takes about a minute:
 ${origin()}/canvas
 
 Until it's reconnected, Insight records the time as missing rather than
-counting it as a stretch where nothing was due — so your patterns don't get
+counting it as a stretch where nothing was due, so your patterns don't get
 quietly distorted by the gap.`,
   );
 }
@@ -126,7 +126,7 @@ quietly distorted by the gap.`,
 /// The weekly recap.
 ///
 /// Deliberately contains no numbers. We cannot read them, and inventing a
-/// summary from what the server *can* see — row counts and timestamps — would
+/// summary from what the server *can* see, row counts and timestamps, would
 /// be a worse email and a dishonest one.
 export async function sendWeeklyRecap(email: string): Promise<SendResult> {
   return send(
@@ -136,7 +136,7 @@ export async function sendWeeklyRecap(email: string): Promise<SendResult> {
 
 ${origin()}/dashboard
 
-It isn't in this email because we can't read your data — it's encrypted with
+It isn't in this email because we can't read your data, it's encrypted with
 a key only you have, so the numbers only exist once your browser opens them.`,
   );
 }

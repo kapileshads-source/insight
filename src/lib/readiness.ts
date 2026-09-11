@@ -16,12 +16,12 @@ import { GATES } from "./insights";
  * buys a *comparison*; the permutation test then throws most of them out, which
  * is the entire point of it. "Two more scores and Insight will tell you about
  * your sleep" would be a lie roughly four times in five. So the wording here
- * says what happens — it starts checking — and never what it will find.
+ * says what happens, it starts checking, and never what it will find.
  */
 
 /// Outcomes needed before any split has enough on both sides. A comparison
 /// divides scores into two groups and wants `minPerGroup` in each, so the floor
-/// is twice that — and even then only if they happen to land either side.
+/// is twice that, and even then only if they happen to land either side.
 export const OUTCOMES_FLOOR = GATES.minPerGroup * 2;
 
 export type Readiness = {
@@ -41,8 +41,8 @@ const plural = (n: number, one: string, many: string) =>
 /**
  * Read the two counts a student can actually influence.
  *
- * Deliberately only these. The other gates — the hold rate, the spread across
- * weeks, the permutation test — cannot be turned into a to-do item, because
+ * Deliberately only these. The other gates, the hold rate, the spread across
+ * weeks, the permutation test, cannot be turned into a to-do item, because
  * nothing a student *does* moves them. Showing "your pattern must hold 60% of
  * the time" as a progress bar would invite them to think they had failed at
  * something.
@@ -63,7 +63,7 @@ export function readiness(sessions: number, outcomes: number): Readiness {
       // Says what it does, not what it will find. Most comparisons fail the
       // shuffle, and that is the feature.
       detail:
-        "You've logged enough for it to start comparing. It only shows a pattern that beats a thousand shuffles of your own data, so it may still stay quiet — that is it working, not failing.",
+        "You've logged enough for it to start comparing. It only shows a pattern that beats a thousand shuffles of your own data, so it may still stay quiet, that is it working, not failing.",
     };
   }
 

@@ -4,7 +4,7 @@ import type { DayType, ScheduleVariant } from "@/generated/prisma/enums";
 /// functions below can be tested without a database.
 export type PeriodSlot = {
   /// Chronological position within the day. The prompt interval arithmetic
-  /// uses this, never `number` — on a B day the numbers run 5, 6, 7, 8 and
+  /// uses this, never `number`, on a B day the numbers run 5, 6, 7, 8 and
   /// Advisory has none at all, so subtracting numbers gives nonsense.
   sequence: number;
   /// What the student calls it. Null for Advisory and similar.
@@ -58,7 +58,7 @@ export function localDateKey(at: Date, timezone: string): string {
 }
 
 /// Resolve which day-type a date is, preferring a campus override over the
-/// district calendar. A date absent from both is not a school day — we never
+/// district calendar. A date absent from both is not a school day, we never
 /// guess by alternating, because one irregular day would desynchronize the
 /// rest of the year without anything visibly breaking.
 export function resolveDay(
@@ -74,7 +74,7 @@ export function resolveDay(
 ///
 /// During passing periods we round forward to the next period rather than
 /// returning null, so the prompt doesn't go silent during transitions. Before
-/// the first bell and after the last we return null — the student isn't in the
+/// the first bell and after the last we return null, the student isn't in the
 /// school day at all, and prompting then would just be noise.
 export function lookupPeriod(
   minutes: number,
@@ -94,7 +94,7 @@ export function lookupPeriod(
   // Outside the school day entirely.
   if (minutes < first.startMinutes || minutes >= last.endMinutes) return null;
 
-  // In a gap between periods — round forward to the one about to start.
+  // In a gap between periods, round forward to the one about to start.
   const upcoming = ordered.find((p) => p.startMinutes > minutes);
   return upcoming ? { period: upcoming, how: "NEAREST_UPCOMING" } : null;
 }

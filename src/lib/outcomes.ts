@@ -8,7 +8,7 @@
  * gradebook still had to re-enter their own marks for any of it to mean
  * anything, which almost nobody would do.
  *
- * The whole thing is pure and works on plaintext, so it runs in the browser —
+ * The whole thing is pure and works on plaintext, so it runs in the browser,
  * assignment names and scores are encrypted and the server cannot read either
  * side of the comparison.
  *
@@ -87,7 +87,7 @@ export type OutcomePlan = {
 /// week of school.
 const SAME_TEST_DAYS = 2;
 
-/// Above this, the numbers are a data-entry accident rather than extra credit —
+/// Above this, the numbers are a data-entry accident rather than extra credit,
 /// a 5-point warm-up recorded as 100 would be 2000% and would move a term's
 /// average on its own.
 const IMPLAUSIBLE_PERCENTAGE = 200;
@@ -120,7 +120,7 @@ const sameSubject = (a: string | null | undefined, b: string): boolean => {
  * What should be written, given what the gradebooks say and what already exists.
  *
  * Nothing is deleted and nothing is overwritten. A conflict is reported, not
- * resolved — the student is the only one who knows which number is right.
+ * resolved, the student is the only one who knows which number is right.
  */
 export function planOutcomes(
   graded: GradedAssignment[],
@@ -171,7 +171,7 @@ export function planOutcomes(
 
     if (typed) {
       plan.skipped.matchedByHand++;
-      // Same number, near enough — the hand-entered row stands and nothing
+      // Same number, near enough, the hand-entered row stands and nothing
       // needs saying.
       if (Math.abs(typed.percentage - percentage) > SAME_SCORE_TOLERANCE) {
         plan.conflicts.push({

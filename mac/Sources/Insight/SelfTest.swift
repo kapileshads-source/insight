@@ -38,7 +38,7 @@ enum SelfTest {
     }
 
     static func run() -> Int32 {
-        print("Insight for macOS — logic tests\n")
+        print("Insight for macOS, logic tests\n")
 
         reportTests()
         blocklistTests()
@@ -135,7 +135,7 @@ enum SelfTest {
         ok("nothing matches an empty list", !Apps.isBlocked("youtube.com", blocklist: []))
 
         // The server now sends app names in the same list as hostnames, which
-        // is what finally makes a game blockable — it is its own app and has
+        // is what finally makes a game blockable, it is its own app and has
         // no website to match on.
         let withApps = ["valorant", "minecraft", "youtube.com"]
 

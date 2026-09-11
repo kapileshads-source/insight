@@ -24,7 +24,7 @@ import {
  *
  * Two outcomes, and which one a student gets was decided months earlier, when
  * they either kept their recovery key or did not. This screen's job is to be
- * straight about that rather than to imply a third possibility — there is no
+ * straight about that rather than to imply a third possibility, there is no
  * support address that can help, because there is nothing on the server that
  * opens the data.
  *
@@ -64,7 +64,7 @@ export function RecoverFlow() {
         }
         if (!recovery) {
           setError(
-            "This account doesn't have a recovery key — it was made before they existed, or one was never set up. Starting over is the only way forward.",
+            "This account doesn't have a recovery key, it was made before they existed, or one was never set up. Starting over is the only way forward.",
           );
           setShowReset(true);
           return;
@@ -88,7 +88,7 @@ export function RecoverFlow() {
       } catch (err) {
         setError(
           err instanceof WrongRecoveryKeyError
-            ? "That recovery key doesn't match. Check for a mistyped character — the key never contains the letters I, L, O or U."
+            ? "That recovery key doesn't match. Check for a mistyped character, the key never contains the letters I, L, O or U."
             : err instanceof UnsupportedBrowserError
               ? err.message
               : "Couldn't use that key. Check your connection and try again.",
@@ -116,7 +116,7 @@ export function RecoverFlow() {
     return (
       <RecoveryCodeScreen
         code={newCode}
-        heading="You're back in — here's a new key"
+        heading="You're back in, here's a new key"
         intro="Your password is changed and your data is intact. The key you just used has been retired, so this is your new one. Save it the same way."
         onDone={() => router.push("/dashboard")}
       />
@@ -134,7 +134,7 @@ export function RecoverFlow() {
       </h1>
       <p className="mt-4 text-[17px] leading-relaxed text-text-muted">
         The 25-character key you were given when you set your password. It opens
-        your data and lets you pick a new password — nothing is lost.
+        your data and lets you pick a new password, nothing is lost.
       </p>
 
       <form onSubmit={submit} className="mt-8">
@@ -234,18 +234,18 @@ export function RecoverFlow() {
                 both frightening and wrong. Most of what a student looks at
                 every day comes back on the next sync. */}
             <p className="mt-3 text-[15px] leading-relaxed text-text-muted">
-              Without the key there is nothing anyone can do — we never had a
+              Without the key there is nothing anyone can do, we never had a
               copy of your password and cannot read your rows. The account can
               be reset with a new password, and what happens is:
             </p>
             <ul className="mt-4 space-y-2 text-[15px] leading-relaxed">
               <li className="text-text-muted">
-                <span className="text-up">Comes back</span> — your classes,
+                <span className="text-up">Comes back</span>, your classes,
                 assignments, marks and transcript. Canvas and HAC still have
                 them, so the next sync restores them.
               </li>
               <li className="text-text-muted">
-                <span className="text-down">Gone for good</span> — your study
+                <span className="text-down">Gone for good</span>, your study
                 sessions, sleep entries, the scores you typed in yourself, and
                 every pattern worked out from them. Only Insight had those.
               </li>

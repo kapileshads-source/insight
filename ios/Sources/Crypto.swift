@@ -8,7 +8,7 @@ import Foundation
 ///
 /// Every constant here has to match `src/lib/crypto.ts` exactly. Get the
 /// iteration count or the salt encoding wrong and nothing decrypts, which
-/// surfaces as "that password doesn't match" — a student would retype a
+/// surfaces as "that password doesn't match", a student would retype a
 /// correct password until they gave up.
 ///
 /// The verifier is checked before anything else for that reason: a mismatch
@@ -47,7 +47,7 @@ enum Crypto {
         case malformed
     }
 
-    /// Unlock, returning the data key. Slow on purpose — around half a second,
+    /// Unlock, returning the data key. Slow on purpose, around half a second,
     /// which is what makes a short password expensive to attack offline.
     static func unlock(password: String, setup: Setup) throws -> SymmetricKey {
         guard let salt = Data(base64Encoded: pad(setup.salt)),

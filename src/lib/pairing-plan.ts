@@ -8,7 +8,7 @@
  *
  *  - **An assignment already in a link is out of the running.** It is spoken
  *    for, and a link is one-to-one.
- *  - **A refused combination is never offered again.** Not the rows — the
+ *  - **A refused combination is never offered again.** Not the rows, the
  *    combination. "Unit 2 Test is not Unit 2 Test Retake" must not stop Unit 2
  *    Test finding the row it really matches.
  *  - **Confident pairings are made without asking.** The middle band is the

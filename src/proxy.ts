@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 // Next.js 16 renamed Middleware to Proxy. Same mechanism, same position in the
-// request lifecycle — the file is just called `proxy.ts` now, and there can
+// request lifecycle, the file is just called `proxy.ts` now, and there can
 // only be one per project.
 
 /// Everything a signed-out visitor is allowed to reach. The intro page has to
@@ -16,7 +16,7 @@ const isPublic = createRouteMatcher([
   // deciding whether to sign up.
   "/download",
   // Opened by a Shortcuts automation the instant a student opens something
-  // they meant to avoid. Requiring a sign-in first would defeat the point —
+  // they meant to avoid. Requiring a sign-in first would defeat the point,
   // and a signed-in reader still gets their session details.
   "/bounce",
   // Cached on the device and shown when the network is gone.

@@ -1,14 +1,14 @@
 /**
  * Which unit a class is actually on.
  *
- * The one question only Canvas can answer — HAC's gradebook has names, dates
+ * The one question only Canvas can answer, HAC's gradebook has names, dates
  * and scores but nothing about what is being taught. Modules are where a
  * teacher writes "Unit 3: Stoichiometry", and reading them turns a dashboard
  * that lists work into one that can say what the week is about.
  *
  * It earns its place twice. On screen it is a sentence a student recognises,
  * and underneath it is the best available answer to "is this undated
- * assignment current?" — work sitting in the module the class is on now
+ * assignment current?", work sitting in the module the class is on now
  * almost certainly is, which no date on the row could have told us.
  *
  * Pure, so the choosing is testable without a Canvas token.
@@ -44,7 +44,7 @@ export type CurrentModule = {
  *
  * Preference order, and each step is a fallback rather than a guess:
  *
- * 1. One Canvas says is `started` — the student has opened something in it,
+ * 1. One Canvas says is `started`, the student has opened something in it,
  *    which is the strongest signal available.
  * 2. Otherwise the first `unlocked` one that isn't finished. Teachers unlock
  *    modules as the term moves, so the earliest open-but-unfinished one is
@@ -64,7 +64,7 @@ export type CurrentModule = {
  * classes are on", that is a sentence pretending to be a heading, and it made
  * the whole feature look broken.
  *
- * The test is shape, not content. A unit name is short and is not a sentence —
+ * The test is shape, not content. A unit name is short and is not a sentence,
  * "Unit 3: Kinematics", "Module 5". Anything long, or carrying sentence
  * punctuation mid-string, is prose. Rejecting it costs nothing: the fallback
  * is showing no unit for that class, which is the honest answer and is what

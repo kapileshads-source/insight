@@ -9,8 +9,8 @@ namespace Insight;
 /// token.
 ///
 /// Not the tally. Recorded time lives in memory and is sent every minute, so a
-/// machine that is switched off — or examined by someone who isn't the student
-/// — has nothing on it saying which apps they used. That is a stronger promise
+/// machine that is switched off, or examined by someone who isn't the student
+///, has nothing on it saying which apps they used. That is a stronger promise
 /// than the extension can make, since <c>chrome.storage</c> is a plaintext
 /// file, and it costs only the last minute of a session if the app is killed.
 ///

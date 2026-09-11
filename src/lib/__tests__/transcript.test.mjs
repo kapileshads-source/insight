@@ -20,7 +20,7 @@ console.log("semester grades, where a letter is not a number");
   ok("a number is a number", semesterGrade("93") === 93);
   ok("decimals survive", semesterGrade("88.5") === 88.5);
   // P, W and CNS are real outcomes. Turning one into a zero invents a failure
-  // the student never had — the same mistake parseScore exists to prevent.
+  // the student never had, the same mistake parseScore exists to prevent.
   ok("P is not zero", semesterGrade("P") === null);
   ok("W is not zero", semesterGrade("W") === null);
   ok("CNS is not zero", semesterGrade("CNS") === null);
@@ -55,7 +55,7 @@ console.log("\nwhat counts toward a GPA");
   ok("a graded course counts", countsTowardGpa(real));
 
   // Printed on the page by the district, which beats any inference from a
-  // title — this is what marks the tech waivers.
+  // title, this is what marks the tech waivers.
   ok("zero credit does not", !countsTowardGpa({ ...real, credit: 0 }));
   ok("no grades at all does not", !countsTowardGpa({ ...real, sem1: null, sem2: null }));
   ok("one semester is enough", countsTowardGpa({ ...real, sem2: null }));

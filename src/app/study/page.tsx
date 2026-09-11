@@ -8,14 +8,14 @@ import { AppNav, PageTitle } from "@/components/chrome";
 import { StudyDataProvider } from "@/components/study-data";
 import { SessionControls, StudyStats } from "@/components/study-panel";
 
-export const metadata = { title: "Study — Insight" };
+export const metadata = { title: "Study, Insight" };
 
 /**
  * Starting a session, on a page of its own.
  *
  * The timer used to sit partway down the dashboard, below what's due and above
  * a setup checklist. It is the one thing in this app a student does
- * deliberately — they sit down, they mean to work, they press it — and a
+ * deliberately, they sit down, they mean to work, they press it, and a
  * deliberate action deserves a screen rather than a slot in a feed.
  *
  * The four figures underneath are here because they answer the question you

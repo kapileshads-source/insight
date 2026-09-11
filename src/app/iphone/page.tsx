@@ -3,14 +3,14 @@ import { PageHero, SiteFooter, SiteNav } from "@/components/chrome";
 
 import { appsToBlock } from "@/lib/ios-apps";
 
-export const metadata = { title: "Insight on iPhone — Insight" };
+export const metadata = { title: "Insight on iPhone, Insight" };
 
 /**
  * The iPhone setup, written out.
  *
  * Every other platform has an app that does the work. iOS grants no way to see
  * which app is in front, or to block one, without an entitlement Apple hands
- * to parental-control companies — so what a student gets instead is three
+ * to parental-control companies, so what a student gets instead is three
  * things they set up by hand, and this page is the difference between them
  * being set up and not.
  *
@@ -66,7 +66,7 @@ export default function IPhonePage() {
           What it can do is start and stop sessions, log a night&rsquo;s sleep,
           quiet itself while you work, and interrupt you when you reach for the
           thing you were avoiding. Phone screen time still gets in the same way
-          it always has — the screenshot on{" "}
+          it always has, the screenshot on{" "}
           <Link href="/dashboard" className="text-accent underline underline-offset-2">
             your dashboard
           </Link>
@@ -77,8 +77,8 @@ export default function IPhonePage() {
       <ol className="mt-12 space-y-8">
         <Step number={1} title="Put Insight on your Home Screen">
           <p>
-            In Safari, open Insight, tap the <strong>Share</strong> button — the
-            square with the arrow — and choose{" "}
+            In Safari, open Insight, tap the <strong>Share</strong> button, the
+            square with the arrow, and choose{" "}
             <strong>Add to Home Screen</strong>.
           </p>
           <p>
@@ -144,7 +144,7 @@ export default function IPhonePage() {
             <h4 className="text-[15px] text-text">Which apps to tick</h4>
             <p className="mt-2 text-[14px] leading-relaxed text-text-muted">
               The picker shows everything on your phone, so here is the list
-              the rest of Insight already blocks — your laptop and an Android
+              the rest of Insight already blocks, your laptop and an Android
               phone enforce exactly these. Tick the ones you actually have; you
               only do this once, and you can come back and edit the automation
               whenever.
@@ -160,7 +160,7 @@ export default function IPhonePage() {
               ))}
             </dl>
             <p className="mt-4 text-[13px] leading-relaxed text-text-faint">
-              One automation holds all of them — select as many apps as you
+              One automation holds all of them, select as many apps as you
               like in the same picker, rather than making one per app. Anything
               you add to your own blocklist in{" "}
               <Link
@@ -174,7 +174,7 @@ export default function IPhonePage() {
           </div>
 
           <p className="text-text-faint">
-            It fires every single time, which is more than a hidden icon does —
+            It fires every single time, which is more than a hidden icon does,
             but you can also delete the automation in ten seconds, and
             that&rsquo;s deliberate. A blocker that hides its own off-switch is
             one you remove in a bad week, and then it protects you from nothing.
@@ -187,7 +187,7 @@ export default function IPhonePage() {
             own blocking, and it&rsquo;s a real wall rather than a nudge.
           </p>
           <p>
-            The catch is that you can lift it yourself in two taps — unless
+            The catch is that you can lift it yourself in two taps, unless
             somebody else sets the Screen Time passcode. A parent, a sibling, a
             friend who won&rsquo;t tell you. That&rsquo;s the free version of a
             lock you can&rsquo;t undo on a whim, and honestly it&rsquo;s

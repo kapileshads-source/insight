@@ -7,12 +7,14 @@ import { redirect } from "next/navigation";
 import { getOrCreateUser, nextOnboardingStep } from "@/lib/user";
 import { getSchoolDayState } from "@/lib/current-period";
 import { getCanvasStatus } from "@/app/actions/canvas";
+import { hacConnectionStatus } from "@/app/actions/hac";
 import { listDevices } from "@/app/actions/devices";
 import { hasProfile } from "@/app/actions/profile";
 import { GapPrompt } from "@/components/gap-prompt";
 import { RoutinePrompt } from "@/components/routine-prompt";
 import { SuggestedThisWeek, WeekTrends } from "@/components/study-panel";
 import { StudyDataProvider } from "@/components/study-data";
+import { HacSync } from "@/components/hac-sync";
 
 export const metadata = { title: "Insight" };
 
@@ -177,9 +179,12 @@ export default async function Dashboard() {
   if (nextOnboardingStep(user) !== "DONE") redirect("/onboarding");
 
   const today = new Date();
-  const canvas = await getCanvasStatus();
-  const devices = await listDevices();
-  const hasBaseline = await hasProfile();
+  const [canvas, devices, hasBaseline, hac] = await Promise.all([
+    getCanvasStatus(),
+    listDevices(),
+    hasProfile(),
+    hacConnectionStatus(),
+  ]);
 
   return (
     <>
@@ -189,6 +194,11 @@ export default async function Dashboard() {
           top and the grades list further down are the same data seen twice, and
           before this each would have unwrapped every assignment row itself. */}
       <GradebookProvider>
+        <HacSync
+          automatic
+          connected={hac.connected && !hac.disconnected}
+          lastSyncedAt={hac.lastSyncedAt}
+        />
         <StudyDataProvider>
         <AssignmentsProvider>
         <div className="mx-auto w-full max-w-5xl flex-1 px-6 pb-32 pt-8">

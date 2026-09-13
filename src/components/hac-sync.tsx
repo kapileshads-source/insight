@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { fetchHacState, pullHac, storeHacData } from "@/app/actions/hac";
 import { useCrypto } from "@/components/crypto-provider";
@@ -55,11 +55,22 @@ type Outcome =
     }
   | { kind: "problem"; message: string };
 
-export function HacSync() {
+export function HacSync({
+  automatic = false,
+  connected = true,
+  lastSyncedAt = null,
+}: {
+  /// When true, run silently from the dashboard if HAC is stale. The browser
+  /// still has to be open and unlocked because only it can encrypt the page.
+  automatic?: boolean;
+  connected?: boolean;
+  lastSyncedAt?: string | null;
+} = {}) {
   const { conceal, reveal, status } = useCrypto();
   const [outcome, setOutcome] = useState<Outcome>({ kind: "idle" });
+  const autoStarted = useRef(false);
 
-  async function pull() {
+  const pull = useCallback(async () => {
     setOutcome({ kind: "working" });
 
     // One way to get the page: the server, signing in with the stored
@@ -298,7 +309,27 @@ export function HacSync() {
         message: "Couldn't read that gradebook. Nothing was saved.",
       });
     }
-  }
+  }, [conceal, reveal]);
+
+  const pullForAutoSync = useCallback(async () => {
+    await pull();
+  }, [pull]);
+
+  useEffect(() => {
+    if (!automatic || !connected || status !== "unlocked" || autoStarted.current) {
+      return;
+    }
+
+    const last = lastSyncedAt ? new Date(lastSyncedAt).getTime() : 0;
+    if (Number.isFinite(last) && Date.now() - last < 24 * 60 * 60 * 1000) {
+      return;
+    }
+
+    autoStarted.current = true;
+    void Promise.resolve().then(() => pullForAutoSync());
+  }, [automatic, connected, lastSyncedAt, pullForAutoSync, status]);
+
+  if (automatic) return null;
 
   if (status !== "unlocked") return null;
 

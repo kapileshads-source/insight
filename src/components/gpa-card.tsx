@@ -12,8 +12,11 @@ import {
   looksNonAcademic,
   gpaIf,
   gpaDelta,
+  gpaTrend,
+  MAX_TEST_GRADE,
   type CourseLevel,
   type GpaCourse,
+  type GpaTrendYear,
 } from "@/lib/gpa";
 
 /**
@@ -238,10 +241,12 @@ export function GpaDetail({
   courses: all,
   past = null,
   priorCount = 0,
+  trendYears = [],
 }: {
   courses: GpaInput[];
   past?: { weighted: number | null; unweighted: number | null } | null;
   priorCount?: number;
+  trendYears?: GpaTrendYear[];
 }) {
   const courses = onlyEnrolled(all);
   const [excluded, setExcluded] = useState<Set<string>>(
@@ -250,9 +255,8 @@ export function GpaDetail({
   const [tryout, setTryout] = useState<Map<string, number>>(new Map());
 
   const withGrades = courses.filter((c) => hasUsableGrade(c.grade));
-  const ungraded = courses.filter(
-    (c) => c.grade !== null && !hasUsableGrade(c.grade),
-  );
+  const testable = courses.filter((c) => !excluded.has(c.id));
+  const ungraded = courses.filter((c) => !hasUsableGrade(c.grade));
 
   const forEstimate: GpaCourse[] = withGrades.map((c) => ({
     id: c.id,
@@ -266,6 +270,12 @@ export function GpaDetail({
   const live = forEstimate
     .filter((c) => !c.excluded)
     .map((c) => ({ id: c.id, level: c.level, grade: c.grades[0] }));
+  const hypotheticalLive = testable.flatMap((c) => {
+    const grade = tryout.get(c.id) ?? c.grade;
+    return grade !== null && Number.isFinite(grade) && (hasUsableGrade(c.grade) || tryout.has(c.id))
+      ? [{ id: c.id, level: levelOf(c.title), grade }]
+      : [];
+  });
 
   const today = presentGpa(
     past ?? { weighted: null, unweighted: null },
@@ -275,7 +285,7 @@ export function GpaDetail({
   const withTryout = gpaIf(
     past ?? { weighted: null, unweighted: null },
     priorCount,
-    live,
+    hypotheticalLive,
     tryout,
   );
   const trying = tryout.size > 0;
@@ -294,18 +304,20 @@ export function GpaDetail({
     setTryout((prev) => {
       const next = new Map(prev);
       const value = Number(raw);
-      // An empty box means "back to the real grade", not "a zero".
+      // An empty box means "back to the real grade", not "a zero". Grade
+      // testing is intentionally capped at 100: a percentage above 100 is
+      // not a valid class grade and would make the projection misleading.
       if (raw.trim() === "" || !Number.isFinite(value)) next.delete(id);
-      else next.set(id, Math.max(0, Math.min(120, value)));
+      else next.set(id, Math.max(0, Math.min(MAX_TEST_GRADE, value)));
       return next;
     });
   }
 
-  if (withGrades.length === 0) {
+  if (courses.length === 0) {
     return (
       <p className="max-w-xl text-[16px] leading-relaxed text-text-muted">
-        No class has a posted percentage yet, so there is nothing to work from.
-        This fills in as soon as one does.
+        No classes are available yet. Connect HAC or Canvas to test a class
+        grade and see how it would change your GPA.
       </p>
     );
   }
@@ -361,12 +373,13 @@ export function GpaDetail({
       <section className="mt-8">
         <h2 className="h3 text-[17px]">Your classes</h2>
         <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-text-muted">
-          Type a grade in the box to see where you would land. Untick a class to
-          leave it out of the calculation entirely.
+          Type a grade in the box to see where you would land. You can test a
+          grade even when that class has no posted assignment yet. Values are
+          limited to 0–100.
         </p>
 
         <ul className="mt-5 border-t border-line">
-          {withGrades.map((c) => {
+          {courses.map((c) => {
             const out = excluded.has(c.id);
             return (
               <li
@@ -393,12 +406,12 @@ export function GpaDetail({
                   <span
                     className={tryout.has(c.id) ? "line-through opacity-60" : ""}
                   >
-                    {c.grade}
+                    {c.grade ?? "not posted"}
                   </span>
                   <input
                     type="number"
                     min={0}
-                    max={120}
+                    max={MAX_TEST_GRADE}
                     value={tryout.get(c.id) ?? ""}
                     onChange={(e) => tryGrade(c.id, e.target.value)}
                     disabled={out}
@@ -426,22 +439,46 @@ export function GpaDetail({
             cumulative GPA, brought up to today, not just this term.
           </p>
         )}
-        <p className="text-text-faint">
-          Frisco weights per percentage point: an on-level class tops out at
-          5.0, Advanced at 5.5 and AP at 6.0, losing 0.1 for every point below
-          100. The unweighted figure uses letter grades on the 4.0 scale, which
-          is a different calculation entirely, that is why the two move at
-          different speeds.
-        </p>
         {ungraded.length > 0 && (
           <p className="text-text-faint">
             {ungraded.length === 1
-              ? `${ungraded[0].title} isn't counted yet, it still reads 0%, which means no assessments have been marked in it.`
-              : `${ungraded.length} classes aren't counted yet, they still read 0%, which means no assessments have been marked in them.`}
+              ? `${ungraded[0].title} isn't counted yet, it has no usable posted percentage.`
+              : `${ungraded.length} classes aren't counted yet, they have no usable posted percentage.`}
           </p>
         )}
+        {trendYears.length > 0 && <GpaTrend years={trendYears} />}
       </section>
     </div>
+  );
+}
+
+function GpaTrend({ years }: { years: GpaTrendYear[] }) {
+  const points = gpaTrend(years);
+  return (
+    <section className="mt-10">
+      <h2 className="h3 text-[17px]">GPA trend by school year</h2>
+      <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-text-muted">
+        Estimated from transcript finals. Each year shows whether your average
+        increased or decreased from the previous year.
+      </p>
+      <ul className="mt-5 border-t border-line">
+        {points.map((point) => (
+          <li key={point.year} className="flex flex-wrap items-center justify-between gap-4 border-b border-line py-3">
+            <span className="text-[15px] text-text">{point.year}</span>
+            <span className="flex items-center gap-5 text-[14px]">
+              <span className="text-text-muted">
+                {point.weighted === null ? "-" : point.weighted.toFixed(3)} weighted
+              </span>
+              <span className={point.weightedDelta === null ? "text-text-faint" : point.weightedDelta > 0 ? "text-up" : point.weightedDelta < 0 ? "text-down" : "text-text-faint"}>
+                {point.weightedDelta === null
+                  ? "first year"
+                  : `${point.weightedDelta > 0 ? "↑" : point.weightedDelta < 0 ? "↓" : "→"} ${Math.abs(point.weightedDelta).toFixed(3)}`}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

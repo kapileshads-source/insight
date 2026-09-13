@@ -30,6 +30,9 @@
 
 export type CourseLevel = "AP" | "ADVANCED" | "ON_LEVEL";
 
+export const MAX_TEST_GRADE = 100;
+
+
 /// The maximum a course can contribute, by level. Kapilesh, 2026-09-06.
 export const LEVEL_MAX: Record<CourseLevel, number> = {
   AP: 6.0,
@@ -341,9 +344,6 @@ export function presentGpa(
     inProgress: current.length,
   };
 }
-
-
-
 // --- what if ----------------------------------------------------------------
 
 /**
@@ -377,17 +377,88 @@ export function gpaIf(
     priorCount,
     current.map((c) => ({
       level: c.level,
-      grade: overrides.get(c.id) ?? c.grade,
+      grade: overrides.has(c.id)
+        ? Math.max(0, Math.min(MAX_TEST_GRADE, overrides.get(c.id) as number))
+        : c.grade,
     })),
   );
 }
 
 /// The move from one GPA to another, as a signed delta. Null whenever either
-/// side is unknown, a change of ", " is not a change of zero.
+/// side is unknown; an unknown change is not the same as zero.
 export function gpaDelta(
   from: number | null,
   to: number | null,
 ): number | null {
   if (from === null || to === null) return null;
   return Math.round((to - from) * 10000) / 10000;
+}
+
+export type GpaTrendYear = {
+  year: string;
+  courses: {
+    title: string;
+    sem1: number | null;
+    sem2: number | null;
+    credit: number | null;
+  }[];
+};
+
+export type GpaTrendPoint = {
+  year: string;
+  weighted: number | null;
+  unweighted: number | null;
+  weightedDelta: number | null;
+  unweightedDelta: number | null;
+  counted: number;
+};
+
+/**
+ * Estimate one GPA point per finished school year from transcript finals.
+ *
+ * HAC exposes finished grades by year, but not a year-by-year GPA table. This
+ * keeps the trend visible while labeling it as an estimate; the district's
+ * cumulative GPA remains authoritative wherever it is available.
+ */
+export function gpaTrend(
+  years: GpaTrendYear[],
+): GpaTrendPoint[] {
+  let previousWeighted: number | null = null;
+  let previousUnweighted: number | null = null;
+
+  return years.map((year) => {
+    let weightedSum = 0;
+    let unweightedSum = 0;
+    let counted = 0;
+
+    for (const course of year.courses) {
+      if (course.credit !== null && course.credit <= 0) continue;
+      for (const grade of [course.sem1, course.sem2]) {
+        if (grade === null || !Number.isFinite(grade)) continue;
+        weightedSum += weightedPoints(grade, levelOf(course.title));
+        unweightedSum += unweightedPoints(grade);
+        counted++;
+      }
+    }
+
+    const weighted = counted > 0
+      ? Math.round((weightedSum / counted) * 10000) / 10000
+      : null;
+    const unweighted = counted > 0
+      ? Math.round((unweightedSum / counted) * 10000) / 10000
+      : null;
+    const weightedDelta = gpaDelta(previousWeighted, weighted);
+    const unweightedDelta = gpaDelta(previousUnweighted, unweighted);
+
+    previousWeighted = weighted;
+    previousUnweighted = unweighted;
+    return {
+      year: year.year,
+      weighted,
+      unweighted,
+      weightedDelta,
+      unweightedDelta,
+      counted,
+    };
+  });
 }

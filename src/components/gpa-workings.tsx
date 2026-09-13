@@ -26,6 +26,7 @@ export function GpaWorkings() {
       courses={data.gpa}
       past={data.past}
       priorCount={data.priorCount}
+      trendYears={data.trendYears}
     />
   );
 }

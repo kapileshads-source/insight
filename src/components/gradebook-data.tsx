@@ -13,6 +13,7 @@ import { fetchStoredTranscript } from "@/app/actions/hac";
 import { useCrypto } from "@/components/crypto-provider";
 import type { GpaInput } from "@/components/gpa-card";
 import { officialGpa, semesterGrades, type Transcript } from "@/lib/transcript";
+import type { GpaTrendYear } from "@/lib/gpa";
 import {
   buildGradebook,
   gradedSince,
@@ -63,6 +64,8 @@ export type GradebookState =
       gpa: GpaInput[];
       /// The school's own cumulative figure, off the transcript.
       past: { weighted: number | null; unweighted: number | null } | null;
+      /// Finished transcript years, used for the year-over-year GPA trend.
+      trendYears: GpaTrendYear[];
       /// How many finished semester grades that figure covers.
       priorCount: number;
     };
@@ -105,6 +108,7 @@ export function GradebookProvider({ children }: { children: React.ReactNode }) {
         courses: [],
         fresh: [],
         gpa: [],
+        trendYears: [],
         past: null,
         priorCount: 0,
       };
@@ -172,6 +176,7 @@ export function GradebookProvider({ children }: { children: React.ReactNode }) {
       let past: { weighted: number | null; unweighted: number | null } | null =
         null;
       let priorCount = 0;
+      let trendYears: GpaTrendYear[] = [];
       const sealed = await fetchStoredTranscript();
       if (sealed) {
         try {
@@ -182,6 +187,15 @@ export function GradebookProvider({ children }: { children: React.ReactNode }) {
             unweighted: official.unweighted?.value ?? null,
           };
           priorCount = semesterGrades(transcript).length;
+          trendYears = transcript.years.map((year) => ({
+            year: year.year,
+            courses: year.courses.map((course) => ({
+              title: course.description,
+              sem1: course.sem1,
+              sem2: course.sem2,
+              credit: course.credit,
+            })),
+          }));
         } catch {
           // An unreadable transcript is not worth failing the whole panel for.
           // The estimate simply falls back to this term alone.
@@ -194,6 +208,7 @@ export function GradebookProvider({ children }: { children: React.ReactNode }) {
         courses: oneCardPerClass(buildGradebook(rows, reported, fromHac)),
         fresh: gradedSince(rows, seen),
         gpa,
+        trendYears,
         past,
         priorCount,
       };

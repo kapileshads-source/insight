@@ -1,6 +1,7 @@
 import {
   gpaIf,
   gpaDelta,
+  gpaTrend,
   estimateGpa,
   onlyEnrolled,
   presentGpa,
@@ -247,6 +248,22 @@ console.log("\nwhat-if");
 
   ok("delta is signed", gpaDelta(4.694, 4.733) > 0 && gpaDelta(4.733, 4.694) < 0);
   ok("delta of an unknown is unknown", gpaDelta(null, 4.7) === null);
+  ok("grade tests cap at 100", gpaIf(official, prior, current, new Map([["chem", 125]])).weighted ===
+    gpaIf(official, prior, current, new Map([["chem", 100]])).weighted);
+}
+
+console.log("\nyear-over-year GPA trend");
+{
+  const trend = gpaTrend([
+    { year: "2024-2025", courses: [{ title: "AP Biology", sem1: 90, sem2: 92, credit: 1 }] },
+    { year: "2025-2026", courses: [{ title: "AP Biology", sem1: 100, sem2: 100, credit: 1 }] },
+    { year: "2026-2027", courses: [{ title: "AP Biology", sem1: 80, sem2: 80, credit: 1 }] },
+  ]);
+  ok("one point per year", trend.length === 3);
+  ok("first year has no comparison", trend[0].weightedDelta === null);
+  ok("an increase is positive", trend[1].weightedDelta > 0);
+  ok("a decrease is negative", trend[2].weightedDelta < 0);
+  ok("zero-credit courses are excluded", gpaTrend([{ year: "2025-2026", courses: [{ title: "Waiver", sem1: 100, sem2: 100, credit: 0 }] }])[0].weighted === null);
 }
 
 if (fail > 0) process.exit(1);
